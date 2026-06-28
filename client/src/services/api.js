@@ -19,10 +19,16 @@ export const getMe = () => api.get("/auth/me");
 // --- Projects ---
 export const getProjects = (params) => api.get("/projects", { params });
 export const getProject = (id) => api.get(`/projects/${id}`);
+export const createProject = (data) => api.post("/projects", data);
+export const updateProject = (id, data) => api.patch(`/projects/${id}`, data);
+export const deleteProject = (id) => api.delete(`/projects/${id}`);
 
 // --- Events ---
 export const getEvents = (params) => api.get("/events", { params });
 export const getEvent = (id) => api.get(`/events/${id}`);
+export const createEvent = (data) => api.post("/events", data);
+export const updateEvent = (id, data) => api.patch(`/events/${id}`, data);
+export const deleteEvent = (id) => api.delete(`/events/${id}`);
 
 // --- Timeline ---
 export const getTimeline = () => api.get("/timeline");
@@ -32,7 +38,25 @@ export const getGallery = (params) => api.get("/gallery", { params });
 
 // --- Announcements ---
 export const getAnnouncements = () => api.get("/announcements");
+export const createAnnouncement = (data) => api.post("/announcements", data);
+export const updateAnnouncement = (id, data) => api.patch(`/announcements/${id}`, data);
+export const deleteAnnouncement = (id) => api.delete(`/announcements/${id}`);
 // Add these to your existing api.js
 export const getUsers = (params) => api.get("/users", { params });
 export const getUserById = (id) => api.get(`/users/${id}`);
+export const createUser = (data) => api.post("/users", data);
 export const updateUser = (id, data) => api.patch(`/users/${id}`, data);
+export const deleteUser = (id) => api.delete(`/users/${id}`);
+
+// Mentorship
+export const createMentorshipRequest = (data) => api.post("/mentorship/request", data);
+export const getMyMentorshipRequests = () => api.get("/mentorship/my-requests");
+export const updateMentorshipStatus = (id, status) => api.patch(`/mentorship/${id}/status`, { status });
+
+// Event Registration
+export const registerForEvent = (eventId) => api.post(`/events/${eventId}/register`);
+
+// Resources
+export const getResources = (params) => api.get("/resources", { params });
+
+export default api;

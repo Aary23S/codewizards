@@ -18,4 +18,33 @@ const createAnnouncement = async (req, res) => {
   }
 };
 
-module.exports = { getAnnouncements, createAnnouncement };
+const updateAnnouncement = async (req, res) => {
+  try {
+    const item = await Announcement.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Not found" });
+    }
+
+    res.json({ success: true, data: item });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+const deleteAnnouncement = async (req, res) => {
+  try {
+    const item = await Announcement.findByIdAndDelete(req.params.id);
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Not found" });
+    }
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement };

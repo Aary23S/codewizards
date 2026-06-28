@@ -29,13 +29,17 @@ const getUsers = async (req, res) => {
 // PATCH /api/v1/users/:id — own profile only
 const updateUser = async (req, res) => {
   try {
-    // Only allow updating own profile
-    if (req.user._id.toString() !== req.params.id) {
+    const isAdmin = req.user.role === "admin";
+    const isSelf = req.user._id.toString() === req.params.id;
+
+    if (!isAdmin && !isSelf) {
       return res.status(403).json({ success: false, message: "Not allowed" });
     }
 
-    // Never allow role or password change through this route
-    const { role, password, ...updates } = req.body;
+    const { password, ...updates } = req.body;
+    if (!isAdmin) {
+      delete updates.role;
+    }
 
     const user = await User.findByIdAndUpdate(
       req.params.id,
@@ -49,4 +53,56 @@ const updateUser = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, getUserById, updateUser };
+// POST /api/v1/users — admin only
+const createUser = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Not allowed" });
+    }
+
+    const { name, email, password, role = "student", batch, domain = [], bio, isMentor = false, github, linkedin, leetcode, codeforces, portfolio } = req.body;
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.status(400).json({ success: false, message: "Email already registered" });
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role,
+      batch,
+      domain,
+      bio,
+      isMentor,
+      github,
+      linkedin,
+      leetcode,
+      codeforces,
+      portfolio,
+    });
+
+    res.status(201).json({ success: true, data: await User.findById(user._id).select("-password") });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Not allowed" });
+    }
+
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getUsers, getUserById, createUser, updateUser, deleteUser };

@@ -35,4 +35,33 @@ const createProject = async (req, res) => {
   }
 };
 
-module.exports = { getProjects, getProject, createProject };
+const updateProject = async (req, res) => {
+  try {
+    const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Not found" });
+    }
+
+    res.json({ success: true, data: project });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+const deleteProject = async (req, res) => {
+  try {
+    const project = await Project.findByIdAndDelete(req.params.id);
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Not found" });
+    }
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getProjects, getProject, createProject, updateProject, deleteProject };

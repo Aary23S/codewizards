@@ -25,6 +25,8 @@ app.use("/api/v1/gallery", require("./routes/gallery.routes"));
 app.use("/api/v1/announcements", require("./routes/announcement.routes"));
 app.use("/api/v1/auth", require("./routes/auth.routes"));
 app.use("/api/v1/users", require("./routes/user.routes"));
+app.use("/api/v1/mentorship", require("./routes/mentorship.routes"));
+app.use("/api/v1/resources", require("./routes/resource.routes"));
 
 
 

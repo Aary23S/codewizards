@@ -19,6 +19,9 @@ import Connect from "./pages/Connect";
 import Dashboard from "./pages/Dashboard";
 import ProfileView from "./pages/ProfileView";
 import ProfileEdit from "./pages/ProfileEdit";
+import Resources from "./pages/Resources";
+import Admin from "./pages/Admin";
+
 
 const DashboardRedirect = () => {
   const { user, loading } = useAuth();
@@ -53,15 +56,6 @@ const OwnProfileEditRoute = () => {
   return <ProfileEdit />;
 };
 
-// Admin stub — Phase 2 build coming next
-const AdminStub = () => (
-  <div className="max-w-2xl mx-auto px-4 py-32 text-center">
-    <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">Admin</p>
-    <h1 className="text-4xl font-bold text-white mb-6">Admin Dashboard</h1>
-    <p className="text-gray-400">Full admin panel coming soon in this phase.</p>
-  </div>
-);
-
 function App() {
   return (
     <BrowserRouter>
@@ -82,6 +76,7 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           <Route path="/dashboard" element={<DashboardRedirect />} />
+          <Route path="/resources" element={<Resources />} />
 
           {/* Protected */}
           <Route path="/student-dashboard" element={
@@ -104,7 +99,7 @@ function App() {
 
           <Route path="/admin" element={
             <ProtectedRoute roles={["admin"]}>
-              <AdminStub />
+              <Admin />
             </ProtectedRoute>
           } />
 
