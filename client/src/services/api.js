@@ -32,3 +32,7 @@ export const getGallery = (params) => api.get("/gallery", { params });
 
 // --- Announcements ---
 export const getAnnouncements = () => api.get("/announcements");
+// Add these to your existing api.js
+export const getUsers = (params) => api.get("/users", { params });
+export const getUserById = (id) => api.get(`/users/${id}`);
+export const updateUser = (id, data) => api.patch(`/users/${id}`, data);

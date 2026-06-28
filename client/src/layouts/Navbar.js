@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/logo.jpeg"; // adjust extension if needed
+import { getDashboardPath } from "../utils/getDashboardPath";
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -47,27 +48,24 @@ const Navbar = () => {
           ))}
         </ul>
 
-     {/* Auth */}
-<div className="hidden md:flex items-center gap-4">
-  {user ? (
-    <>
-      <span className="text-sm text-gray-400">Hi, {user.name?.split(" ")[0]}</span>
-      <button
-        onClick={logout}
-        className="border border-gray-700 text-gray-300 hover:border-white hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
-      >
-        Logout
-      </button>
-    </>
-  ) : (
-    <Link
-      to="/login"
-      className="border border-white text-white hover:bg-white hover:text-black px-4 py-2 rounded-lg text-sm font-medium transition-all"
-    >
-      Login
+          {user ? (
+  <>
+    <Link to={getDashboardPath(user.role)} className="text-sm text-gray-400 hover:text-white transition-colors">
+      {user.name?.split(" ")[0]}
     </Link>
-  )}
-</div>
+    <button
+      onClick={logout}
+      className="border border-gray-700 text-gray-300 hover:border-white hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
+    >
+      Logout
+    </button>
+  </>
+) : (
+  <Link to="/login"
+    className="border border-white text-white hover:bg-white hover:text-black px-4 py-2 rounded-lg text-sm font-medium transition-all">
+    Login
+  </Link>
+)}
 
         {/* Mobile Hamburger */}
         <button
