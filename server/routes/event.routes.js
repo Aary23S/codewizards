@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const { getEvents, getEvent, createEvent, updateEvent, deleteEvent } = require("../controllers/event.controller");
-const { registerForEvent, getRegistrations } = require("../controllers/eventRegistration.controller");
+const { registerForEvent, getRegistrations, getMyRegistrations } = require("../controllers/eventRegistration.controller");
 const { protect, requireRole } = require("../middleware/auth");
 
 router.get("/", getEvents);
+router.get("/my-registrations", protect, requireRole("student"), getMyRegistrations);
 router.get("/:id", getEvent);
 router.post("/:id/register", protect, registerForEvent);
 router.post("/", protect, requireRole("admin"), createEvent);

@@ -28,4 +28,15 @@ const getRegistrations = async (req, res) => {
   }
 };
 
-module.exports = { registerForEvent, getRegistrations };
+// GET /api/v1/events/my-registrations
+const getMyRegistrations = async (req, res) => {
+  try {
+    const regs = await EventRegistration.find({ studentId: req.user._id });
+    const eventIds = regs.map((r) => r.eventId.toString());
+    res.json({ success: true, data: eventIds });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { registerForEvent, getRegistrations, getMyRegistrations };
