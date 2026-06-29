@@ -4,7 +4,7 @@ const {
   getOpportunities,
   createOpportunity,
   deleteOpportunity,
-} = require("../controllers/opportunity.controller");
+} = require("../controllers/opportunities.controller");
 const { protect, requireRole } = require("../middleware/auth");
 
 router.get("/", getOpportunities);

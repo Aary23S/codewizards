@@ -1,4 +1,4 @@
-const Opportunity = require("../models/Opportunity");
+const Opportunity = require("../models/Opportunities");
 
 // GET /api/v1/opportunities
 const getOpportunities = async (req, res) => {
