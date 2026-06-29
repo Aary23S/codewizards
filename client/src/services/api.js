@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
 });
 
@@ -30,6 +30,7 @@ export const getEvent = (id) => api.get(`/events/${id}`);
 export const createEvent = (data) => api.post("/events", data);
 export const updateEvent = (id, data) => api.patch(`/events/${id}`, data);
 export const deleteEvent = (id) => api.delete(`/events/${id}`);
+export const registerForEvent = (eventId) => api.post(`/events/${eventId}/register`);
 
 // --- Timeline ---
 export const getTimeline = () => api.get("/timeline");
@@ -42,22 +43,21 @@ export const getAnnouncements = () => api.get("/announcements");
 export const createAnnouncement = (data) => api.post("/announcements", data);
 export const updateAnnouncement = (id, data) => api.patch(`/announcements/${id}`, data);
 export const deleteAnnouncement = (id) => api.delete(`/announcements/${id}`);
-// Add these to your existing api.js
+
+// --- Users ---
 export const getUsers = (params) => api.get("/users", { params });
 export const getUserById = (id) => api.get(`/users/${id}`);
 export const createUser = (data) => api.post("/users", data);
 export const updateUser = (id, data) => api.patch(`/users/${id}`, data);
 export const deleteUser = (id) => api.delete(`/users/${id}`);
 
-// Mentorship
+// --- Mentorship ---
 export const createMentorshipRequest = (data) => api.post("/mentorship/request", data);
 export const getMyMentorshipRequests = () => api.get("/mentorship/my-requests");
-export const updateMentorshipStatus = (id, status) => api.patch(`/mentorship/${id}/status`, { status });
+export const updateMentorshipStatus = (id, status) =>
+  api.patch(`/mentorship/${id}/status`, { status });
 
-// Event Registration
-export const registerForEvent = (eventId) => api.post(`/events/${eventId}/register`);
-
-// Resources
+// --- Resources ---
 export const getResources = (params) => api.get("/resources", { params });
 
 export default api;
