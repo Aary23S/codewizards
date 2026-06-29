@@ -29,6 +29,8 @@ app.use("/api/v1/mentorship", require("./routes/mentorship.routes"));
 app.use("/api/v1/resources", require("./routes/resource.routes"));
 app.use("/api/v1/opportunities", require("./routes/opportunities.routes"));
 app.use("/api/v1/doubts", require("./routes/doubt.routes"));
+app.use("/api/v1/sync", require("./routes/sync.routes"));
+app.use("/api/v1/leaderboard", require("./routes/leaderboard.routes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

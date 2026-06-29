@@ -23,9 +23,21 @@ const userSchema = new mongoose.Schema(
     leetcode: String,
     codeforces: String,
     portfolio: String,
+
+    codeforcesHandle: String,
+    leetcodeUsername: String,
+    githubUsername: String,
+
+    externalStats: {
+      codeforcesRating: { type: Number, default: null },
+      leetcodeSolveScore: { type: Number, default: null }, // easy*1 + medium*3 + hard*5
+      githubContributions: { type: Number, default: null },
+      lastSynced: { type: Date, default: null },
+    },
   },
   { timestamps: true }
 );
+
 
 // Hash password before saving — runs automatically on save()
 userSchema.pre("save", async function () {
@@ -37,5 +49,7 @@ userSchema.pre("save", async function () {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+
 
 module.exports = mongoose.model("User", userSchema);
