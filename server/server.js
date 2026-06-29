@@ -27,7 +27,7 @@ app.use("/api/v1/auth", require("./routes/auth.routes"));
 app.use("/api/v1/users", require("./routes/user.routes"));
 app.use("/api/v1/mentorship", require("./routes/mentorship.routes"));
 app.use("/api/v1/resources", require("./routes/resource.routes"));
-
+app.use("/api/v1/opportunities", require("./routes/opportunity.routes"));
 
 
 const PORT = process.env.PORT || 5000;

@@ -60,4 +60,9 @@ export const updateMentorshipStatus = (id, status) =>
 // --- Resources ---
 export const getResources = (params) => api.get("/resources", { params });
 
+
+export const getOpportunities = (params) => api.get("/opportunities", { params });
+export const createOpportunity = (data) => api.post("/opportunities", data);
+export const deleteOpportunity = (id) => api.delete(`/opportunities/${id}`);
+
 export default api;
