@@ -22,7 +22,7 @@ import ProfileEdit from "./pages/ProfileEdit";
 import Resources from "./pages/Resources";
 import Admin from "./pages/Admin";
 import Opportunities from "./pages/Opportunities";
-
+import Doubts from "./pages/Doubts";
 const DashboardRedirect = () => {
   const { user, loading } = useAuth();
 
@@ -107,6 +107,8 @@ function App() {
           <Route path="/profile/:id/edit" element={<OwnProfileEditRoute />} />
 
           <Route path="/opportunities" element={<Opportunities />} />
+
+          <Route path="/doubts" element={<Doubts />} />
 
         </Routes>
       </main>

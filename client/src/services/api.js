@@ -65,4 +65,11 @@ export const getOpportunities = (params) => api.get("/opportunities", { params }
 export const createOpportunity = (data) => api.post("/opportunities", data);
 export const deleteOpportunity = (id) => api.delete(`/opportunities/${id}`);
 
+export const getDoubts = (params) => api.get("/doubts", { params });
+export const getDoubt = (id) => api.get(`/doubts/${id}`);
+export const createDoubt = (data) => api.post("/doubts", data);
+export const addReply = (id, data) => api.post(`/doubts/${id}/reply`, data);
+export const toggleResolve = (id) => api.patch(`/doubts/${id}/resolve`);
+export const upvoteDoubt = (id) => api.patch(`/doubts/${id}/upvote`);
+
 export default api;
