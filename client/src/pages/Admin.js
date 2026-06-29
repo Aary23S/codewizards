@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  api,
   createAnnouncement,
   createEvent,
   createUser,
@@ -11,6 +12,7 @@ import {
   getAnnouncements,
   getEvents,
   getProjects,
+  getResources,
   getUsers,
   updateAnnouncement,
   updateEvent,
@@ -28,16 +30,18 @@ const StatBox = ({ label, value }) => (
 const blankProject = { title: "", description: "", techStack: "", githubUrl: "", demoUrl: "", featured: false };
 const blankEvent = { title: "", type: "workshop", description: "", date: "", venue: "", status: "upcoming", featured: false, registrationLink: "" };
 const blankAnnouncement = { title: "", body: "", important: false };
+const blankResource = { title: "", url: "", category: "Other", domain: "", description: "" };
 
 const toDateInput = (value) => (value ? new Date(value).toISOString().slice(0, 10) : "");
 
 const Admin = () => {
   const [tab, setTab] = useState("overview");
-  const [stats, setStats] = useState({ users: 0, projects: 0, events: 0, announcements: 0 });
+  const [stats, setStats] = useState({ users: 0, projects: 0, events: 0, announcements: 0, resources: 0 });
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [events, setEvents] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [resources, setResources] = useState([]);
   const [error, setError] = useState("");
 
   const [projectForm, setProjectForm] = useState(blankProject);
@@ -46,6 +50,7 @@ const Admin = () => {
   const [eventId, setEventId] = useState(null);
   const [announcementForm, setAnnouncementForm] = useState(blankAnnouncement);
   const [announcementId, setAnnouncementId] = useState(null);
+  const [newResource, setNewResource] = useState(blankResource);
 
   const [userDrafts, setUserDrafts] = useState({});
   const [newUser, setNewUser] = useState({
@@ -63,17 +68,28 @@ const Admin = () => {
     "bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gray-400 w-full";
 
   const loadData = async () => {
-    const [u, p, e, a] = await Promise.all([getUsers(), getProjects(), getEvents(), getAnnouncements()]);
+    const [u, p, e, a, r] = await Promise.all([
+      getUsers(),
+      getProjects(),
+      getEvents(),
+      getAnnouncements(),
+      getResources(),
+    ]);
+
     setUsers(u.data.data);
     setProjects(p.data.data);
     setEvents(e.data.data);
     setAnnouncements(a.data.data);
+    setResources(r.data.data);
+
     setStats({
       users: u.data.data.length,
       projects: p.data.data.length,
       events: e.data.data.length,
       announcements: a.data.data.length,
+      resources: r.data.data.length,
     });
+
     setUserDrafts(
       Object.fromEntries(
         u.data.data.map((user) => [
@@ -96,7 +112,7 @@ const Admin = () => {
     loadData().catch((err) => setError(err.response?.data?.message || "Failed to load admin data"));
   }, []);
 
-  const tabs = useMemo(() => ["overview", "users", "projects", "events", "announcements"], []);
+  const tabs = useMemo(() => ["overview", "users", "projects", "events", "announcements", "resources"], []);
 
   const handleUserDraft = (id, patch) => {
     setUserDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -112,10 +128,7 @@ const Admin = () => {
         role: draft.role,
         batch: draft.batch === "" ? null : Number(draft.batch),
         isMentor: draft.isMentor,
-        domain: draft.domain
-          .split(",")
-          .map((d) => d.trim())
-          .filter(Boolean),
+        domain: draft.domain.split(",").map((d) => d.trim()).filter(Boolean),
         bio: draft.bio,
       });
       await loadData();
@@ -130,21 +143,9 @@ const Admin = () => {
       await createUser({
         ...newUser,
         batch: newUser.batch === "" ? null : Number(newUser.batch),
-        domain: newUser.domain
-          .split(",")
-          .map((d) => d.trim())
-          .filter(Boolean),
+        domain: newUser.domain.split(",").map((d) => d.trim()).filter(Boolean),
       });
-      setNewUser({
-        name: "",
-        email: "",
-        password: "",
-        role: "student",
-        batch: "",
-        domain: "",
-        bio: "",
-        isMentor: false,
-      });
+      setNewUser({ name: "", email: "", password: "", role: "student", batch: "", domain: "", bio: "", isMentor: false });
       await loadData();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create user");
@@ -156,10 +157,7 @@ const Admin = () => {
     try {
       const payload = {
         ...projectForm,
-        techStack: projectForm.techStack
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
+        techStack: projectForm.techStack.split(",").map((s) => s.trim()).filter(Boolean),
       };
       const res = projectId ? await updateProject(projectId, payload) : await createProject(payload);
       setProjects((prev) => (projectId ? prev.map((item) => (item._id === projectId ? res.data.data : item)) : [res.data.data, ...prev]));
@@ -186,12 +184,7 @@ const Admin = () => {
   const saveEvent = async () => {
     setError("");
     try {
-      const payload = {
-        ...eventForm,
-        date: eventForm.date,
-        featured: !!eventForm.featured,
-      };
-      const res = eventId ? await updateEvent(eventId, payload) : await createEvent(payload);
+      const res = eventId ? await updateEvent(eventId, eventForm) : await createEvent(eventForm);
       setEvents((prev) => (eventId ? prev.map((item) => (item._id === eventId ? res.data.data : item)) : [res.data.data, ...prev]));
       setEventForm(blankEvent);
       setEventId(null);
@@ -218,14 +211,14 @@ const Admin = () => {
   const saveAnnouncement = async () => {
     setError("");
     try {
-      const payload = {
-        ...announcementForm,
-        important: !!announcementForm.important,
-      };
       const res = announcementId
-        ? await updateAnnouncement(announcementId, payload)
-        : await createAnnouncement(payload);
-      setAnnouncements((prev) => (announcementId ? prev.map((item) => (item._id === announcementId ? res.data.data : item)) : [res.data.data, ...prev]));
+        ? await updateAnnouncement(announcementId, announcementForm)
+        : await createAnnouncement(announcementForm);
+
+      setAnnouncements((prev) =>
+        announcementId ? prev.map((item) => (item._id === announcementId ? res.data.data : item)) : [res.data.data, ...prev]
+      );
+
       setAnnouncementForm(blankAnnouncement);
       setAnnouncementId(null);
       await loadData();
@@ -234,11 +227,34 @@ const Admin = () => {
     }
   };
 
+  const createResource = async () => {
+    setError("");
+    try {
+      const res = await api.post("/resources", newResource);
+      setResources((prev) => [res.data.data, ...prev]);
+      setNewResource(blankResource);
+      await loadData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to create resource");
+    }
+  };
+
+  const deleteResource = async (id) => {
+    setError("");
+    try {
+      await api.delete(`/resources/${id}`);
+      setResources((prev) => prev.filter((r) => r._id !== id));
+      await loadData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete resource");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-16">
       <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">Admin</p>
       <h1 className="text-3xl font-bold text-white mb-4">Dashboard</h1>
-      <p className="text-gray-500 text-sm mb-8">Manage users, projects, events, and announcements.</p>
+      <p className="text-gray-500 text-sm mb-8">Manage users, projects, events, announcements, and resources.</p>
 
       {error && <p className="text-red-400 text-sm mb-6">{error}</p>}
 
@@ -257,11 +273,12 @@ const Admin = () => {
       </div>
 
       {tab === "overview" && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <StatBox label="Total Users" value={stats.users} />
           <StatBox label="Projects" value={stats.projects} />
           <StatBox label="Events" value={stats.events} />
           <StatBox label="Announcements" value={stats.announcements} />
+          <StatBox label="Resources" value={stats.resources} />
         </div>
       )}
 
@@ -274,9 +291,7 @@ const Admin = () => {
               <input className={inputClass} placeholder="Email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
               <input className={inputClass} type="password" placeholder="Password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
               <select className={inputClass} value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
-                {["student", "senior", "alumni", "admin"].map((role) => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
+                {["student", "senior", "alumni", "admin"].map((role) => <option key={role} value={role}>{role}</option>)}
               </select>
               <input className={inputClass} type="number" placeholder="Batch" value={newUser.batch} onChange={(e) => setNewUser({ ...newUser, batch: e.target.value })} />
               <input className={inputClass} placeholder="Domains comma separated" value={newUser.domain} onChange={(e) => setNewUser({ ...newUser, domain: e.target.value })} />
@@ -300,10 +315,7 @@ const Admin = () => {
                     <p className="text-white font-medium">{user.name}</p>
                     <p className="text-gray-500 text-xs">{user.email}</p>
                   </div>
-                  <button
-                    onClick={() => deleteUser(user._id).then(loadData)}
-                    className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors"
-                  >
+                  <button onClick={() => deleteUser(user._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">
                     Delete
                   </button>
                 </div>
@@ -312,49 +324,19 @@ const Admin = () => {
                   <input className={inputClass} value={draft.name || ""} onChange={(e) => handleUserDraft(user._id, { name: e.target.value })} />
                   <input className={inputClass} value={draft.email || ""} onChange={(e) => handleUserDraft(user._id, { email: e.target.value })} />
                   <select className={inputClass} value={draft.role || "student"} onChange={(e) => handleUserDraft(user._id, { role: e.target.value })}>
-                    {["student", "senior", "alumni", "admin"].map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
+                    {["student", "senior", "alumni", "admin"].map((role) => <option key={role} value={role}>{role}</option>)}
                   </select>
-                  <input
-                    className={inputClass}
-                    type="number"
-                    value={draft.batch ?? ""}
-                    onChange={(e) => handleUserDraft(user._id, { batch: e.target.value })}
-                    placeholder="Batch"
-                  />
-                  <textarea
-                    className={inputClass}
-                    rows={2}
-                    value={draft.domain || ""}
-                    onChange={(e) => handleUserDraft(user._id, { domain: e.target.value })}
-                    placeholder="Domains comma separated"
-                  />
-                  <textarea
-                    className={inputClass}
-                    rows={2}
-                    value={draft.bio || ""}
-                    onChange={(e) => handleUserDraft(user._id, { bio: e.target.value })}
-                    placeholder="Bio"
-                  />
+                  <input className={inputClass} type="number" value={draft.batch ?? ""} onChange={(e) => handleUserDraft(user._id, { batch: e.target.value })} placeholder="Batch" />
+                  <textarea className={inputClass} rows={2} value={draft.domain || ""} onChange={(e) => handleUserDraft(user._id, { domain: e.target.value })} placeholder="Domains comma separated" />
+                  <textarea className={inputClass} rows={2} value={draft.bio || ""} onChange={(e) => handleUserDraft(user._id, { bio: e.target.value })} placeholder="Bio" />
                 </div>
 
                 <label className="flex items-center gap-2 text-sm text-gray-300">
-                  <input
-                    type="checkbox"
-                    checked={!!draft.isMentor}
-                    onChange={(e) => handleUserDraft(user._id, { isMentor: e.target.checked })}
-                    className="accent-white"
-                  />
+                  <input type="checkbox" checked={!!draft.isMentor} onChange={(e) => handleUserDraft(user._id, { isMentor: e.target.checked })} className="accent-white" />
                   Mentor
                 </label>
 
-                <button
-                  onClick={() => saveUser(user._id)}
-                  className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit"
-                >
+                <button onClick={() => saveUser(user._id)} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
                   Save User
                 </button>
               </div>
@@ -366,9 +348,7 @@ const Admin = () => {
       {tab === "projects" && (
         <div className="flex flex-col gap-6">
           <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">
-              {projectId ? "Edit Project" : "Add Project"}
-            </h2>
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">{projectId ? "Edit Project" : "Add Project"}</h2>
             <input className={inputClass} placeholder="Title" value={projectForm.title} onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })} />
             <textarea className={inputClass} placeholder="Description" rows={2} value={projectForm.description} onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })} />
             <input className={inputClass} placeholder="Tech Stack (comma separated)" value={projectForm.techStack} onChange={(e) => setProjectForm({ ...projectForm, techStack: e.target.value })} />
@@ -383,14 +363,7 @@ const Admin = () => {
                 {projectId ? "Update Project" : "Add Project"}
               </button>
               {projectId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProjectId(null);
-                    setProjectForm(blankProject);
-                  }}
-                  className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors"
-                >
+                <button type="button" onClick={() => { setProjectId(null); setProjectForm(blankProject); }} className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors">
                   Cancel
                 </button>
               )}
@@ -405,12 +378,8 @@ const Admin = () => {
                   <p className="text-gray-500 text-xs mt-0.5">{project.techStack?.join(", ")}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button onClick={() => editProject(project)} className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">
-                    Edit
-                  </button>
-                  <button onClick={() => deleteProject(project._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">
-                    Delete
-                  </button>
+                  <button onClick={() => editProject(project)} className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">Edit</button>
+                  <button onClick={() => deleteProject(project._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">Delete</button>
                 </div>
               </div>
             ))}
@@ -421,16 +390,10 @@ const Admin = () => {
       {tab === "events" && (
         <div className="flex flex-col gap-6">
           <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">
-              {eventId ? "Edit Event" : "Add Event"}
-            </h2>
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">{eventId ? "Edit Event" : "Add Event"}</h2>
             <input className={inputClass} placeholder="Title" value={eventForm.title} onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })} />
             <select className={inputClass} value={eventForm.type} onChange={(e) => setEventForm({ ...eventForm, type: e.target.value })}>
-              {["workshop", "hackathon", "contest", "seminar", "other"].map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
+              {["workshop", "hackathon", "contest", "seminar", "other"].map((type) => <option key={type} value={type}>{type}</option>)}
             </select>
             <textarea className={inputClass} placeholder="Description" rows={2} value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} />
             <input className={inputClass} type="date" value={eventForm.date} onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })} />
@@ -449,14 +412,7 @@ const Admin = () => {
                 {eventId ? "Update Event" : "Add Event"}
               </button>
               {eventId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEventId(null);
-                    setEventForm(blankEvent);
-                  }}
-                  className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors"
-                >
+                <button type="button" onClick={() => { setEventId(null); setEventForm(blankEvent); }} className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors">
                   Cancel
                 </button>
               )}
@@ -468,17 +424,11 @@ const Admin = () => {
               <div key={event._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
                 <div>
                   <p className="text-white font-medium">{event.title}</p>
-                  <p className="text-gray-500 text-xs">
-                    {event.type} · {event.status} · {new Date(event.date).toDateString()}
-                  </p>
+                  <p className="text-gray-500 text-xs">{event.type} · {event.status} · {new Date(event.date).toDateString()}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button onClick={() => editEvent(event)} className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">
-                    Edit
-                  </button>
-                  <button onClick={() => deleteEvent(event._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">
-                    Delete
-                  </button>
+                  <button onClick={() => editEvent(event)} className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">Edit</button>
+                  <button onClick={() => deleteEvent(event._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">Delete</button>
                 </div>
               </div>
             ))}
@@ -489,9 +439,7 @@ const Admin = () => {
       {tab === "announcements" && (
         <div className="flex flex-col gap-6">
           <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">
-              {announcementId ? "Edit Announcement" : "Add Announcement"}
-            </h2>
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">{announcementId ? "Edit Announcement" : "Add Announcement"}</h2>
             <input className={inputClass} placeholder="Title" value={announcementForm.title} onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })} />
             <textarea className={inputClass} placeholder="Body" rows={2} value={announcementForm.body} onChange={(e) => setAnnouncementForm({ ...announcementForm, body: e.target.value })} />
             <label className="flex items-center gap-2 text-sm text-gray-300">
@@ -503,14 +451,7 @@ const Admin = () => {
                 {announcementId ? "Update Announcement" : "Post Announcement"}
               </button>
               {announcementId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAnnouncementId(null);
-                    setAnnouncementForm(blankAnnouncement);
-                  }}
-                  className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors"
-                >
+                <button type="button" onClick={() => { setAnnouncementId(null); setAnnouncementForm(blankAnnouncement); }} className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors">
                   Cancel
                 </button>
               )}
@@ -534,6 +475,48 @@ const Admin = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {tab === "resources" && (
+        <div className="flex flex-col gap-6">
+          <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">Add Resource</h2>
+
+            <input className={inputClass} placeholder="Title" value={newResource.title} onChange={(e) => setNewResource({ ...newResource, title: e.target.value })} />
+            <input className={inputClass} placeholder="URL" value={newResource.url} onChange={(e) => setNewResource({ ...newResource, url: e.target.value })} />
+
+            <select className={inputClass} value={newResource.category} onChange={(e) => setNewResource({ ...newResource, category: e.target.value })}>
+              {["PDF", "GitHub", "YouTube", "Docs", "Other"].map((c) => <option key={c}>{c}</option>)}
+            </select>
+
+            <input className={inputClass} placeholder="Domain (e.g. Web, AI)" value={newResource.domain} onChange={(e) => setNewResource({ ...newResource, domain: e.target.value })} />
+            <textarea className={inputClass} placeholder="Description" rows={2} value={newResource.description} onChange={(e) => setNewResource({ ...newResource, description: e.target.value })} />
+
+            <button onClick={createResource} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
+              Add Resource
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {resources.map((r) => (
+              <div key={r._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-white font-medium">{r.title}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">
+                    {r.category} {r.domain && `· ${r.domain}`}
+                  </p>
+                  {r.description && <p className="text-gray-600 text-xs mt-1">{r.description}</p>}
+                </div>
+
+                <button onClick={() => deleteResource(r._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors shrink-0">
+                  Delete
+                </button>
+              </div>
+            ))}
+
+            {resources.length === 0 && <p className="text-gray-600 text-sm">No resources found.</p>}
           </div>
         </div>
       )}

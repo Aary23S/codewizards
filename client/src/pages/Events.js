@@ -7,35 +7,45 @@ const Events = () => {
   const [events, setEvents] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [registered, setRegistered] = useState({});
+  const [regError, setRegError] = useState({});
   const [registeringId, setRegisteringId] = useState(null);
-  const [message, setMessage] = useState("");
+
   const { user } = useAuth();
 
   useEffect(() => {
     getEvents()
-      .then((res) => setEvents(res.data.data))
+      .then((res) => setEvents(res.data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = filter === "all" ? events : events.filter((e) => e.status === filter);
-
   const handleRegister = async (eventId) => {
-    setMessage("");
     setRegisteringId(eventId);
+    setRegError((prev) => ({ ...prev, [eventId]: "" }));
+
     try {
       await registerForEvent(eventId);
-      setMessage("Registration successful.");
+      setRegistered((prev) => ({ ...prev, [eventId]: true }));
     } catch (err) {
-      setMessage(err.response?.data?.message || "Registration failed");
+      setRegError((prev) => ({
+        ...prev,
+        [eventId]: err.response?.data?.message || "Registration failed",
+      }));
     } finally {
       setRegisteringId(null);
     }
   };
 
+  const filtered =
+    filter === "all" ? events : events.filter((e) => e.status === filter);
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-20">
-      <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">What's Happening</p>
+      <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">
+        What's Happening
+      </p>
+
       <h1 className="text-4xl font-bold text-white mb-8">Events</h1>
 
       <div className="flex gap-3 mb-10">
@@ -43,18 +53,15 @@ const Events = () => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`text-xs px-4 py-2 rounded-full border transition-colors capitalize ${
-              filter === f
-                ? "bg-white text-black border-white font-semibold"
-                : "border-gray-700 text-gray-400 hover:border-gray-500"
-            }`}
+            className={`text-xs px-4 py-2 rounded-full border transition-colors capitalize ${filter === f
+              ? "bg-white text-black border-white font-semibold"
+              : "border-gray-700 text-gray-400 hover:border-gray-500"
+              }`}
           >
             {f}
           </button>
         ))}
       </div>
-
-      {message && <p className="text-sm text-gray-300 mb-6">{message}</p>}
 
       {loading ? (
         <p className="text-gray-600 text-sm">Loading...</p>
@@ -68,44 +75,76 @@ const Events = () => {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-xs uppercase tracking-widest text-gray-500">{e.type}</span>
+                    <span className="text-xs uppercase tracking-widest text-gray-500">
+                      {e.type}
+                    </span>
+
                     <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        e.status === "upcoming"
-                          ? "bg-white text-black font-semibold"
-                          : "bg-gray-800 text-gray-400"
-                      }`}
+                      className={`text-xs px-2 py-0.5 rounded-full ${e.status === "upcoming"
+                        ? "bg-white text-black font-semibold"
+                        : "bg-gray-800 text-gray-400"
+                        }`}
                     >
                       {e.status}
                     </span>
                   </div>
-                  <h3 className="text-white font-semibold text-lg mb-2">{e.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{e.description}</p>
-                  <p className="text-gray-600 text-xs mt-3">
-                    {new Date(e.date).toDateString()} {e.venue && `· ${e.venue}`}
+
+                  <h3 className="text-white font-semibold text-lg mb-2">
+                    {e.title}
+                  </h3>
+
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    {e.description}
                   </p>
-                  {e.status === "upcoming" && user && (
-                    <button
-                      onClick={() => handleRegister(e._id)}
-                      disabled={registeringId === e._id}
-                      className="mt-4 bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    >
-                      {registeringId === e._id ? "Registering..." : "Register"}
-                    </button>
+
+                  <p className="text-gray-600 text-xs mt-3">
+                    {new Date(e.date).toDateString()}{" "}
+                    {e.venue && `· ${e.venue}`}
+                  </p>
+
+                  {/* Register button — only for students, upcoming events */}
+                  {e.status === "upcoming" && user?.role === "student" && (
+                    <div className="mt-4">
+                      {registered[e._id] ? (
+                        <span className="text-xs bg-white text-black px-3 py-1.5 rounded-lg font-semibold">
+                          ✓ Registered
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleRegister(e._id)}
+                          className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-4 py-2 rounded-lg transition-colors"
+                        >
+                          Register
+                        </button>
+                      )}
+                      {regError[e._id] && (
+                        <p className="text-red-400 text-xs mt-2">{regError[e._id]}</p>
+                      )}
+                    </div>
                   )}
-                  {e.status === "upcoming" && !user && (
-                    <p className="text-gray-500 text-xs mt-3">
-                      <Link to="/login" className="text-white hover:underline">
-                        Login
-                      </Link>{" "}
-                      to register.
+
+                  {/* Prompt to login if not a student */}
+                  {e.status === "upcoming" && (!user || user.role !== "student") && !registered[e._id] && (
+                    <p className="text-gray-600 text-xs mt-4">
+                      {!user ? (
+                        <>
+                          <a href="/login" className="text-gray-400 hover:text-white underline">Login</a> as a student to register
+                        </>
+                      ) : (
+                        "Only students can register for events"
+                      )}
                     </p>
                   )}
                 </div>
               </div>
             </div>
           ))}
-          {filtered.length === 0 && <p className="text-gray-600 text-sm">No {filter} events found.</p>}
+
+          {filtered.length === 0 && (
+            <p className="text-gray-600 text-sm">
+              No {filter} events found.
+            </p>
+          )}
         </div>
       )}
     </div>

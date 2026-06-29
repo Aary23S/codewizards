@@ -21,4 +21,13 @@ const createResource = async (req, res) => {
   }
 };
 
-module.exports = { getResources, createResource };
+const deleteResource = async (req, res) => {
+  try {
+    await Resource.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getResources, createResource, deleteResource };
