@@ -29,18 +29,26 @@ const Opportunities = () => {
   const [posting, setPosting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const fetchItems = () => {
-    const params = {};
-    if (typeFilter !== "all") params.type = typeFilter;
-    if (domainFilter !== "All") params.domain = domainFilter;
-    setLoading(true);
-    getOpportunities(params)
-      .then((res) => setItems(res.data.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
+useEffect(() => {
+  const params = {};
 
-  useEffect(() => { fetchItems(); }, [typeFilter, domainFilter]);
+  if (typeFilter !== "all") params.type = typeFilter;
+  if (domainFilter !== "All") params.domain = domainFilter;
+
+  setLoading(true);
+
+  getOpportunities(params)
+    .then((res) => setItems(res.data.data || []))
+    .catch(console.error)
+    .finally(() => setLoading(false));
+}, [typeFilter, domainFilter]);
+
+  useEffect(() => { setLoading(true);
+
+getOpportunities({})
+  .then((res) => setItems(res.data.data || []))
+  .catch(console.error)
+  .finally(() => setLoading(false)); }, [typeFilter, domainFilter]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -58,7 +66,8 @@ const Opportunities = () => {
       await createOpportunity(payload);
       setForm({ title: "", company: "", type: "internship", domain: "", description: "", applyLink: "", deadline: "" });
       setShowForm(false);
-      fetchItems();
+      setTypeFilter("all");
+setDomainFilter("All");
     } catch (err) {
       setFormError(err.response?.data?.message || "Failed to post");
     } finally {
