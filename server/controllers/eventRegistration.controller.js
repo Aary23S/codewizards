@@ -35,7 +35,7 @@ const registerForEvent = async (req, res) => {
       seminar: "seminar_attended",
       other: "seminar_attended",
     };
-    const ruleKey = EVENT_TYPE_TO_RULE[event.type] || "seminar_attended"; A
+    const ruleKey = EVENT_TYPE_TO_RULE[event.type] || "seminar_attended"; 
     try {
       await PointLedger.create({
         student: req.user._id,
@@ -65,4 +65,15 @@ const getRegistrations = async (req, res) => {
   }
 };
 
-module.exports = { registerForEvent, getRegistrations };
+// GET /api/v1/events/my-registrations
+const getMyRegistrations = async (req, res) => {
+  try {
+    const regs = await EventRegistration.find({ studentId: req.user._id });
+    const eventIds = regs.map((r) => r.eventId.toString());
+    res.json({ success: true, data: eventIds });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { registerForEvent, getRegistrations, getMyRegistrations };
