@@ -18,6 +18,8 @@ import {
   updateEvent,
   updateProject,
   updateUser,
+  getPointRules,
+  updatePointRule 
 } from "../services/api";
 
 const StatBox = ({ label, value }) => (
@@ -51,6 +53,9 @@ const Admin = () => {
   const [announcementForm, setAnnouncementForm] = useState(blankAnnouncement);
   const [announcementId, setAnnouncementId] = useState(null);
   const [newResource, setNewResource] = useState(blankResource);
+
+  const [pointRules, setPointRules] = useState([]);
+  const [editingRule, setEditingRule] = useState(null); // rule being edited, or null
 
   const [userDrafts, setUserDrafts] = useState({});
   const [newUser, setNewUser] = useState({
@@ -109,10 +114,29 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    loadData().catch((err) => setError(err.response?.data?.message || "Failed to load admin data"));
-  }, []);
+  Promise.all([getUsers(), getProjects(), getEvents(), getAnnouncements(), getResources(), getPointRules()]).then(
+    ([u, p, e, a, r, pr]) => {
+      setUsers(u.data.data);
+      setProjects(p.data.data);
+      setEvents(e.data.data);
+      setAnnouncements(a.data.data);
+      setResources(r.data.data);
+      setPointRules(pr.data.data);
+      setStats({ users: u.data.data.length, projects: p.data.data.length, events: e.data.data.length });
+    }
+  );
+}, []);
 
-  const tabs = useMemo(() => ["overview", "users", "projects", "events", "announcements", "resources"], []);
+const saveRule = async (rule) => {
+  const res = await updatePointRule(rule._id, {
+    flatPoints: rule.flatPoints,
+    tiers: rule.tiers,
+  });
+  setPointRules((prev) => prev.map((r) => (r._id === rule._id ? res.data.data : r)));
+  setEditingRule(null);
+};
+
+  const tabs = useMemo(() => ["overview", "users", "projects", "events", "announcements", "resources", "points"], []);
 
   const handleUserDraft = (id, patch) => {
     setUserDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -520,6 +544,88 @@ const Admin = () => {
           </div>
         </div>
       )}
+
+      {/* Point Rules */}
+{tab === "points" && (
+  <div className="flex flex-col gap-4">
+    <p className="text-gray-500 text-sm mb-2">
+      Changes apply immediately and retroactively to all past activity (dynamic recompute).
+    </p>
+    {pointRules.map((rule) => (
+      <div key={rule._id} className="border border-gray-800 rounded-xl p-5 bg-gray-900">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-white font-medium text-sm">{rule.label}</p>
+          {editingRule?._id !== rule._id && (
+            <button
+              onClick={() => setEditingRule(JSON.parse(JSON.stringify(rule)))}
+              className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
+        {editingRule?._id === rule._id ? (
+          <div className="flex flex-col gap-3">
+            {rule.type === "flat" ? (
+              <div className="flex items-center gap-3">
+                <label className="text-xs text-gray-400">Points</label>
+                <input
+                  type="number"
+                  value={editingRule.flatPoints}
+                  onChange={(e) => setEditingRule({ ...editingRule, flatPoints: Number(e.target.value) })}
+                  className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:border-gray-400"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {editingRule.tiers.map((tier, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-400 w-24 shrink-0">{tier.label}</span>
+                    <span className="text-gray-600 text-xs">
+                      {tier.min}–{tier.max ?? "∞"}
+                    </span>
+                    <input
+                      type="number"
+                      value={tier.points}
+                      onChange={(e) => {
+                        const newTiers = [...editingRule.tiers];
+                        newTiers[idx] = { ...tier, points: Number(e.target.value) };
+                        setEditingRule({ ...editingRule, tiers: newTiers });
+                      }}
+                      className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-sm w-20 ml-auto focus:outline-none focus:border-gray-400"
+                    />
+                    <span className="text-gray-600 text-xs">pts</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => saveRule(editingRule)}
+                className="bg-white text-black px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditingRule(null)}
+                className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-4 py-1.5 rounded-lg text-xs transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-xs">
+            {rule.type === "flat"
+              ? `${rule.flatPoints} points`
+              : rule.tiers.map((t) => `${t.label}: ${t.points}pts`).join(" · ")}
+          </p>
+        )}
+      </div>
+    ))}
+  </div>
+)}
     </div>
   );
 };

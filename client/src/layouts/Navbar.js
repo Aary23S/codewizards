@@ -15,6 +15,7 @@ const navLinks = [
   { name: "Contact", path: "/contact" },
   { name: "Opportunities", path: "/opportunities" },
   { name: "Forum", path: "/doubts" },
+  { name: "Leaderboard", path: "/leaderboard" },
 ];
 
 const Navbar = () => {

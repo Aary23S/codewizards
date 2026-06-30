@@ -23,6 +23,7 @@ import Resources from "./pages/Resources";
 import Admin from "./pages/Admin";
 import Opportunities from "./pages/Opportunities";
 import Doubts from "./pages/Doubts";
+import Leaderboard from "./pages/Leaderboard";
 const DashboardRedirect = () => {
   const { user, loading } = useAuth();
 
@@ -109,6 +110,8 @@ function App() {
           <Route path="/opportunities" element={<Opportunities />} />
 
           <Route path="/doubts" element={<Doubts />} />
+
+          <Route path="/leaderboard" element={<Leaderboard />} />
 
         </Routes>
       </main>

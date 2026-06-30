@@ -57,7 +57,7 @@ export const getMyMentorshipRequests = () => api.get("/mentorship/my-requests");
 export const updateMentorshipStatus = (id, status) =>
   api.patch(`/mentorship/${id}/status`, { status });
 
-// --- Resources ---
+// --- Resources ---                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
 export const getResources = (params) => api.get("/resources", { params });
 
 
@@ -71,5 +71,17 @@ export const createDoubt = (data) => api.post("/doubts", data);
 export const addReply = (id, data) => api.post(`/doubts/${id}/reply`, data);
 export const toggleResolve = (id) => api.patch(`/doubts/${id}/resolve`);
 export const upvoteDoubt = (id) => api.patch(`/doubts/${id}/upvote`);
+
+// Leaderboard
+export const getLeaderboard = (params) => api.get("/leaderboard", { params });
+
+// External sync
+export const syncCodeforces = (handle) => api.post("/sync/codeforces", { handle });
+export const syncLeetcode = (username) => api.post("/sync/leetcode", { username });
+export const syncGithub = (username) => api.post("/sync/github", { username });
+
+// Point rules (admin)
+export const getPointRules = () => api.get("/point-rules");
+export const updatePointRule = (id, data) => api.patch(`/point-rules/${id}`, data);
 
 export default api;
