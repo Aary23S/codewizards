@@ -84,4 +84,10 @@ export const syncGithub = (username) => api.post("/sync/github", { username });
 export const getPointRules = () => api.get("/point-rules");
 export const updatePointRule = (id, data) => api.patch(`/point-rules/${id}`, data);
 
+export const getBlogs = (params) => api.get("/blogs", { params });
+export const getBlog = (id) => api.get(`/blogs/${id}`);
+export const createBlog = (data) => api.post("/blogs", data);
+export const updateBlog = (id, data) => api.patch(`/blogs/${id}`, data);
+export const deleteBlog = (id) => api.delete(`/blogs/${id}`);
+
 export default api;
