@@ -9,8 +9,12 @@ const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+  if (user) {
+  navigate(getDashboardPath(user.role), { replace: true });
+  return null;
+}
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -23,7 +27,7 @@ const Login = () => {
       const res = await loginUser(form);
       const { token, ...userData } = res.data.data;
       login(token, userData);
-      navigate(getDashboardPath(userData.role));
+      navigate(getDashboardPath(userData.role), { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     } finally {

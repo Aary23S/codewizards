@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import { getDashboardPath } from "../utils/getDashboardPath";
 
@@ -23,6 +23,13 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+  logout();
+  setMenuOpen(false);
+  navigate("/login", { replace: true });
+};
 
   const activeLink = useMemo(() => navLinks.find((link) => link.path === pathname), [pathname]);
 
@@ -60,7 +67,7 @@ const Navbar = () => {
               <Link to={getDashboardPath(user.role)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition-colors hover:border-white/25 hover:text-white">
                 {user.name?.split(" ")[0]}
               </Link>
-              <button onClick={logout} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition-colors hover:border-white/25 hover:text-white">
+              <button onClick={handleLogout} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition-colors hover:border-white/25 hover:text-white">
                 Logout
               </button>
             </div>
@@ -124,10 +131,7 @@ const Navbar = () => {
                   {user.name?.split(" ")[0]}
                 </Link>
                 <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    logout();
-                  }}
+                  onClick={handleLogout}
                   className="rounded-full bg-white px-4 py-3 text-sm font-medium text-black"
                 >
                   Logout
