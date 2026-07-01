@@ -31,9 +31,9 @@ import api, {
 } from "../services/api";
 
 const shellCard =
-  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
+  "group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20";
 const fieldClass =
-  "w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition duration-200 focus:border-cyan-300/60 focus:bg-white/[0.05]";
+  "w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition duration-200 focus:border-cyan-300/60 focus:bg-white/8";
 
 const TABS = [
   "overview",
@@ -54,10 +54,10 @@ const TABS = [
 const TabButton = ({ active, children, ...props }) => (
   <button
     {...props}
-    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.3em] transition ${
+    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.28em] transition ${
       active
         ? "border-white bg-white text-black"
-        : "border-white/10 bg-white/[0.03] text-white/60 hover:border-white/20 hover:bg-white/[0.05] hover:text-white"
+        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white"
     }`}
   >
     {children}
@@ -65,7 +65,7 @@ const TabButton = ({ active, children, ...props }) => (
 );
 
 const StatBox = ({ label, value }) => (
-  <div className={`${shellCard} p-5`}>
+  <div className={`${shellCard} p-5 md:p-6`}>
     <p className="text-3xl font-semibold text-white">{value}</p>
     <p className="mt-2 text-[11px] uppercase tracking-[0.35em] text-white/45">{label}</p>
   </div>
@@ -74,7 +74,7 @@ const StatBox = ({ label, value }) => (
 const Section = ({ title, description, children, className = "" }) => (
   <section className={`${shellCard} ${className} p-6 md:p-7`}>
     <div className="mb-5 flex flex-col gap-2">
-      <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">{title}</p>
+      <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">{title}</p>
       {description && <p className="text-sm leading-6 text-white/60">{description}</p>}
     </div>
     {children}
@@ -369,35 +369,35 @@ const Admin = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] px-4 py-12 text-white md:px-6 lg:px-8">
+    <div className="relative min-h-screen overflow-hidden bg-black px-4 py-12 text-white md:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-10%] top-0 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute right-[-10%] top-[16%] h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="absolute bottom-[-10%] left-[28%] h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
+        <div className="absolute left-0 top-12 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute right-8 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute bottom-[-8%] left-[28%] h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-6xl">
-        <section className={`${shellCard} overflow-hidden px-6 py-8 md:px-8 md:py-10`}>
-          <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Admin</p>
-          <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">Control Panel</h1>
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+        <section className={`${shellCard} overflow-hidden p-7 md:p-8`}>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Admin</p>
+          <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <h1 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">Control Panel</h1>
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
                 Manage all public content, users, and community systems from one unified console.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+              <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Users</p>
                 <p className="mt-2 text-2xl font-semibold text-white">{users.length}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+              <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Content</p>
                 <p className="mt-2 text-2xl font-semibold text-white">
                   {projects.length + events.length + blogs.length}
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+              <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Team</p>
                 <p className="mt-2 text-2xl font-semibold text-white">{teamMembers.length}</p>
               </div>
@@ -416,7 +416,7 @@ const Admin = () => {
         </section>
 
         {tab === "overview" && (
-          <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <StatBox label="Users" value={users.length} />
             <StatBox label="Projects" value={projects.length} />
             <StatBox label="Events" value={events.length} />
@@ -435,7 +435,7 @@ const Admin = () => {
             {users.map((user) => (
               <div
                 key={user._id}
-                className={`${shellCard} flex flex-col gap-4 p-5 transition hover:border-white/20 hover:bg-white/8 md:flex-row md:items-start md:justify-between`}
+                className={`${shellCard} flex flex-col gap-4 p-5 md:flex-row md:items-start md:justify-between`}
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -457,7 +457,7 @@ const Admin = () => {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSuspendModal({ user, reason: user.suspendedReason || "" })}
-                    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.3em] transition ${
+                    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.28em] transition ${
                       user.isSuspended
                         ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
                         : "border-amber-400/30 bg-amber-400/10 text-amber-200"
@@ -468,7 +468,7 @@ const Admin = () => {
                   {user._id !== adminUser?._id && (
                     <button
                       onClick={() => handleDeleteUser(user._id)}
-                      className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20"
+                      className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20"
                     >
                       Delete
                     </button>
@@ -506,7 +506,7 @@ const Admin = () => {
                     <p className="text-base font-semibold text-white">{project.title}</p>
                     <p className="mt-1 text-sm text-white/55">{project.techStack?.join(", ")}</p>
                   </div>
-                  <button onClick={() => handleDeleteProject(project._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                  <button onClick={() => handleDeleteProject(project._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                     Delete
                   </button>
                 </div>
@@ -550,7 +550,7 @@ const Admin = () => {
                       {event.type} · {event.status} · {new Date(event.date).toDateString()}
                     </p>
                   </div>
-                  <button onClick={() => handleDeleteEvent(event._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                  <button onClick={() => handleDeleteEvent(event._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                     Delete
                   </button>
                 </div>
@@ -581,7 +581,7 @@ const Admin = () => {
                     <p className="text-base font-semibold text-white">{item.title}</p>
                     <p className="mt-1 text-sm text-white/55">{item.body}</p>
                   </div>
-                  <button onClick={() => handleDeleteAnnouncement(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                  <button onClick={() => handleDeleteAnnouncement(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                     Delete
                   </button>
                 </div>
@@ -615,7 +615,7 @@ const Admin = () => {
                     <p className="mt-2 text-base font-semibold text-white">{item.title}</p>
                     <p className="mt-1 text-sm text-white/55">{item.description}</p>
                   </div>
-                  <button onClick={() => handleDeleteTimeline(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                  <button onClick={() => handleDeleteTimeline(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                     Delete
                   </button>
                 </div>
@@ -649,7 +649,7 @@ const Admin = () => {
                   <img src={item.imageUrl} alt={item.title} className="h-40 w-full object-cover" />
                   <div className="flex items-center justify-between gap-3 p-4">
                     <p className="truncate text-sm font-semibold text-white">{item.title}</p>
-                    <button onClick={() => handleDeleteGallery(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                  <button onClick={() => handleDeleteGallery(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                       Del
                     </button>
                   </div>
@@ -687,7 +687,7 @@ const Admin = () => {
                     By {item.author?.name} · {item.replies?.length} replies · {item.upvotes?.length} upvotes
                   </p>
                 </div>
-                <button onClick={() => handleDeleteDoubt(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                <button onClick={() => handleDeleteDoubt(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                   Delete
                 </button>
               </div>
@@ -699,7 +699,7 @@ const Admin = () => {
           <section className="mt-6 space-y-4">
             <p className="text-sm text-white/55">{blogs.length} total posts · Admin can delete any post</p>
             {blogs.map((item) => (
-              <div key={item._id} className={`${shellCard} flex items-start justify-between gap-4 p-5`}>
+                <div key={item._id} className={`${shellCard} flex items-start justify-between gap-4 p-5`}>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-semibold text-white">{item.title}</p>
                   <p className="mt-2 text-sm text-white/55">
@@ -715,7 +715,7 @@ const Admin = () => {
                     </div>
                   )}
                 </div>
-                <button onClick={() => handleDeleteBlog(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                <button onClick={() => handleDeleteBlog(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                   Delete
                 </button>
               </div>
@@ -776,10 +776,10 @@ const Admin = () => {
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <button onClick={() => setEditingOpportunity(item)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                  <button onClick={() => setEditingOpportunity(item)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
                           Edit
                         </button>
-                        <button onClick={() => handleDeleteOpportunity(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                        <button onClick={() => handleDeleteOpportunity(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                           Delete
                         </button>
                       </div>
@@ -838,11 +838,11 @@ const Admin = () => {
                         });
                         setEditingTeamImageFile(null);
                       }}
-                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
                     >
                       Edit
                     </button>
-                    <button onClick={() => handleDeleteTeamMember(member._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-rose-200 transition hover:bg-rose-400/20">
+                    <button onClick={() => handleDeleteTeamMember(member._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                       Delete
                     </button>
                   </div>
@@ -866,7 +866,7 @@ const Admin = () => {
                   { key: "twitter", label: "Twitter/X URL", placeholder: "https://twitter.com/..." },
                 ].map((item) => (
                   <div key={item.key} className="space-y-2">
-                    <label className="text-xs uppercase tracking-[0.3em] text-white/45">{item.label}</label>
+                    <label className="text-xs uppercase tracking-[0.28em] text-white/45">{item.label}</label>
                     <input
                       className={fieldClass}
                       placeholder={item.placeholder}
@@ -975,7 +975,7 @@ const Admin = () => {
               <input className={fieldClass} placeholder="GitHub URL" value={editingTeamMember.github || ""} onChange={(e) => setEditingTeamMember({ ...editingTeamMember, github: e.target.value })} />
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
-              <button onClick={saveTeamMemberUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+                <button onClick={saveTeamMemberUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
                 Save
               </button>
               <button onClick={() => setEditingTeamMember(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
