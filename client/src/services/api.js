@@ -90,4 +90,32 @@ export const createBlog = (data) => api.post("/blogs", data);
 export const updateBlog = (id, data) => api.patch(`/blogs/${id}`, data);
 export const deleteBlog = (id) => api.delete(`/blogs/${id}`);
 
+// Users
+export const suspendUser = (id, data) => api.patch(`/users/${id}/suspend`, data);
+export const deleteUser = (id) => api.delete(`/users/${id}`);
+
+// Timeline
+export const updateTimeline = (id, data) => api.patch(`/timeline/${id}`, data);
+export const deleteTimeline = (id) => api.delete(`/timeline/${id}`);
+
+// Gallery
+export const deleteGalleryItem = (id) => api.delete(`/gallery/${id}`);
+
+// Doubts (admin)
+export const deleteDoubt = (id) => api.delete(`/doubts/${id}`);
+export const deleteReply = (doubtId, replyId) => api.delete(`/doubts/${doubtId}/replies/${replyId}`);
+
+// Opportunities
+export const updateOpportunity = (id, data) => api.patch(`/opportunities/${id}`, data);
+
+// Team
+export const getTeam = () => api.get("/team");
+export const createTeamMember = (data) => api.post("/team", data);
+export const updateTeamMember = (id, data) => api.patch(`/team/${id}`, data);
+export const deleteTeamMember = (id) => api.delete(`/team/${id}`);
+
+// Contact
+export const getContact = () => api.get("/contact");
+export const updateContact = (data) => api.put("/contact", data);
+
 export default api;

@@ -1,631 +1,623 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import {
-  api,
-  createAnnouncement,
-  createEvent,
-  createUser,
-  createProject,
-  deleteAnnouncement,
-  deleteEvent,
-  deleteProject,
-  deleteUser,
-  getAnnouncements,
-  getEvents,
-  getProjects,
-  getResources,
-  getUsers,
-  updateAnnouncement,
-  updateEvent,
-  updateProject,
-  updateUser,
-  getPointRules,
-  updatePointRule 
+  getUsers, suspendUser, deleteUser,
+  getProjects, createOpportunity, deleteOpportunity, updateOpportunity,
+  getEvents, getAnnouncements, getResources,
+  getTimeline, deleteTimeline,
+  getGallery, deleteGalleryItem,
+  getDoubts, deleteDoubt,
+  getBlogs, deleteBlog,
+  getOpportunities,
+  getPointRules, updatePointRule,
+  getTeam, createTeamMember, updateTeamMember, deleteTeamMember,
+  getContact, updateContact,
 } from "../services/api";
+import api from "../services/api";
 
+// ── Reusable input class ───────────────────────────────────
+const ic = "bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gray-400 w-full";
+
+// ── Stat Box ───────────────────────────────────────────────
 const StatBox = ({ label, value }) => (
   <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 text-center">
     <p className="text-3xl font-bold text-white">{value}</p>
-    <p className="text-gray-500 text-xs mt-1">{label}</p>
+    <p className="text-gray-500 text-xs mt-1 uppercase tracking-widest">{label}</p>
   </div>
 );
 
-const blankProject = { title: "", description: "", techStack: "", githubUrl: "", demoUrl: "", featured: false };
-const blankEvent = { title: "", type: "workshop", description: "", date: "", venue: "", status: "upcoming", featured: false, registrationLink: "" };
-const blankAnnouncement = { title: "", body: "", important: false };
-const blankResource = { title: "", url: "", category: "Other", domain: "", description: "" };
-
-const toDateInput = (value) => (value ? new Date(value).toISOString().slice(0, 10) : "");
+const TABS = [
+  "overview", "users", "projects", "events",
+  "announcements", "timeline", "gallery",
+  "doubts", "blogs", "opportunities",
+  "team", "contact", "points"
+];
 
 const Admin = () => {
+  const { user: adminUser } = useAuth();
   const [tab, setTab] = useState("overview");
-  const [stats, setStats] = useState({ users: 0, projects: 0, events: 0, announcements: 0, resources: 0 });
+
+  // Data state
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [events, setEvents] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
-  const [resources, setResources] = useState([]);
-  const [error, setError] = useState("");
-
-  const [projectForm, setProjectForm] = useState(blankProject);
-  const [projectId, setProjectId] = useState(null);
-  const [eventForm, setEventForm] = useState(blankEvent);
-  const [eventId, setEventId] = useState(null);
-  const [announcementForm, setAnnouncementForm] = useState(blankAnnouncement);
-  const [announcementId, setAnnouncementId] = useState(null);
-  const [newResource, setNewResource] = useState(blankResource);
-
+  const [timeline, setTimeline] = useState([]);
+  const [gallery, setGallery] = useState([]);
+  const [doubts, setDoubts] = useState([]);
+  const [blogs, setBlogs] = useState([]);
+  const [opportunities, setOpportunities] = useState([]);
   const [pointRules, setPointRules] = useState([]);
-  const [editingRule, setEditingRule] = useState(null); // rule being edited, or null
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [contactInfo, setContactInfo] = useState({});
 
-  const [userDrafts, setUserDrafts] = useState({});
-  const [newUser, setNewUser] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "student",
-    batch: "",
-    domain: "",
-    bio: "",
-    isMentor: false,
-  });
-
-  const inputClass =
-    "bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gray-400 w-full";
-
-  const loadData = async () => {
-    const [u, p, e, a, r] = await Promise.all([
-      getUsers(),
-      getProjects(),
-      getEvents(),
-      getAnnouncements(),
-      getResources(),
-    ]);
-
-    setUsers(u.data.data);
-    setProjects(p.data.data);
-    setEvents(e.data.data);
-    setAnnouncements(a.data.data);
-    setResources(r.data.data);
-
-    setStats({
-      users: u.data.data.length,
-      projects: p.data.data.length,
-      events: e.data.data.length,
-      announcements: a.data.data.length,
-      resources: r.data.data.length,
-    });
-
-    setUserDrafts(
-      Object.fromEntries(
-        u.data.data.map((user) => [
-          user._id,
-          {
-            name: user.name || "",
-            email: user.email || "",
-            role: user.role || "student",
-            batch: user.batch ?? "",
-            isMentor: !!user.isMentor,
-            domain: Array.isArray(user.domain) ? user.domain.join(", ") : "",
-            bio: user.bio || "",
-          },
-        ])
-      )
-    );
-  };
+  // Form state
+  const [newProject, setNewProject] = useState({ title: "", description: "", techStack: "", githubUrl: "", demoUrl: "", featured: false });
+  const [newEvent, setNewEvent] = useState({ title: "", type: "workshop", description: "", date: "", venue: "", status: "upcoming" });
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: "", body: "", important: false });
+  const [newTimeline, setNewTimeline] = useState({ year: "", month: "", title: "", description: "" });
+  const [newGallery, setNewGallery] = useState({ title: "", imageUrl: "", category: "event", eventRef: "" });
+  const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
+  const [editingRule, setEditingRule] = useState(null);
+  const [suspendModal, setSuspendModal] = useState(null); // { user, reason }
 
   useEffect(() => {
-  Promise.all([getUsers(), getProjects(), getEvents(), getAnnouncements(), getResources(), getPointRules()]).then(
-    ([u, p, e, a, r, pr]) => {
+    Promise.all([
+      getUsers(), getProjects(), getEvents(), getAnnouncements(),
+      getTimeline(), getGallery(), getDoubts(), getBlogs(),
+      getOpportunities(), getPointRules(), getTeam(), getContact(),
+    ]).then(([u, p, e, a, tl, g, d, bl, op, pr, tm, ct]) => {
       setUsers(u.data.data);
       setProjects(p.data.data);
       setEvents(e.data.data);
       setAnnouncements(a.data.data);
-      setResources(r.data.data);
+      setTimeline(tl.data.data);
+      setGallery(g.data.data);
+      setDoubts(d.data.data);
+      setBlogs(bl.data.data);
+      setOpportunities(op.data.data);
       setPointRules(pr.data.data);
-      setStats({ users: u.data.data.length, projects: p.data.data.length, events: e.data.data.length });
-    }
-  );
-}, []);
+      setTeamMembers(tm.data.data);
+      setContactInfo(ct.data.data || {});
+    }).catch(console.error);
+  }, []);
 
-const saveRule = async (rule) => {
-  const res = await updatePointRule(rule._id, {
-    flatPoints: rule.flatPoints,
-    tiers: rule.tiers,
-  });
-  setPointRules((prev) => prev.map((r) => (r._id === rule._id ? res.data.data : r)));
-  setEditingRule(null);
-};
-
-  const tabs = useMemo(() => ["overview", "users", "projects", "events", "announcements", "resources", "points"], []);
-
-  const handleUserDraft = (id, patch) => {
-    setUserDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
-  };
-
-  const saveUser = async (id) => {
-    setError("");
-    try {
-      const draft = userDrafts[id];
-      await updateUser(id, {
-        name: draft.name,
-        email: draft.email,
-        role: draft.role,
-        batch: draft.batch === "" ? null : Number(draft.batch),
-        isMentor: draft.isMentor,
-        domain: draft.domain.split(",").map((d) => d.trim()).filter(Boolean),
-        bio: draft.bio,
-      });
-      await loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to save user");
-    }
-  };
-
-  const createAdminUser = async () => {
-    setError("");
-    try {
-      await createUser({
-        ...newUser,
-        batch: newUser.batch === "" ? null : Number(newUser.batch),
-        domain: newUser.domain.split(",").map((d) => d.trim()).filter(Boolean),
-      });
-      setNewUser({ name: "", email: "", password: "", role: "student", batch: "", domain: "", bio: "", isMentor: false });
-      await loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create user");
-    }
-  };
-
-  const saveProject = async () => {
-    setError("");
-    try {
-      const payload = {
-        ...projectForm,
-        techStack: projectForm.techStack.split(",").map((s) => s.trim()).filter(Boolean),
-      };
-      const res = projectId ? await updateProject(projectId, payload) : await createProject(payload);
-      setProjects((prev) => (projectId ? prev.map((item) => (item._id === projectId ? res.data.data : item)) : [res.data.data, ...prev]));
-      setProjectForm(blankProject);
-      setProjectId(null);
-      await loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to save project");
-    }
-  };
-
-  const editProject = (project) => {
-    setProjectId(project._id);
-    setProjectForm({
-      title: project.title || "",
-      description: project.description || "",
-      techStack: Array.isArray(project.techStack) ? project.techStack.join(", ") : "",
-      githubUrl: project.githubUrl || "",
-      demoUrl: project.demoUrl || "",
-      featured: !!project.featured,
+  // ── Handlers ───────────────────────────────────────────
+  const handleSuspend = async () => {
+    if (!suspendModal) return;
+    const res = await suspendUser(suspendModal.user._id, {
+      isSuspended: !suspendModal.user.isSuspended,
+      suspendedReason: suspendModal.reason || "",
     });
+    setUsers((prev) => prev.map((u) => u._id === res.data.data._id ? res.data.data : u));
+    setSuspendModal(null);
   };
 
-  const saveEvent = async () => {
-    setError("");
-    try {
-      const res = eventId ? await updateEvent(eventId, eventForm) : await createEvent(eventForm);
-      setEvents((prev) => (eventId ? prev.map((item) => (item._id === eventId ? res.data.data : item)) : [res.data.data, ...prev]));
-      setEventForm(blankEvent);
-      setEventId(null);
-      await loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to save event");
-    }
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm("Permanently delete this user? This cannot be undone.")) return;
+    await deleteUser(id);
+    setUsers((prev) => prev.filter((u) => u._id !== id));
   };
 
-  const editEvent = (event) => {
-    setEventId(event._id);
-    setEventForm({
-      title: event.title || "",
-      type: event.type || "workshop",
-      description: event.description || "",
-      date: toDateInput(event.date),
-      venue: event.venue || "",
-      status: event.status || "upcoming",
-      featured: !!event.featured,
-      registrationLink: event.registrationLink || "",
-    });
+  const createProject = async () => {
+    const res = await api.post("/projects", { ...newProject, techStack: newProject.techStack.split(",").map((s) => s.trim()) });
+    setProjects([res.data.data, ...projects]);
+    setNewProject({ title: "", description: "", techStack: "", githubUrl: "", demoUrl: "", featured: false });
   };
 
-  const saveAnnouncement = async () => {
-    setError("");
-    try {
-      const res = announcementId
-        ? await updateAnnouncement(announcementId, announcementForm)
-        : await createAnnouncement(announcementForm);
-
-      setAnnouncements((prev) =>
-        announcementId ? prev.map((item) => (item._id === announcementId ? res.data.data : item)) : [res.data.data, ...prev]
-      );
-
-      setAnnouncementForm(blankAnnouncement);
-      setAnnouncementId(null);
-      await loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to save announcement");
-    }
+  const handleDeleteProject = async (id) => {
+    await api.delete(`/projects/${id}`);
+    setProjects((prev) => prev.filter((p) => p._id !== id));
   };
 
-  const createResource = async () => {
-    setError("");
-    try {
-      const res = await api.post("/resources", newResource);
-      setResources((prev) => [res.data.data, ...prev]);
-      setNewResource(blankResource);
-      await loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create resource");
-    }
+  const createEvent = async () => {
+    const res = await api.post("/events", newEvent);
+    setEvents([res.data.data, ...events]);
+    setNewEvent({ title: "", type: "workshop", description: "", date: "", venue: "", status: "upcoming" });
   };
 
-  const deleteResource = async (id) => {
-    setError("");
-    try {
-      await api.delete(`/resources/${id}`);
-      setResources((prev) => prev.filter((r) => r._id !== id));
-      await loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete resource");
-    }
+  const handleDeleteEvent = async (id) => {
+    await api.delete(`/events/${id}`);
+    setEvents((prev) => prev.filter((e) => e._id !== id));
   };
 
+  const createAnnouncement = async () => {
+    const res = await api.post("/announcements", newAnnouncement);
+    setAnnouncements([res.data.data, ...announcements]);
+    setNewAnnouncement({ title: "", body: "", important: false });
+  };
+
+  const handleDeleteAnnouncement = async (id) => {
+    await api.delete(`/announcements/${id}`);
+    setAnnouncements((prev) => prev.filter((a) => a._id !== id));
+  };
+
+  const createTimeline = async () => {
+    const res = await api.post("/timeline", { ...newTimeline, year: Number(newTimeline.year) });
+    setTimeline([...timeline, res.data.data].sort((a, b) => a.year - b.year));
+    setNewTimeline({ year: "", month: "", title: "", description: "" });
+  };
+
+  const handleDeleteTimeline = async (id) => {
+    await deleteTimeline(id);
+    setTimeline((prev) => prev.filter((t) => t._id !== id));
+  };
+
+  const createGalleryItem = async () => {
+    const res = await api.post("/gallery", newGallery);
+    setGallery([res.data.data, ...gallery]);
+    setNewGallery({ title: "", imageUrl: "", category: "event", eventRef: "" });
+  };
+
+  const handleDeleteGallery = async (id) => {
+    await deleteGalleryItem(id);
+    setGallery((prev) => prev.filter((g) => g._id !== id));
+  };
+
+  const handleDeleteDoubt = async (id) => {
+    await deleteDoubt(id);
+    setDoubts((prev) => prev.filter((d) => d._id !== id));
+  };
+
+  const handleDeleteBlog = async (id) => {
+    await deleteBlog(id);
+    setBlogs((prev) => prev.filter((b) => b._id !== id));
+  };
+
+  const handleDeleteOpportunity = async (id) => {
+    await deleteOpportunity(id);
+    setOpportunities((prev) => prev.filter((o) => o._id !== id));
+  };
+
+  const createTeamMemberHandler = async () => {
+    const payload = {
+      ...newTeamMember,
+      batch: newTeamMember.batch ? Number(newTeamMember.batch) : undefined,
+      domain: newTeamMember.domain ? newTeamMember.domain.split(",").map((d) => d.trim()) : [],
+    };
+    const res = await createTeamMember(payload);
+    setTeamMembers([...teamMembers, res.data.data]);
+    setNewTeamMember({ name: "", role: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
+  };
+
+  const handleDeleteTeamMember = async (id) => {
+    await deleteTeamMember(id);
+    setTeamMembers((prev) => prev.filter((m) => m._id !== id));
+  };
+
+  const saveContact = async () => {
+    const res = await updateContact(contactInfo);
+    setContactInfo(res.data.data);
+  };
+
+  const saveRule = async (rule) => {
+    const res = await updatePointRule(rule._id, { flatPoints: rule.flatPoints, tiers: rule.tiers });
+    setPointRules((prev) => prev.map((r) => r._id === rule._id ? res.data.data : r));
+    setEditingRule(null);
+  };
+
+  // ── Render ─────────────────────────────────────────────
   return (
     <div className="max-w-7xl mx-auto px-4 py-16">
       <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">Admin</p>
-      <h1 className="text-3xl font-bold text-white mb-4">Dashboard</h1>
-      <p className="text-gray-500 text-sm mb-8">Manage users, projects, events, announcements, and resources.</p>
+      <h1 className="text-3xl font-bold text-white mb-10">Control Panel</h1>
 
-      {error && <p className="text-red-400 text-sm mb-6">{error}</p>}
-
-      <div className="flex gap-2 flex-wrap mb-10">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
+      {/* Tab Nav */}
+      <div className="flex flex-wrap gap-2 mb-10">
+        {TABS.map((t) => (
+          <button key={t} onClick={() => setTab(t)}
             className={`text-xs px-4 py-2 rounded-full border capitalize transition-colors ${
               tab === t ? "bg-white text-black border-white font-semibold" : "border-gray-700 text-gray-400 hover:border-gray-500"
-            }`}
-          >
+            }`}>
             {t}
           </button>
         ))}
       </div>
 
+      {/* ── OVERVIEW ── */}
       {tab === "overview" && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <StatBox label="Total Users" value={stats.users} />
-          <StatBox label="Projects" value={stats.projects} />
-          <StatBox label="Events" value={stats.events} />
-          <StatBox label="Announcements" value={stats.announcements} />
-          <StatBox label="Resources" value={stats.resources} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatBox label="Users" value={users.length} />
+          <StatBox label="Projects" value={projects.length} />
+          <StatBox label="Events" value={events.length} />
+          <StatBox label="Announcements" value={announcements.length} />
+          <StatBox label="Blog Posts" value={blogs.length} />
+          <StatBox label="Opportunities" value={opportunities.length} />
+          <StatBox label="Doubts" value={doubts.length} />
+          <StatBox label="Gallery Items" value={gallery.length} />
         </div>
       )}
 
+      {/* ── USERS ── */}
       {tab === "users" && (
-        <div className="flex flex-col gap-4">
-          <div className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-1">Add User</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input className={inputClass} placeholder="Name" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} />
-              <input className={inputClass} placeholder="Email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
-              <input className={inputClass} type="password" placeholder="Password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
-              <select className={inputClass} value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
-                {["student", "senior", "alumni", "admin"].map((role) => <option key={role} value={role}>{role}</option>)}
-              </select>
-              <input className={inputClass} type="number" placeholder="Batch" value={newUser.batch} onChange={(e) => setNewUser({ ...newUser, batch: e.target.value })} />
-              <input className={inputClass} placeholder="Domains comma separated" value={newUser.domain} onChange={(e) => setNewUser({ ...newUser, domain: e.target.value })} />
-              <textarea className={inputClass} rows={2} placeholder="Bio" value={newUser.bio} onChange={(e) => setNewUser({ ...newUser, bio: e.target.value })} />
-            </div>
-            <label className="flex items-center gap-2 text-sm text-gray-300">
-              <input type="checkbox" checked={newUser.isMentor} onChange={(e) => setNewUser({ ...newUser, isMentor: e.target.checked })} className="accent-white" />
-              Mentor
-            </label>
-            <button onClick={createAdminUser} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
-              Create User
-            </button>
-          </div>
-
-          {users.map((user) => {
-            const draft = userDrafts[user._id] || {};
-            return (
-              <div key={user._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex flex-col gap-4">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div>
-                    <p className="text-white font-medium">{user.name}</p>
-                    <p className="text-gray-500 text-xs">{user.email}</p>
-                  </div>
-                  <button onClick={() => deleteUser(user._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-500 text-xs mb-2">{users.length} total users</p>
+          {users.map((u) => (
+            <div key={u._id} className={`border rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4 flex-wrap ${u.isSuspended ? "border-red-900" : "border-gray-800"}`}>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-white font-medium">{u.name}</p>
+                  {u.isSuspended && <span className="text-xs bg-red-900 text-red-400 px-2 py-0.5 rounded-full">Suspended</span>}
+                  <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full capitalize">{u.role}</span>
+                </div>
+                <p className="text-gray-500 text-xs mt-0.5">{u.email} · Batch {u.batch}</p>
+                {u.suspendedReason && <p className="text-red-400 text-xs mt-1">Reason: {u.suspendedReason}</p>}
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setSuspendModal({ user: u, reason: u.suspendedReason || "" })}
+                  className={`text-xs border px-3 py-1.5 rounded-lg transition-colors ${
+                    u.isSuspended
+                      ? "border-green-900 text-green-400 hover:border-green-400"
+                      : "border-yellow-900 text-yellow-400 hover:border-yellow-400"
+                  }`}>
+                  {u.isSuspended ? "Unsuspend" : "Suspend"}
+                </button>
+                {u._id !== adminUser?._id && (
+                  <button onClick={() => handleDeleteUser(u._id)}
+                    className="text-xs border border-red-900 text-red-400 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors">
                     Delete
                   </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input className={inputClass} value={draft.name || ""} onChange={(e) => handleUserDraft(user._id, { name: e.target.value })} />
-                  <input className={inputClass} value={draft.email || ""} onChange={(e) => handleUserDraft(user._id, { email: e.target.value })} />
-                  <select className={inputClass} value={draft.role || "student"} onChange={(e) => handleUserDraft(user._id, { role: e.target.value })}>
-                    {["student", "senior", "alumni", "admin"].map((role) => <option key={role} value={role}>{role}</option>)}
-                  </select>
-                  <input className={inputClass} type="number" value={draft.batch ?? ""} onChange={(e) => handleUserDraft(user._id, { batch: e.target.value })} placeholder="Batch" />
-                  <textarea className={inputClass} rows={2} value={draft.domain || ""} onChange={(e) => handleUserDraft(user._id, { domain: e.target.value })} placeholder="Domains comma separated" />
-                  <textarea className={inputClass} rows={2} value={draft.bio || ""} onChange={(e) => handleUserDraft(user._id, { bio: e.target.value })} placeholder="Bio" />
-                </div>
-
-                <label className="flex items-center gap-2 text-sm text-gray-300">
-                  <input type="checkbox" checked={!!draft.isMentor} onChange={(e) => handleUserDraft(user._id, { isMentor: e.target.checked })} className="accent-white" />
-                  Mentor
-                </label>
-
-                <button onClick={() => saveUser(user._id)} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
-                  Save User
-                </button>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
 
+      {/* ── PROJECTS ── */}
       {tab === "projects" && (
         <div className="flex flex-col gap-6">
           <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">{projectId ? "Edit Project" : "Add Project"}</h2>
-            <input className={inputClass} placeholder="Title" value={projectForm.title} onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })} />
-            <textarea className={inputClass} placeholder="Description" rows={2} value={projectForm.description} onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })} />
-            <input className={inputClass} placeholder="Tech Stack (comma separated)" value={projectForm.techStack} onChange={(e) => setProjectForm({ ...projectForm, techStack: e.target.value })} />
-            <input className={inputClass} placeholder="GitHub URL" value={projectForm.githubUrl} onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value })} />
-            <input className={inputClass} placeholder="Demo URL" value={projectForm.demoUrl} onChange={(e) => setProjectForm({ ...projectForm, demoUrl: e.target.value })} />
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">Add Project</h2>
+            <input className={ic} placeholder="Title *" value={newProject.title} onChange={(e) => setNewProject({ ...newProject, title: e.target.value })} />
+            <textarea className={ic} placeholder="Description" rows={2} value={newProject.description} onChange={(e) => setNewProject({ ...newProject, description: e.target.value })} />
+            <input className={ic} placeholder="Tech Stack (comma separated)" value={newProject.techStack} onChange={(e) => setNewProject({ ...newProject, techStack: e.target.value })} />
+            <input className={ic} placeholder="GitHub URL" value={newProject.githubUrl} onChange={(e) => setNewProject({ ...newProject, githubUrl: e.target.value })} />
+            <input className={ic} placeholder="Demo URL" value={newProject.demoUrl} onChange={(e) => setNewProject({ ...newProject, demoUrl: e.target.value })} />
             <label className="flex items-center gap-2 text-sm text-gray-300">
-              <input type="checkbox" checked={projectForm.featured} onChange={(e) => setProjectForm({ ...projectForm, featured: e.target.checked })} className="accent-white" />
+              <input type="checkbox" checked={newProject.featured} onChange={(e) => setNewProject({ ...newProject, featured: e.target.checked })} className="accent-white" />
               Featured
             </label>
-            <div className="flex gap-3">
-              <button onClick={saveProject} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
-                {projectId ? "Update Project" : "Add Project"}
-              </button>
-              {projectId && (
-                <button type="button" onClick={() => { setProjectId(null); setProjectForm(blankProject); }} className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors">
-                  Cancel
-                </button>
-              )}
-            </div>
+            <button onClick={createProject} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">Add Project</button>
           </div>
-
           <div className="flex flex-col gap-3">
-            {projects.map((project) => (
-              <div key={project._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
+            {projects.map((p) => (
+              <div key={p._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-white font-medium">{project.title}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{project.techStack?.join(", ")}</p>
+                  <p className="text-white font-medium">{p.title}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{p.techStack?.join(", ")}</p>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => editProject(project)} className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">Edit</button>
-                  <button onClick={() => deleteProject(project._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">Delete</button>
-                </div>
+                <button onClick={() => handleDeleteProject(p._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors shrink-0">Delete</button>
               </div>
             ))}
           </div>
         </div>
       )}
 
+      {/* ── EVENTS ── */}
       {tab === "events" && (
         <div className="flex flex-col gap-6">
           <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">{eventId ? "Edit Event" : "Add Event"}</h2>
-            <input className={inputClass} placeholder="Title" value={eventForm.title} onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })} />
-            <select className={inputClass} value={eventForm.type} onChange={(e) => setEventForm({ ...eventForm, type: e.target.value })}>
-              {["workshop", "hackathon", "contest", "seminar", "other"].map((type) => <option key={type} value={type}>{type}</option>)}
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">Add Event</h2>
+            <input className={ic} placeholder="Title *" value={newEvent.title} onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })} />
+            <select className={ic} value={newEvent.type} onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}>
+              {["workshop", "hackathon", "contest", "seminar", "other"].map((t) => <option key={t}>{t}</option>)}
             </select>
-            <textarea className={inputClass} placeholder="Description" rows={2} value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} />
-            <input className={inputClass} type="date" value={eventForm.date} onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })} />
-            <input className={inputClass} placeholder="Venue" value={eventForm.venue} onChange={(e) => setEventForm({ ...eventForm, venue: e.target.value })} />
-            <input className={inputClass} placeholder="Registration Link" value={eventForm.registrationLink} onChange={(e) => setEventForm({ ...eventForm, registrationLink: e.target.value })} />
-            <select className={inputClass} value={eventForm.status} onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}>
+            <textarea className={ic} placeholder="Description" rows={2} value={newEvent.description} onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })} />
+            <input className={ic} type="date" value={newEvent.date} onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })} />
+            <input className={ic} placeholder="Venue" value={newEvent.venue} onChange={(e) => setNewEvent({ ...newEvent, venue: e.target.value })} />
+            <select className={ic} value={newEvent.status} onChange={(e) => setNewEvent({ ...newEvent, status: e.target.value })}>
               <option value="upcoming">Upcoming</option>
               <option value="completed">Completed</option>
             </select>
-            <label className="flex items-center gap-2 text-sm text-gray-300">
-              <input type="checkbox" checked={eventForm.featured} onChange={(e) => setEventForm({ ...eventForm, featured: e.target.checked })} className="accent-white" />
-              Featured
-            </label>
-            <div className="flex gap-3">
-              <button onClick={saveEvent} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
-                {eventId ? "Update Event" : "Add Event"}
-              </button>
-              {eventId && (
-                <button type="button" onClick={() => { setEventId(null); setEventForm(blankEvent); }} className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors">
-                  Cancel
-                </button>
-              )}
-            </div>
+            <button onClick={createEvent} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">Add Event</button>
           </div>
-
           <div className="flex flex-col gap-3">
-            {events.map((event) => (
-              <div key={event._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
+            {events.map((e) => (
+              <div key={e._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-white font-medium">{event.title}</p>
-                  <p className="text-gray-500 text-xs">{event.type} · {event.status} · {new Date(event.date).toDateString()}</p>
+                  <p className="text-white font-medium">{e.title}</p>
+                  <p className="text-gray-500 text-xs">{e.type} · {e.status} · {new Date(e.date).toDateString()}</p>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => editEvent(event)} className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">Edit</button>
-                  <button onClick={() => deleteEvent(event._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">Delete</button>
-                </div>
+                <button onClick={() => handleDeleteEvent(e._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors shrink-0">Delete</button>
               </div>
             ))}
           </div>
         </div>
       )}
 
+      {/* ── ANNOUNCEMENTS ── */}
       {tab === "announcements" && (
         <div className="flex flex-col gap-6">
           <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">{announcementId ? "Edit Announcement" : "Add Announcement"}</h2>
-            <input className={inputClass} placeholder="Title" value={announcementForm.title} onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })} />
-            <textarea className={inputClass} placeholder="Body" rows={2} value={announcementForm.body} onChange={(e) => setAnnouncementForm({ ...announcementForm, body: e.target.value })} />
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">Add Announcement</h2>
+            <input className={ic} placeholder="Title *" value={newAnnouncement.title} onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })} />
+            <textarea className={ic} placeholder="Body" rows={2} value={newAnnouncement.body} onChange={(e) => setNewAnnouncement({ ...newAnnouncement, body: e.target.value })} />
             <label className="flex items-center gap-2 text-sm text-gray-300">
-              <input type="checkbox" checked={announcementForm.important} onChange={(e) => setAnnouncementForm({ ...announcementForm, important: e.target.checked })} className="accent-white" />
+              <input type="checkbox" checked={newAnnouncement.important} onChange={(e) => setNewAnnouncement({ ...newAnnouncement, important: e.target.checked })} className="accent-white" />
               Mark as Important
             </label>
-            <div className="flex gap-3">
-              <button onClick={saveAnnouncement} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
-                {announcementId ? "Update Announcement" : "Post Announcement"}
-              </button>
-              {announcementId && (
-                <button type="button" onClick={() => { setAnnouncementId(null); setAnnouncementForm(blankAnnouncement); }} className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-5 py-2 rounded-lg text-sm transition-colors">
-                  Cancel
-                </button>
-              )}
-            </div>
+            <button onClick={createAnnouncement} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">Post</button>
           </div>
-
           <div className="flex flex-col gap-3">
-            {announcements.map((announcement) => (
-              <div key={announcement._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
+            {announcements.map((a) => (
+              <div key={a._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-white font-medium">{announcement.title}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{announcement.body}</p>
+                  <p className="text-white font-medium">{a.title}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{a.body}</p>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => { setAnnouncementId(announcement._id); setAnnouncementForm({ title: announcement.title || "", body: announcement.body || "", important: !!announcement.important }); }} className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">
-                    Edit
-                  </button>
-                  <button onClick={() => deleteAnnouncement(announcement._id).then(loadData)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">
-                    Delete
-                  </button>
-                </div>
+                <button onClick={() => handleDeleteAnnouncement(a._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors">Delete</button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {tab === "resources" && (
+      {/* ── TIMELINE ── */}
+      {tab === "timeline" && (
         <div className="flex flex-col gap-6">
           <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">Add Resource</h2>
-
-            <input className={inputClass} placeholder="Title" value={newResource.title} onChange={(e) => setNewResource({ ...newResource, title: e.target.value })} />
-            <input className={inputClass} placeholder="URL" value={newResource.url} onChange={(e) => setNewResource({ ...newResource, url: e.target.value })} />
-
-            <select className={inputClass} value={newResource.category} onChange={(e) => setNewResource({ ...newResource, category: e.target.value })}>
-              {["PDF", "GitHub", "YouTube", "Docs", "Other"].map((c) => <option key={c}>{c}</option>)}
-            </select>
-
-            <input className={inputClass} placeholder="Domain (e.g. Web, AI)" value={newResource.domain} onChange={(e) => setNewResource({ ...newResource, domain: e.target.value })} />
-            <textarea className={inputClass} placeholder="Description" rows={2} value={newResource.description} onChange={(e) => setNewResource({ ...newResource, description: e.target.value })} />
-
-            <button onClick={createResource} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
-              Add Resource
-            </button>
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">Add Milestone</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <input className={ic} placeholder="Year *" type="number" value={newTimeline.year} onChange={(e) => setNewTimeline({ ...newTimeline, year: e.target.value })} />
+              <input className={ic} placeholder="Month (e.g. June)" value={newTimeline.month} onChange={(e) => setNewTimeline({ ...newTimeline, month: e.target.value })} />
+            </div>
+            <input className={ic} placeholder="Title *" value={newTimeline.title} onChange={(e) => setNewTimeline({ ...newTimeline, title: e.target.value })} />
+            <textarea className={ic} placeholder="Description" rows={2} value={newTimeline.description} onChange={(e) => setNewTimeline({ ...newTimeline, description: e.target.value })} />
+            <button onClick={createTimeline} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">Add Milestone</button>
           </div>
-
           <div className="flex flex-col gap-3">
-            {resources.map((r) => (
-              <div key={r._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
+            {timeline.map((t) => (
+              <div key={t._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-white font-medium">{r.title}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">
-                    {r.category} {r.domain && `· ${r.domain}`}
-                  </p>
-                  {r.description && <p className="text-gray-600 text-xs mt-1">{r.description}</p>}
+                  <p className="text-gray-500 text-xs">{t.month} {t.year}</p>
+                  <p className="text-white font-medium">{t.title}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{t.description}</p>
                 </div>
-
-                <button onClick={() => deleteResource(r._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors shrink-0">
-                  Delete
-                </button>
+                <button onClick={() => handleDeleteTimeline(t._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors">Delete</button>
               </div>
             ))}
-
-            {resources.length === 0 && <p className="text-gray-600 text-sm">No resources found.</p>}
           </div>
         </div>
       )}
 
-      {/* Point Rules */}
-{tab === "points" && (
-  <div className="flex flex-col gap-4">
-    <p className="text-gray-500 text-sm mb-2">
-      Changes apply immediately and retroactively to all past activity (dynamic recompute).
-    </p>
-    {pointRules.map((rule) => (
-      <div key={rule._id} className="border border-gray-800 rounded-xl p-5 bg-gray-900">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-white font-medium text-sm">{rule.label}</p>
-          {editingRule?._id !== rule._id && (
-            <button
-              onClick={() => setEditingRule(JSON.parse(JSON.stringify(rule)))}
-              className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors"
-            >
-              Edit
-            </button>
-          )}
+      {/* ── GALLERY ── */}
+      {tab === "gallery" && (
+        <div className="flex flex-col gap-6">
+          <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">Add Photo</h2>
+            <input className={ic} placeholder="Title *" value={newGallery.title} onChange={(e) => setNewGallery({ ...newGallery, title: e.target.value })} />
+            <input className={ic} placeholder="Image URL *" value={newGallery.imageUrl} onChange={(e) => setNewGallery({ ...newGallery, imageUrl: e.target.value })} />
+            <select className={ic} value={newGallery.category} onChange={(e) => setNewGallery({ ...newGallery, category: e.target.value })}>
+              {["event", "poster", "team", "other"].map((c) => <option key={c}>{c}</option>)}
+            </select>
+            <input className={ic} placeholder="Event Reference (optional)" value={newGallery.eventRef} onChange={(e) => setNewGallery({ ...newGallery, eventRef: e.target.value })} />
+            <button onClick={createGalleryItem} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">Add Photo</button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {gallery.map((g) => (
+              <div key={g._id} className="border border-gray-800 rounded-xl overflow-hidden bg-gray-900">
+                <img src={g.imageUrl} alt={g.title} className="w-full h-32 object-cover" />
+                <div className="p-3 flex items-center justify-between gap-2">
+                  <p className="text-white text-xs font-medium truncate">{g.title}</p>
+                  <button onClick={() => handleDeleteGallery(g._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-2 py-1 rounded-lg shrink-0 transition-colors">Del</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+      )}
 
-        {editingRule?._id === rule._id ? (
-          <div className="flex flex-col gap-3">
-            {rule.type === "flat" ? (
-              <div className="flex items-center gap-3">
-                <label className="text-xs text-gray-400">Points</label>
-                <input
-                  type="number"
-                  value={editingRule.flatPoints}
-                  onChange={(e) => setEditingRule({ ...editingRule, flatPoints: Number(e.target.value) })}
-                  className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:border-gray-400"
-                />
+      {/* ── DOUBTS ── */}
+      {tab === "doubts" && (
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-500 text-xs mb-2">{doubts.length} total questions · Admin can delete any post</p>
+          {doubts.map((d) => (
+            <div key={d._id} className={`border rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4 ${d.resolved ? "border-green-900" : "border-gray-800"}`}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  {d.resolved && <span className="text-xs bg-green-900 text-green-400 px-2 py-0.5 rounded-full">Resolved</span>}
+                  {d.domain && <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md">{d.domain}</span>}
+                </div>
+                <p className="text-white font-medium text-sm">{d.title}</p>
+                <p className="text-gray-500 text-xs mt-0.5">By {d.author?.name} · {d.replies?.length} replies · {d.upvotes?.length} upvotes</p>
               </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {editingRule.tiers.map((tier, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-400 w-24 shrink-0">{tier.label}</span>
-                    <span className="text-gray-600 text-xs">
-                      {tier.min}–{tier.max ?? "∞"}
-                    </span>
-                    <input
-                      type="number"
-                      value={tier.points}
-                      onChange={(e) => {
-                        const newTiers = [...editingRule.tiers];
-                        newTiers[idx] = { ...tier, points: Number(e.target.value) };
-                        setEditingRule({ ...editingRule, tiers: newTiers });
-                      }}
-                      className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-sm w-20 ml-auto focus:outline-none focus:border-gray-400"
-                    />
-                    <span className="text-gray-600 text-xs">pts</span>
+              <button onClick={() => handleDeleteDoubt(d._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors">Delete</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── BLOGS ── */}
+      {tab === "blogs" && (
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-500 text-xs mb-2">{blogs.length} total posts · Admin can delete any post</p>
+          {blogs.map((b) => (
+            <div key={b._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-medium text-sm">{b.title}</p>
+                <p className="text-gray-500 text-xs mt-0.5">By {b.author?.name} · {new Date(b.createdAt).toDateString()}</p>
+                {b.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {b.tags.map((t) => <span key={t} className="text-xs bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded">{t}</span>)}
                   </div>
-                ))}
+                )}
               </div>
+              <button onClick={() => handleDeleteBlog(b._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors">Delete</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── OPPORTUNITIES ── */}
+      {tab === "opportunities" && (
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-500 text-xs mb-2">{opportunities.length} active opportunities · Admin can delete any post</p>
+          {opportunities.map((o) => (
+            <div key={o._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-medium text-sm">{o.title}</p>
+                <p className="text-gray-500 text-xs mt-0.5">{o.company} · {o.type} · Posted by {o.postedBy?.name}</p>
+              </div>
+              <button onClick={() => handleDeleteOpportunity(o._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors">Delete</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── TEAM ── */}
+      {tab === "team" && (
+        <div className="flex flex-col gap-6">
+          <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">Add Team Member</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input className={ic} placeholder="Name *" value={newTeamMember.name} onChange={(e) => setNewTeamMember({ ...newTeamMember, name: e.target.value })} />
+              <input className={ic} placeholder="Role (e.g. Co-Founder) *" value={newTeamMember.role} onChange={(e) => setNewTeamMember({ ...newTeamMember, role: e.target.value })} />
+              <select className={ic} value={newTeamMember.category} onChange={(e) => setNewTeamMember({ ...newTeamMember, category: e.target.value })}>
+                {["founder", "faculty", "core", "mentor"].map((c) => <option key={c}>{c}</option>)}
+              </select>
+              <input className={ic} placeholder="Batch Year" type="number" value={newTeamMember.batch} onChange={(e) => setNewTeamMember({ ...newTeamMember, batch: e.target.value })} />
+              <input className={ic} placeholder="Domains (comma separated)" value={newTeamMember.domain} onChange={(e) => setNewTeamMember({ ...newTeamMember, domain: e.target.value })} />
+              <input className={ic} placeholder="Display Order (0 = first)" type="number" value={newTeamMember.order} onChange={(e) => setNewTeamMember({ ...newTeamMember, order: e.target.value })} />
+              <input className={ic} placeholder="Image URL" value={newTeamMember.imageUrl} onChange={(e) => setNewTeamMember({ ...newTeamMember, imageUrl: e.target.value })} />
+              <input className={ic} placeholder="LinkedIn URL" value={newTeamMember.linkedin} onChange={(e) => setNewTeamMember({ ...newTeamMember, linkedin: e.target.value })} />
+              <input className={ic} placeholder="GitHub URL" value={newTeamMember.github} onChange={(e) => setNewTeamMember({ ...newTeamMember, github: e.target.value })} />
+            </div>
+            <button onClick={createTeamMemberHandler} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">Add Member</button>
+          </div>
+          <div className="flex flex-col gap-3">
+            {teamMembers.map((m) => (
+              <div key={m._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-white font-medium">{m.name}</p>
+                  <p className="text-gray-500 text-xs capitalize">{m.category} · {m.role} {m.batch ? `· Batch ${m.batch}` : ""}</p>
+                </div>
+                <button onClick={() => handleDeleteTeamMember(m._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors">Delete</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── CONTACT ── */}
+      {tab === "contact" && (
+        <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-4 max-w-xl">
+          <h2 className="text-xs uppercase tracking-widest text-gray-500">Edit Contact Info</h2>
+          {[
+            { key: "email", label: "Email", placeholder: "codewizards@dypatil.edu" },
+            { key: "location", label: "Location", placeholder: "University name and address" },
+            { key: "department", label: "Department", placeholder: "Department of CSE" },
+            { key: "github", label: "GitHub URL", placeholder: "https://github.com/..." },
+            { key: "linkedin", label: "LinkedIn URL", placeholder: "https://linkedin.com/..." },
+            { key: "instagram", label: "Instagram URL", placeholder: "https://instagram.com/..." },
+            { key: "twitter", label: "Twitter/X URL", placeholder: "https://twitter.com/..." },
+          ].map(({ key, label, placeholder }) => (
+            <div key={key} className="flex flex-col gap-1.5">
+              <label className="text-xs text-gray-400 uppercase tracking-widest">{label}</label>
+              <input className={ic} placeholder={placeholder}
+                value={contactInfo[key] || ""}
+                onChange={(e) => setContactInfo({ ...contactInfo, [key]: e.target.value })} />
+            </div>
+          ))}
+          <button onClick={saveContact} className="bg-white text-black px-6 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">Save Changes</button>
+        </div>
+      )}
+
+      {/* ── POINTS ── */}
+      {tab === "points" && (
+        <div className="flex flex-col gap-4">
+          <p className="text-gray-500 text-sm mb-2">Changes apply immediately and retroactively to all past activity.</p>
+          {pointRules.map((rule) => (
+            <div key={rule._id} className="border border-gray-800 rounded-xl p-5 bg-gray-900">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-white font-medium text-sm">{rule.label}</p>
+                {editingRule?._id !== rule._id && (
+                  <button onClick={() => setEditingRule(JSON.parse(JSON.stringify(rule)))}
+                    className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">
+                    Edit
+                  </button>
+                )}
+              </div>
+              {editingRule?._id === rule._id ? (
+                <div className="flex flex-col gap-3">
+                  {rule.type === "flat" ? (
+                    <div className="flex items-center gap-3">
+                      <label className="text-xs text-gray-400">Points</label>
+                      <input type="number" value={editingRule.flatPoints}
+                        onChange={(e) => setEditingRule({ ...editingRule, flatPoints: Number(e.target.value) })}
+                        className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:border-gray-400" />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {editingRule.tiers.map((tier, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-400 w-24 shrink-0">{tier.label}</span>
+                          <span className="text-gray-600 text-xs">{tier.min}–{tier.max ?? "∞"}</span>
+                          <input type="number" value={tier.points}
+                            onChange={(e) => {
+                              const newTiers = [...editingRule.tiers];
+                              newTiers[idx] = { ...tier, points: Number(e.target.value) };
+                              setEditingRule({ ...editingRule, tiers: newTiers });
+                            }}
+                            className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-sm w-20 ml-auto focus:outline-none focus:border-gray-400" />
+                          <span className="text-gray-600 text-xs">pts</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => saveRule(editingRule)} className="bg-white text-black px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">Save</button>
+                    <button onClick={() => setEditingRule(null)} className="border border-gray-700 text-gray-400 hover:border-white px-4 py-1.5 rounded-lg text-xs transition-colors">Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-xs">
+                  {rule.type === "flat" ? `${rule.flatPoints} points` : rule.tiers.map((t) => `${t.label}: ${t.points}pts`).join(" · ")}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── SUSPEND MODAL ── */}
+      {suspendModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-white font-semibold mb-2">
+              {suspendModal.user.isSuspended ? "Unsuspend" : "Suspend"} {suspendModal.user.name}
+            </h2>
+            <p className="text-gray-400 text-sm mb-4">
+              {suspendModal.user.isSuspended
+                ? "This will restore the user's access immediately."
+                : "The user will be blocked from all protected actions until unsuspended."}
+            </p>
+            {!suspendModal.user.isSuspended && (
+              <textarea
+                rows={2} placeholder="Reason for suspension (optional)"
+                value={suspendModal.reason}
+                onChange={(e) => setSuspendModal({ ...suspendModal, reason: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gray-400 resize-none mb-4"
+              />
             )}
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={() => saveRule(editingRule)}
-                className="bg-white text-black px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors"
-              >
-                Save
+            <div className="flex gap-3">
+              <button onClick={handleSuspend}
+                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  suspendModal.user.isSuspended
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                }`}>
+                {suspendModal.user.isSuspended ? "Restore Access" : "Confirm Suspend"}
               </button>
-              <button
-                onClick={() => setEditingRule(null)}
-                className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-4 py-1.5 rounded-lg text-xs transition-colors"
-              >
+              <button onClick={() => setSuspendModal(null)}
+                className="border border-gray-700 text-gray-400 hover:border-white px-5 py-2 rounded-lg text-sm transition-colors">
                 Cancel
               </button>
             </div>
           </div>
-        ) : (
-          <p className="text-gray-500 text-xs">
-            {rule.type === "flat"
-              ? `${rule.flatPoints} points`
-              : rule.tiers.map((t) => `${t.label}: ${t.points}pts`).join(" · ")}
-          </p>
-        )}
-      </div>
-    ))}
-  </div>
-)}
+        </div>
+      )}
     </div>
   );
 };
