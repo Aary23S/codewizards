@@ -24,8 +24,8 @@ const About = () => (
       <h2 className="text-white font-semibold mb-6 uppercase text-xs tracking-widest">Founders</h2>
       <div className="grid md:grid-cols-2 gap-6">
         {[
-          { name: "Aary Satardekar", role: "Co-Founder", batch: "2026" },
-          { name: "Aarya Dalal", role: "Co-Founder", batch: "2026" },
+          { name: "Aary Satardekar", role: "Co-Founder", batch: "2022" },
+          { name: "Aarya Dalal", role: "Co-Founder", batch: "2022" },
         ].map((f) => (
           <div key={f.name} className="border border-gray-700 rounded-lg p-5">
             <p className="text-white font-semibold">{f.name}</p>
