@@ -83,7 +83,7 @@ useEffect(() => {
     .finally(() => setLoading(false));
 }, [tagFilter]);
 
-  useEffect(() => { fetchBlogs(); }, [tagFilter]);
+  // useEffect(() => { fetchBlogs(); }, [tagFilter]);
 
   const handleSubmit = async () => {
     if (!form.title.trim() || !form.content.trim()) {
