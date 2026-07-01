@@ -45,5 +45,3 @@ const deleteMilestone = async (req, res) => {
 };
 
 module.exports = { getTimeline, createMilestone, updateMilestone, deleteMilestone };
-
-module.exports = { getTimeline, createMilestone };

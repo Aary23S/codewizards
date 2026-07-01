@@ -33,4 +33,3 @@ const deleteGalleryItem = async (req, res) => {
 
 module.exports = { getGallery, createGalleryItem, deleteGalleryItem };
 
-module.exports = { getGallery, createGalleryItem };
