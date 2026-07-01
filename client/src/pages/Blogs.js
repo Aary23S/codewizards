@@ -70,15 +70,18 @@ const Blogs = () => {
   const [posting, setPosting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const fetchBlogs = () => {
-    const params = {};
-    if (tagFilter) params.tag = tagFilter;
-    setLoading(true);
-    getBlogs(params)
-      .then((res) => setBlogs(res.data.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
+useEffect(() => {
+  const params = {};
+
+  if (tagFilter) params.tag = tagFilter;
+
+  setLoading(true);
+
+  getBlogs(params)
+    .then((res) => setBlogs(res.data.data || []))
+    .catch(console.error)
+    .finally(() => setLoading(false));
+}, [tagFilter]);
 
   useEffect(() => { fetchBlogs(); }, [tagFilter]);
 
