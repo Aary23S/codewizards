@@ -10,6 +10,7 @@ const teamMemberSchema = new mongoose.Schema(
       enum: ["founder", "faculty", "core", "mentor"],
       default: "core",
     },
+    teamYear: { type: Number, default: null },     // display year for annual teams
     batch: Number,
     domain: [String],
     imageUrl: String,

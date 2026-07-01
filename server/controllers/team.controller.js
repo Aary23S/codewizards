@@ -33,6 +33,12 @@ const normalizePayload = async (req) => {
     delete payload.order;
   }
 
+  if (payload.teamYear !== undefined && payload.teamYear !== "") {
+    payload.teamYear = Number(payload.teamYear);
+  } else {
+    delete payload.teamYear;
+  }
+
   if (typeof payload.domain === "string") {
     payload.domain = payload.domain
       .split(",")
@@ -49,7 +55,7 @@ const normalizePayload = async (req) => {
 
 const getTeam = async (req, res) => {
   try {
-    const members = await TeamMember.find().sort({ order: 1, createdAt: 1 });
+    const members = await TeamMember.find().sort({ teamYear: -1, order: 1, createdAt: 1 });
     res.json({ success: true, data: members });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

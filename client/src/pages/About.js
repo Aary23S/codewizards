@@ -1,16 +1,48 @@
 import { useEffect, useMemo, useState } from "react";
 import { getTeam } from "../services/api";
 
+const fallbackFounders = [
+  {
+    name: "Aary Satardekar",
+    role: "Co-Founder",
+    subtitle: "Founding Team",
+    batch: 2022,
+    category: "founder",
+  },
+  {
+    name: "Aarya Dalal",
+    role: "Co-Founder",
+    subtitle: "Founding Team",
+    batch: 2022,
+    category: "founder",
+  },
+];
+
+const fallbackFaculty = [
+  {
+    name: "Mr. Somnath Salunkhe",
+    role: "Faculty Coordinator",
+    subtitle: "Computer Science & Engineering",
+    category: "faculty",
+  },
+  {
+    name: "Dr. Vidya Baddadare",
+    role: "Faculty Coordinator",
+    subtitle: "Computer Science & Engineering",
+    category: "faculty",
+  },
+];
+
 const roleTone = {
   founder: "bg-amber-500/15 text-amber-200 border-amber-500/25",
   faculty: "bg-sky-500/15 text-sky-200 border-sky-500/25",
 };
 
-const MemberCard = ({ member, compact = false }) => (
+const MemberCard = ({ member }) => (
   <div className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
     <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-    <div className={`relative ${compact ? "flex items-center gap-4" : "flex flex-col gap-4"}`}>
-      <div className={`${compact ? "h-20 w-20 rounded-2xl" : "h-24 w-24 rounded-3xl"} shrink-0 overflow-hidden border border-white/10 bg-slate-800`}>
+    <div className="relative flex flex-col gap-4">
+      <div className="h-24 w-24 overflow-hidden rounded-3xl border border-white/10 bg-slate-800">
         {member.imageUrl ? (
           <img src={member.imageUrl} alt={member.name} className="h-full w-full object-cover" />
         ) : (
@@ -32,9 +64,7 @@ const MemberCard = ({ member, compact = false }) => (
         <div className="mt-3 flex flex-wrap gap-2">
           {member.batch && <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/70">Batch {member.batch}</span>}
           {member.domain?.map((d) => (
-            <span key={d} className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/70">
-              {d}
-            </span>
+            <span key={d} className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/70">{d}</span>
           ))}
         </div>
       </div>
@@ -49,9 +79,7 @@ const Section = ({ title, members, compact = false }) => (
       <p className="text-xs uppercase tracking-[0.2em] text-white/30">{members.length} members</p>
     </div>
     <div className={compact ? "grid grid-cols-1 gap-4 md:grid-cols-2" : "grid grid-cols-1 gap-5 md:grid-cols-2"}>
-      {members.map((member) => (
-        <MemberCard key={member._id} member={member} compact={compact} />
-      ))}
+      {members.map((member) => <MemberCard key={`${member.category}-${member.name}`} member={member} />)}
     </div>
   </section>
 );
@@ -67,8 +95,15 @@ const About = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const founders = useMemo(() => members.filter((member) => member.category === "founder"), [members]);
-  const faculty = useMemo(() => members.filter((member) => member.category === "faculty"), [members]);
+  const founders = useMemo(() => {
+    const apiFounders = members.filter((member) => member.category === "founder");
+    return apiFounders.length > 0 ? apiFounders : fallbackFounders;
+  }, [members]);
+
+  const faculty = useMemo(() => {
+    const apiFaculty = members.filter((member) => member.category === "faculty");
+    return apiFaculty.length > 0 ? apiFaculty : fallbackFaculty;
+  }, [members]);
 
   return (
     <div className="relative mx-auto max-w-6xl px-4 py-20">
@@ -105,12 +140,6 @@ const About = () => {
           <Section title="Founders" members={founders} />
           <Section title="Faculty Coordinators" members={faculty} compact />
         </>
-      )}
-
-      {!loading && founders.length === 0 && faculty.length === 0 && (
-        <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-white/55">
-          Team details are not configured yet.
-        </div>
       )}
     </div>
   );

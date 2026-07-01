@@ -67,7 +67,7 @@ const Admin = () => {
     applyLink: "",
     deadline: "",
   });
-  const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "", subtitle: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
+  const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "", subtitle: "", teamYear: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
   const [newTeamImageFile, setNewTeamImageFile] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [editingOpportunity, setEditingOpportunity] = useState(null);
@@ -249,7 +249,7 @@ const Admin = () => {
 
     const res = await createTeamMember(formData);
     setTeamMembers([...teamMembers, res.data.data]);
-    setNewTeamMember({ name: "", role: "", subtitle: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
+    setNewTeamMember({ name: "", role: "", subtitle: "", teamYear: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
     setNewTeamImageFile(null);
   };
 
@@ -667,6 +667,7 @@ const Admin = () => {
               <input className={ic} placeholder="Name *" value={newTeamMember.name} onChange={(e) => setNewTeamMember({ ...newTeamMember, name: e.target.value })} />
               <input className={ic} placeholder="Role (e.g. Co-Founder) *" value={newTeamMember.role} onChange={(e) => setNewTeamMember({ ...newTeamMember, role: e.target.value })} />
               <input className={ic} placeholder="Subtitle / Department / Batch note" value={newTeamMember.subtitle} onChange={(e) => setNewTeamMember({ ...newTeamMember, subtitle: e.target.value })} />
+              <input className={ic} placeholder="Team Year (e.g. 2025)" type="number" value={newTeamMember.teamYear} onChange={(e) => setNewTeamMember({ ...newTeamMember, teamYear: e.target.value })} />
               <select className={ic} value={newTeamMember.category} onChange={(e) => setNewTeamMember({ ...newTeamMember, category: e.target.value })}>
                 {["founder", "faculty", "core", "mentor"].map((c) => <option key={c}>{c}</option>)}
               </select>
@@ -685,7 +686,7 @@ const Admin = () => {
               <div key={m._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-center justify-between gap-4">
                 <div>
                   <p className="text-white font-medium">{m.name}</p>
-                  <p className="text-gray-500 text-xs capitalize">{m.category} · {m.role}{m.subtitle ? ` · ${m.subtitle}` : ""}{m.batch ? ` · Batch ${m.batch}` : ""}</p>
+                  <p className="text-gray-500 text-xs capitalize">{m.category} · {m.role}{m.subtitle ? ` · ${m.subtitle}` : ""}{m.teamYear ? ` · Team ${m.teamYear}` : ""}{m.batch ? ` · Batch ${m.batch}` : ""}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -811,6 +812,9 @@ const Admin = () => {
 
             <input className={ic} placeholder="Subtitle / Department / Batch note" value={editingTeamMember.subtitle || ""}
               onChange={(e) => setEditingTeamMember({ ...editingTeamMember, subtitle: e.target.value })} />
+
+            <input className={ic} placeholder="Team Year" type="number" value={editingTeamMember.teamYear || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, teamYear: e.target.value })} />
 
             <select className={ic} value={editingTeamMember.category || "core"}
               onChange={(e) => setEditingTeamMember({ ...editingTeamMember, category: e.target.value })}>
