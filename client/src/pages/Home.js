@@ -2,67 +2,122 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getProjects, getEvents, getAnnouncements } from "../services/api";
 
-// ── Stat Card ──────────────────────────────────────────────
 const StatCard = ({ value, label }) => (
-  <div className="border border-gray-800 rounded-xl p-6 text-center bg-gray-900">
-    <div className="text-4xl font-bold text-white mb-1">{value}</div>
-    <div className="text-gray-400 text-sm">{label}</div>
+  <div className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
+    <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="relative">
+      <div className="text-3xl font-semibold tracking-tight text-white md:text-4xl">{value}</div>
+      <div className="mt-2 text-xs uppercase tracking-[0.28em] text-white/45">{label}</div>
+    </div>
   </div>
 );
 
-// ── Project Card ───────────────────────────────────────────
-const ProjectCard = ({ project }) => (
-  <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3 hover:border-gray-600 transition-colors">
-    <h3 className="text-white font-semibold text-lg">{project.title}</h3>
-    <p className="text-gray-400 text-sm leading-relaxed flex-1">{project.description}</p>
-    <div className="flex flex-wrap gap-2">
-      {project.techStack?.map((tech) => (
-        <span key={tech} className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded-md">
-          {tech}
+const SectionHeader = ({ eyebrow, title, description, action }) => (
+  <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
+    <div className="max-w-2xl">
+      <p className="text-xs uppercase tracking-[0.3em] text-white/45">{eyebrow}</p>
+      <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white md:text-4xl">{title}</h2>
+      {description && <p className="mt-3 text-sm leading-7 text-white/55 md:text-base">{description}</p>}
+    </div>
+    {action}
+  </div>
+);
+
+const ProjectCard = ({ project, index }) => (
+  <div
+    className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+    style={{ transitionDelay: `${index * 60}ms` }}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="relative flex h-full flex-col gap-4">
+      {project.featured && (
+        <span className="w-fit rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-amber-200">
+          Featured
         </span>
-      ))}
-    </div>
-    <div className="flex gap-3 mt-2">
-      {project.githubUrl && (
-        <a href={project.githubUrl} target="_blank" rel="noreferrer"
-          className="text-xs border border-gray-700 text-gray-300 hover:text-white hover:border-white px-3 py-1 rounded-lg transition-colors">
-          GitHub
-        </a>
       )}
-      {project.demoUrl && (
-        <a href={project.demoUrl} target="_blank" rel="noreferrer"
-          className="text-xs border border-gray-700 text-gray-300 hover:text-white hover:border-white px-3 py-1 rounded-lg transition-colors">
-          Live Demo
-        </a>
-      )}
+      <h3 className="text-lg font-semibold text-white">{project.title}</h3>
+      <p className="flex-1 text-sm leading-7 text-white/60">{project.description}</p>
+      <div className="flex flex-wrap gap-2">
+        {project.techStack?.map((tech) => (
+          <span key={tech} className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/70">
+            {tech}
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-3 pt-1">
+        {project.githubUrl && (
+          <a
+            href={project.githubUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-full border border-white/12 px-4 py-2 text-xs font-medium text-white/75 transition-colors hover:border-white/30 hover:text-white"
+          >
+            GitHub
+          </a>
+        )}
+        {project.demoUrl && (
+          <a
+            href={project.demoUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-full border border-white/12 px-4 py-2 text-xs font-medium text-white/75 transition-colors hover:border-white/30 hover:text-white"
+          >
+            Live Demo
+          </a>
+        )}
+      </div>
     </div>
   </div>
 );
 
-// ── Event Card ─────────────────────────────────────────────
-const EventCard = ({ event }) => (
-  <div className="border border-gray-800 rounded-xl p-5 bg-gray-900 hover:border-gray-600 transition-colors">
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <span className="text-xs uppercase tracking-widest text-gray-500 mb-1 block">{event.type}</span>
-        <h3 className="text-white font-semibold">{event.title}</h3>
-        <p className="text-gray-400 text-sm mt-1">{event.description}</p>
+const EventCard = ({ event, index }) => (
+  <div
+    className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+    style={{ transitionDelay: `${index * 60}ms` }}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="relative flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <span className="mb-2 block text-[11px] uppercase tracking-[0.28em] text-white/40">{event.type}</span>
+        <h3 className="text-lg font-semibold text-white">{event.title}</h3>
+        <p className="mt-2 text-sm leading-7 text-white/60">{event.description}</p>
+        <div className="mt-4 text-xs text-white/40">
+          {new Date(event.date).toDateString()} {event.venue && `· ${event.venue}`}
+        </div>
       </div>
-      <span className={`text-xs px-2 py-1 rounded-full shrink-0 ${
-        event.status === "upcoming"
-          ? "bg-white text-black font-semibold"
-          : "bg-gray-800 text-gray-400"
-      }`}>
+      <span
+        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
+          event.status === "upcoming" ? "bg-white text-black" : "bg-white/8 text-white/55"
+        }`}
+      >
         {event.status}
       </span>
     </div>
-    <div className="mt-3 text-xs text-gray-600">
-      {new Date(event.date).toDateString()} {event.venue && `· ${event.venue}`}
+  </div>
+);
+
+const AnnouncementCard = ({ announcement, index }) => (
+  <div
+    className={`group relative overflow-hidden rounded-3xl border p-5 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 ${
+      announcement.important ? "border-white/20 bg-white/8" : "border-white/10 bg-white/5"
+    }`}
+    style={{ transitionDelay: `${index * 50}ms` }}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="relative flex items-start gap-3">
+      {announcement.important && (
+        <span className="mt-0.5 shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-black">
+          Important
+        </span>
+      )}
+      <div>
+        <p className="text-sm font-medium text-white">{announcement.title}</p>
+        <p className="mt-1 text-sm leading-7 text-white/60">{announcement.body}</p>
+      </div>
     </div>
   </div>
 );
 
-// ── Home Page ──────────────────────────────────────────────
 const Home = () => {
   const [projects, setProjects] = useState([]);
   const [events, setEvents] = useState([]);
@@ -90,37 +145,45 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#050505] text-white">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute left-[-8rem] top-[-8rem] h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute right-[-8rem] top-[10rem] h-96 w-96 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.05),_transparent_40%)]" />
+      </div>
 
-      {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 pt-24 pb-20 text-center">
-        <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">
-          D.Y. Patil Agriculture & Technical University, Talsande
-        </p>
-        <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6">
-          Code.<br />
-          <span className="text-gray-400">Build.</span><br />
-          Grow.
-        </h1>
-        <p className="text-gray-400 text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-          CodeWizards is the official coding club connecting students with seniors,
-          projects, and opportunities that matter.
-        </p>
-        <div className="flex justify-center gap-4 flex-wrap">
-          <Link to="/connect"
-            className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
-            Find a Mentor
-          </Link>
-          <Link to="/projects"
-            className="border border-gray-700 text-white px-6 py-3 rounded-lg font-semibold hover:border-white transition-colors">
-            View Projects
-          </Link>
+      <section className="mx-auto max-w-7xl px-4 pb-20 pt-20 md:pb-24 md:pt-28">
+        <div className="max-w-4xl">
+          <p className="text-xs uppercase tracking-[0.35em] text-white/45">
+            D.Y. Patil Agriculture & Technical University, Talsande
+          </p>
+          <h1 className="mt-5 text-5xl font-semibold tracking-tight text-white md:text-7xl lg:text-8xl">
+            Code.
+            <span className="block text-white/55">Build.</span>
+            <span className="block text-white/85">Grow.</span>
+          </h1>
+          <p className="mt-6 max-w-2xl text-base leading-8 text-white/60 md:text-lg">
+            CodeWizards is the official coding club connecting students with seniors, projects, and opportunities that matter.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <Link
+              to="/connect"
+              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90"
+            >
+              Find a Mentor
+            </Link>
+            <Link
+              to="/projects"
+              className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-white/30 hover:bg-white/10"
+            >
+              View Projects
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── Stats ────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 pb-20">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section className="mx-auto max-w-7xl px-4 pb-20">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard value="400+" label="Active Members" />
           <StatCard value="2023" label="Founded" />
           <StatCard value="10+" label="Projects Built" />
@@ -128,77 +191,90 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── Announcements ────────────────────────────────── */}
       {announcements.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 pb-20">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-6">Announcements</h2>
-          <div className="flex flex-col gap-3">
-            {announcements.map((a) => (
-              <div key={a._id}
-                className={`border rounded-lg px-5 py-4 flex items-start gap-3 ${
-                  a.important
-                    ? "border-white bg-gray-900"
-                    : "border-gray-800 bg-gray-900"
-                }`}>
-                {a.important && (
-                  <span className="text-xs bg-white text-black px-2 py-0.5 rounded-full font-semibold shrink-0 mt-0.5">
-                    Important
-                  </span>
-                )}
-                <div>
-                  <p className="text-white font-medium text-sm">{a.title}</p>
-                  <p className="text-gray-400 text-sm mt-0.5">{a.body}</p>
-                </div>
-              </div>
+        <section className="mx-auto max-w-7xl px-4 pb-20">
+          <SectionHeader
+            eyebrow="Announcements"
+            title="What the club needs to know"
+            description="Short updates, important notices, and operational alerts."
+          />
+          <div className="grid gap-4">
+            {announcements.map((announcement, index) => (
+              <AnnouncementCard key={announcement._id} announcement={announcement} index={index} />
             ))}
           </div>
         </section>
       )}
 
-      {/* ── Featured Projects ─────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 pb-20">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500">Featured Projects</h2>
-          <Link to="/projects" className="text-sm text-gray-400 hover:text-white transition-colors">
-            View all →
-          </Link>
-        </div>
+      <section className="mx-auto max-w-7xl px-4 pb-20">
+        <SectionHeader
+          eyebrow="Featured Projects"
+          title="Built by the club"
+          description="Selected projects that show what students are shipping across different domains."
+          action={
+            <Link to="/projects" className="text-sm text-white/55 transition-colors hover:text-white">
+              View all →
+            </Link>
+          }
+        />
         {loading ? (
-          <p className="text-gray-600 text-sm">Loading...</p>
+          <p className="text-sm text-white/45">Loading...</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {projects.map((p) => <ProjectCard key={p._id} project={p} />)}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {projects.map((project, index) => (
+              <ProjectCard key={project._id} project={project} index={index} />
+            ))}
           </div>
         )}
       </section>
 
-      {/* ── Events ───────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 pb-24">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500">Recent & Upcoming Events</h2>
-          <Link to="/events" className="text-sm text-gray-400 hover:text-white transition-colors">
-            View all →
-          </Link>
-        </div>
+      <section className="mx-auto max-w-7xl px-4 pb-24">
+        <SectionHeader
+          eyebrow="Events"
+          title="Recent and upcoming events"
+          description="A compact view of the latest workshops, seminars, and activity around the club."
+          action={
+            <Link to="/events" className="text-sm text-white/55 transition-colors hover:text-white">
+              View all →
+            </Link>
+          }
+        />
         {loading ? (
-          <p className="text-gray-600 text-sm">Loading...</p>
+          <p className="text-sm text-white/45">Loading...</p>
         ) : (
           <div className="flex flex-col gap-4">
-            {events.map((e) => <EventCard key={e._id} event={e} />)}
+            {events.map((event, index) => (
+              <EventCard key={event._id} event={event} index={index} />
+            ))}
           </div>
         )}
       </section>
 
-      {/* ── CTA ──────────────────────────────────────────── */}
-      <section className="border-t border-gray-800 py-20 text-center">
-        <h2 className="text-3xl font-bold text-white mb-4">Ready to connect?</h2>
-        <p className="text-gray-400 mb-8">Find seniors who can guide you in your domain.</p>
-        <Link to="/connect"
-          className="bg-white text-black px-8 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
-          Browse Seniors
-        </Link>
+      <section className="mx-auto max-w-7xl px-4 pb-24">
+        <div className="rounded-[2rem] border border-white/10 bg-white/5 px-8 py-12 text-center shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
+          <p className="text-xs uppercase tracking-[0.35em] text-white/45">Connect</p>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-5xl">
+            Ready to connect?
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
+            Find seniors who can guide you in your domain or explore the club’s work.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link
+              to="/connect"
+              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90"
+            >
+              Browse Seniors
+            </Link>
+            <Link
+              to="/about"
+              className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-white/30 hover:bg-white/10"
+            >
+              About the Club
+            </Link>
+          </div>
+        </div>
       </section>
-
     </div>
   );
 };
