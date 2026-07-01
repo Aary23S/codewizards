@@ -10,7 +10,7 @@ const roleLabel = {
 };
 
 const shellCard =
-  "rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
 
 const statusPillClass = (status) => {
   if (status === "accepted") {
@@ -136,9 +136,9 @@ const Dashboard = () => {
         <div className="absolute bottom-[-12%] left-[28%] h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 py-14 md:px-6 lg:px-8 lg:py-16">
+      <div className="relative mx-auto max-w-6xl px-4 py-14 md:px-6 lg:px-8 lg:py-16">
         <section className={`${shellCard} relative overflow-hidden px-6 py-8 md:px-8 md:py-10`}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.14),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.12),transparent_35%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.08),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.06),transparent_35%)]" />
           <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">

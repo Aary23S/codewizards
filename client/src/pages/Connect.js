@@ -16,14 +16,14 @@ const DOMAINS = [
 ];
 
 const shellCard =
-  "rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
 
 const UserCard = ({ user }) => {
   const profileImage = user.image || user.avatar || user.photo || "";
 
   return (
     <div
-      className={`${shellCard} group flex h-full flex-col p-6 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/8`}
+      className={`${shellCard} group flex h-full flex-col p-6 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]`}
     >
       <div className="flex items-start gap-4">
         {profileImage ? (
@@ -108,7 +108,7 @@ const Connect = () => {
         <div className="absolute right-[-12%] top-[18%] h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative mx-auto max-w-6xl">
         <section className={`${shellCard} overflow-hidden px-6 py-8 md:px-8 md:py-10`}>
           <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Find your guide</p>
           <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

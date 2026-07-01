@@ -4,7 +4,7 @@ import { getUserById, createMentorshipRequest } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const shellCard =
-  "rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
 
 const ProfileView = () => {
   const { id } = useParams();
@@ -61,9 +61,9 @@ const ProfileView = () => {
         <div className="absolute right-[-8%] top-[18%] h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-5xl">
+      <div className="relative mx-auto max-w-6xl">
         <section className={`${shellCard} overflow-hidden`}>
-          <div className="bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.12),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.12),transparent_35%)] px-6 py-8 md:px-8 md:py-10">
+          <div className="bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.08),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.06),transparent_35%)] px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-5">
                 {profileImage ? (

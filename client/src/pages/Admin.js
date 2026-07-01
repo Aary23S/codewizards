@@ -31,9 +31,9 @@ import api, {
 } from "../services/api";
 
 const shellCard =
-  "rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
 const fieldClass =
-  "w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition duration-200 focus:border-cyan-300/60 focus:bg-white/8";
+  "w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition duration-200 focus:border-cyan-300/60 focus:bg-white/[0.05]";
 
 const TABS = [
   "overview",
@@ -57,7 +57,7 @@ const TabButton = ({ active, children, ...props }) => (
     className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.3em] transition ${
       active
         ? "border-white bg-white text-black"
-        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white"
+        : "border-white/10 bg-white/[0.03] text-white/60 hover:border-white/20 hover:bg-white/[0.05] hover:text-white"
     }`}
   >
     {children}
@@ -376,7 +376,7 @@ const Admin = () => {
         <div className="absolute bottom-[-10%] left-[28%] h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative mx-auto max-w-6xl">
         <section className={`${shellCard} overflow-hidden px-6 py-8 md:px-8 md:py-10`}>
           <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Admin</p>
           <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

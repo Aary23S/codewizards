@@ -39,7 +39,7 @@ const Login = () => {
       </div>
 
       <div className="relative mx-auto grid min-h-[calc(100vh-6rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl md:p-10">
+        <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-8 shadow-[0_12px_36px_rgba(0,0,0,0.18)] md:p-10">
           <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Welcome back</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">Login</h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-white/65 md:text-base">
@@ -59,7 +59,7 @@ const Login = () => {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl md:p-8">
+        <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.18)] md:p-8">
           <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Sign in</p>
           <h2 className="mt-3 text-2xl font-semibold text-white">Use your account</h2>
           <p className="mt-3 text-sm leading-6 text-white/60">

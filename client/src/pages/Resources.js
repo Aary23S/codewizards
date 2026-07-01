@@ -4,7 +4,7 @@ import { getResources } from "../services/api";
 const CATEGORIES = ["All", "PDF", "GitHub", "YouTube", "Docs", "Other"];
 
 const shellCard =
-  "rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
 
 const Resources = () => {
   const [resources, setResources] = useState([]);
@@ -69,7 +69,7 @@ const Resources = () => {
                   href={resource.url}
                   target="_blank"
                   rel="noreferrer"
-                  className={`${shellCard} group block p-6 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/8`}
+                className={`${shellCard} group block p-6 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
