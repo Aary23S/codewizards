@@ -4,7 +4,7 @@ import { getResources } from "../services/api";
 const CATEGORIES = ["All", "PDF", "GitHub", "YouTube", "Docs", "Other"];
 
 const shellCard =
-  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
+  "group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20";
 
 const Resources = () => {
   const [resources, setResources] = useState([]);
@@ -21,17 +21,18 @@ const Resources = () => {
   }, [category]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] px-4 py-14 text-white md:px-6 lg:px-8">
+    <div className="relative min-h-screen overflow-hidden bg-black px-4 py-14 text-white md:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-10%] top-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute right-[-12%] top-[18%] h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
+        <div className="absolute left-0 top-12 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute right-8 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute bottom-[-8%] left-[26%] h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-6xl">
-        <section className={`${shellCard} overflow-hidden px-6 py-8 md:px-8 md:py-10`}>
-          <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Learn</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">Resources</h1>
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+        <section className={`${shellCard} overflow-hidden p-7 md:p-8`}>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Learn</p>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">Resources</h1>
+          <p className="mt-5 max-w-3xl text-sm leading-7 text-white/60 md:text-base">
             A unified library for guides, references, and learning materials across the community.
           </p>
         </section>
@@ -42,7 +43,7 @@ const Resources = () => {
               <button
                 key={item}
                 onClick={() => setCategory(item)}
-                className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.3em] transition ${
+                className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.28em] transition ${
                   category === item
                     ? "border-white bg-white text-black"
                     : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white"
@@ -69,7 +70,7 @@ const Resources = () => {
                   href={resource.url}
                   target="_blank"
                   rel="noreferrer"
-                className={`${shellCard} group block p-6 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]`}
+                  className={`${shellCard} block p-6`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -78,12 +79,12 @@ const Resources = () => {
                         {resource.description || "Open this resource for more details."}
                       </p>
                     </div>
-                    <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-white/55">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-white/55">
                       {resource.category}
                     </span>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-cyan-200/70">
+                  <div className="mt-5 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.28em] text-white/50">
                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
                       Open resource
                     </span>
