@@ -88,7 +88,7 @@ const Admin = () => {
       getPointRules(),
       getTeam(),
       getContact(),
-]).then(([u, p, e, a, tl, g, d, bl, op, r, pr, tm, ct]) => {
+    ]).then(([u, p, e, a, tl, g, d, bl, op, r, pr, tm, ct]) => {
       setUsers(u.data.data);
       setProjects(p.data.data);
       setEvents(e.data.data);
@@ -188,38 +188,38 @@ const Admin = () => {
   };
 
   const saveOpportunityUpdate = async () => {
-  const res = await updateOpportunity(
-    editingOpportunity._id,
-    editingOpportunity
-  );
+    const res = await updateOpportunity(
+      editingOpportunity._id,
+      editingOpportunity
+    );
 
-  setOpportunities((prev) =>
-    prev.map((o) =>
-      o._id === editingOpportunity._id ? res.data.data : o
-    )
-  );
+    setOpportunities((prev) =>
+      prev.map((o) =>
+        o._id === editingOpportunity._id ? res.data.data : o
+      )
+    );
 
-  setEditingOpportunity(null);
-};
+    setEditingOpportunity(null);
+  };
   const createOpportunityHandler = async () => {
-  const payload = { ...newOpportunity };
+    const payload = { ...newOpportunity };
 
-  if (!payload.deadline) delete payload.deadline;
+    if (!payload.deadline) delete payload.deadline;
 
-  const res = await createOpportunity(payload);
+    const res = await createOpportunity(payload);
 
-  setOpportunities((prev) => [res.data.data, ...prev]);
+    setOpportunities((prev) => [res.data.data, ...prev]);
 
-  setNewOpportunity({
-    title: "",
-    company: "",
-    type: "internship",
-    domain: "",
-    description: "",
-    applyLink: "",
-    deadline: "",
-  });
-};
+    setNewOpportunity({
+      title: "",
+      company: "",
+      type: "internship",
+      domain: "",
+      description: "",
+      applyLink: "",
+      deadline: "",
+    });
+  };
   const handleDeleteOpportunity = async (id) => {
     await deleteOpportunity(id);
     setOpportunities((prev) => prev.filter((o) => o._id !== id));
@@ -237,34 +237,34 @@ const Admin = () => {
   };
 
   const saveTeamMemberUpdate = async () => {
-  const payload = {
-    ...editingTeamMember,
-    batch: editingTeamMember.batch
-      ? Number(editingTeamMember.batch)
-      : undefined,
-    domain: Array.isArray(editingTeamMember.domain)
-      ? editingTeamMember.domain
-      : editingTeamMember.domain
+    const payload = {
+      ...editingTeamMember,
+      batch: editingTeamMember.batch
+        ? Number(editingTeamMember.batch)
+        : undefined,
+      domain: Array.isArray(editingTeamMember.domain)
+        ? editingTeamMember.domain
+        : editingTeamMember.domain
           .split(",")
           .map((d) => d.trim())
           .filter(Boolean),
+    };
+
+    const res = await updateTeamMember(
+      editingTeamMember._id,
+      payload
+    );
+
+    setTeamMembers((prev) =>
+      prev.map((m) =>
+        m._id === editingTeamMember._id
+          ? res.data.data
+          : m
+      )
+    );
+
+    setEditingTeamMember(null);
   };
-
-  const res = await updateTeamMember(
-    editingTeamMember._id,
-    payload
-  );
-
-  setTeamMembers((prev) =>
-    prev.map((m) =>
-      m._id === editingTeamMember._id
-        ? res.data.data
-        : m
-    )
-  );
-
-  setEditingTeamMember(null);
-};
   const handleDeleteTeamMember = async (id) => {
     await deleteTeamMember(id);
     setTeamMembers((prev) => prev.filter((m) => m._id !== id));
@@ -332,8 +332,8 @@ const Admin = () => {
                 <button
                   onClick={() => setSuspendModal({ user: u, reason: u.suspendedReason || "" })}
                   className={`text-xs border px-3 py-1.5 rounded-lg transition-colors ${u.isSuspended
-                      ? "border-green-900 text-green-400 hover:border-green-400"
-                      : "border-yellow-900 text-yellow-400 hover:border-yellow-400"
+                    ? "border-green-900 text-green-400 hover:border-green-400"
+                    : "border-yellow-900 text-yellow-400 hover:border-yellow-400"
                     }`}>
                   {u.isSuspended ? "Unsuspend" : "Suspend"}
                 </button>
@@ -536,17 +536,104 @@ const Admin = () => {
 
       {/* ── OPPORTUNITIES ── */}
       {tab === "opportunities" && (
-        <div className="flex flex-col gap-3">
-          <p className="text-gray-500 text-xs mb-2">{opportunities.length} active opportunities · Admin can delete any post</p>
-          {opportunities.map((o) => (
-            <div key={o._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-medium text-sm">{o.title}</p>
-                <p className="text-gray-500 text-xs mt-0.5">{o.company} · {o.type} · Posted by {o.postedBy?.name}</p>
+        <div className="flex flex-col gap-6">
+          <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3">
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+              Add Opportunity
+            </h2>
+
+            <input className={ic} placeholder="Title *" value={newOpportunity.title}
+              onChange={(e) => setNewOpportunity({ ...newOpportunity, title: e.target.value })} />
+
+            <input className={ic} placeholder="Company *" value={newOpportunity.company}
+              onChange={(e) => setNewOpportunity({ ...newOpportunity, company: e.target.value })} />
+
+            <select className={ic} value={newOpportunity.type}
+              onChange={(e) => setNewOpportunity({ ...newOpportunity, type: e.target.value })}>
+              {["internship", "job", "freelance", "open_source"].map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+
+            <input className={ic} placeholder="Domain" value={newOpportunity.domain}
+              onChange={(e) => setNewOpportunity({ ...newOpportunity, domain: e.target.value })} />
+
+            <input className={ic} placeholder="Apply Link *" value={newOpportunity.applyLink}
+              onChange={(e) => setNewOpportunity({ ...newOpportunity, applyLink: e.target.value })} />
+
+            <input className={ic} type="date" value={newOpportunity.deadline}
+              onChange={(e) => setNewOpportunity({ ...newOpportunity, deadline: e.target.value })} />
+
+            <textarea className={ic} placeholder="Description" rows={2} value={newOpportunity.description}
+              onChange={(e) => setNewOpportunity({ ...newOpportunity, description: e.target.value })} />
+
+            <button onClick={createOpportunityHandler}
+              className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 w-fit">
+              Add Opportunity
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <p className="text-gray-500 text-xs mb-2">
+              {opportunities.length} active opportunities · Admin can edit/delete any post
+            </p>
+
+            {opportunities.map((o) => (
+              <div key={o._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex flex-col gap-3">
+                {editingOpportunity?._id === o._id ? (
+                  <>
+                    <input className={ic} value={editingOpportunity.title || ""}
+                      onChange={(e) => setEditingOpportunity({ ...editingOpportunity, title: e.target.value })} />
+
+                    <input className={ic} value={editingOpportunity.company || ""}
+                      onChange={(e) => setEditingOpportunity({ ...editingOpportunity, company: e.target.value })} />
+
+                    <input className={ic} value={editingOpportunity.domain || ""}
+                      onChange={(e) => setEditingOpportunity({ ...editingOpportunity, domain: e.target.value })} />
+
+                    <input className={ic} value={editingOpportunity.applyLink || ""}
+                      onChange={(e) => setEditingOpportunity({ ...editingOpportunity, applyLink: e.target.value })} />
+
+                    <textarea className={ic} rows={2} value={editingOpportunity.description || ""}
+                      onChange={(e) => setEditingOpportunity({ ...editingOpportunity, description: e.target.value })} />
+
+                    <div className="flex gap-2">
+                      <button onClick={saveOpportunityUpdate}
+                        className="bg-white text-black px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-200">
+                        Save
+                      </button>
+
+                      <button onClick={() => setEditingOpportunity(null)}
+                        className="border border-gray-700 text-gray-400 hover:border-white px-4 py-1.5 rounded-lg text-xs">
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium text-sm">{o.title}</p>
+                      <p className="text-gray-500 text-xs mt-0.5">
+                        {o.company} · {o.type} · Posted by {o.postedBy?.name}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => setEditingOpportunity(o)}
+                        className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors">
+                        Edit
+                      </button>
+
+                      <button onClick={() => handleDeleteOpportunity(o._id)}
+                        className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg transition-colors">
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <button onClick={() => handleDeleteOpportunity(o._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors">Delete</button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -577,8 +664,27 @@ const Admin = () => {
                   <p className="text-white font-medium">{m.name}</p>
                   <p className="text-gray-500 text-xs capitalize">{m.category} · {m.role} {m.batch ? `· Batch ${m.batch}` : ""}</p>
                 </div>
-                <button onClick={() => handleDeleteTeamMember(m._id)} className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors">Delete</button>
-              </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      setEditingTeamMember({
+                        ...m,
+                        domain: Array.isArray(m.domain) ? m.domain.join(", ") : m.domain || "",
+                        batch: m.batch || "",
+                      })
+                    }
+                    className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteTeamMember(m._id)}
+                    className="text-xs text-red-400 border border-red-900 hover:border-red-400 px-3 py-1 rounded-lg shrink-0 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>              </div>
             ))}
           </div>
         </div>
@@ -665,6 +771,56 @@ const Admin = () => {
         </div>
       )}
 
+      {/* ── TEAM EDIT MODAL ── */}
+      {editingTeamMember && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-xl flex flex-col gap-3">
+            <h2 className="text-white font-semibold mb-2">
+              Edit Team Member
+            </h2>
+
+            <input className={ic} placeholder="Name" value={editingTeamMember.name || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, name: e.target.value })} />
+
+            <input className={ic} placeholder="Role" value={editingTeamMember.role || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, role: e.target.value })} />
+
+            <select className={ic} value={editingTeamMember.category || "core"}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, category: e.target.value })}>
+              {["founder", "faculty", "core", "mentor"].map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+
+            <input className={ic} placeholder="Batch" type="number" value={editingTeamMember.batch || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, batch: e.target.value })} />
+
+            <input className={ic} placeholder="Domains comma separated" value={editingTeamMember.domain || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, domain: e.target.value })} />
+
+            <input className={ic} placeholder="Image URL" value={editingTeamMember.imageUrl || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, imageUrl: e.target.value })} />
+
+            <input className={ic} placeholder="LinkedIn URL" value={editingTeamMember.linkedin || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, linkedin: e.target.value })} />
+
+            <input className={ic} placeholder="GitHub URL" value={editingTeamMember.github || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, github: e.target.value })} />
+
+            <div className="flex gap-3 mt-2">
+              <button onClick={saveTeamMemberUpdate}
+                className="bg-white text-black px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200">
+                Save
+              </button>
+
+              <button onClick={() => setEditingTeamMember(null)}
+                className="border border-gray-700 text-gray-400 hover:border-white px-5 py-2 rounded-lg text-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── SUSPEND MODAL ── */}
       {suspendModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4">
@@ -688,8 +844,8 @@ const Admin = () => {
             <div className="flex gap-3">
               <button onClick={handleSuspend}
                 className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${suspendModal.user.isSuspended
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-red-600 text-white hover:bg-red-700"
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-red-600 text-white hover:bg-red-700"
                   }`}>
                 {suspendModal.user.isSuspended ? "Restore Access" : "Confirm Suspend"}
               </button>
