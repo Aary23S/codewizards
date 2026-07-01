@@ -6,17 +6,17 @@ import { getDashboardPath } from "../utils/getDashboardPath";
 
 const navLinks = [
   { name: "Home", path: "/" },
-  { name: "About", path: "/about" },
+  { name: "Team", path: "/team" },
   { name: "Legacy", path: "/legacy" },
   { name: "Projects", path: "/projects" },
   { name: "Events", path: "/events" },
   { name: "Gallery", path: "/gallery" },
-  { name: "Team", path: "/team" },
   { name: "Contact", path: "/contact" },
   { name: "Opportunities", path: "/opportunities" },
   { name: "Forum", path: "/doubts" },
   { name: "Leaderboard", path: "/leaderboard" },
   { name: "Blog", path: "/blogs" },
+  { name: "About", path: "/about" },
 ];
 
 const Navbar = () => {
