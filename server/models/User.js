@@ -28,6 +28,9 @@ const userSchema = new mongoose.Schema(
     leetcodeUsername: String,
     githubUsername: String,
 
+    isSuspended: { type: Boolean, default: false },
+suspendedReason: { type: String, default: "" },
+
     externalStats: {
       codeforcesRating: { type: Number, default: null },
       leetcodeSolveScore: { type: Number, default: null }, // easy*1 + medium*3 + hard*5
