@@ -4,7 +4,7 @@ import { getUserById, createMentorshipRequest } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const shellCard =
-  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
+  "group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.22)]";
 
 const ProfileView = () => {
   const { id } = useParams();
@@ -55,15 +55,15 @@ const ProfileView = () => {
   ].filter((item) => item.url);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] px-4 py-12 text-white md:px-6 lg:px-8">
+    <div className="relative min-h-screen overflow-hidden bg-black px-4 py-12 text-white md:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-8%] top-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute right-[-8%] top-[18%] h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute left-0 top-12 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute right-8 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-6xl">
         <section className={`${shellCard} overflow-hidden`}>
-          <div className="bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.08),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.06),transparent_35%)] px-6 py-8 md:px-8 md:py-10">
+          <div className="px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-5">
                 {profileImage ? (

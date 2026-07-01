@@ -16,15 +16,13 @@ const DOMAINS = [
 ];
 
 const shellCard =
-  "rounded-[28px] border border-white/10 bg-white/[0.03] shadow-[0_12px_36px_rgba(0,0,0,0.18)]";
+  "group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.22)]";
 
 const UserCard = ({ user }) => {
   const profileImage = user.image || user.avatar || user.photo || "";
 
   return (
-    <div
-      className={`${shellCard} group flex h-full flex-col p-6 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]`}
-    >
+    <div className={`${shellCard} flex h-full flex-col p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20`}>
       <div className="flex items-start gap-4">
         {profileImage ? (
           <img
@@ -102,10 +100,10 @@ const Connect = () => {
   }, [domain, roleFilter, mentorOnly]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] px-4 py-14 text-white md:px-6 lg:px-8">
+    <div className="relative min-h-screen overflow-hidden bg-black px-4 py-14 text-white md:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-10%] top-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute right-[-12%] top-[18%] h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute left-0 top-12 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute right-8 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-6xl">

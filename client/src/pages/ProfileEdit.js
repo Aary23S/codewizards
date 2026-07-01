@@ -24,7 +24,7 @@ const DOMAIN_OPTIONS = [
 ];
 
 const shellCard =
-  "rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+  "group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.22)]";
 
 const ProfileEdit = () => {
   const { id } = useParams();
@@ -152,15 +152,15 @@ const ProfileEdit = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] px-4 py-12 text-white md:px-6 lg:px-8">
+    <div className="relative min-h-screen overflow-hidden bg-black px-4 py-12 text-white md:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-8%] top-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute right-[-8%] top-[16%] h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute left-0 top-12 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute right-8 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-4xl">
+      <div className="relative mx-auto max-w-6xl">
         <section className={`${shellCard} overflow-hidden`}>
-          <div className="bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.12),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.12),transparent_35%)] px-6 py-8 md:px-8 md:py-10">
+          <div className="px-6 py-8 md:px-8 md:py-10">
             <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Your profile</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">Edit Profile</h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
