@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const {
-  getDoubts, getDoubt, createDoubt, addReply, toggleResolve, upvoteDoubt,
+  getDoubts, getDoubt, createDoubt, addReply,
+  toggleResolve, upvoteDoubt, deleteDoubt, deleteReply,
 } = require("../controllers/doubt.controller");
 const { protect } = require("../middleware/auth");
 
@@ -11,5 +12,7 @@ router.post("/", protect, createDoubt);
 router.post("/:id/reply", protect, addReply);
 router.patch("/:id/resolve", protect, toggleResolve);
 router.patch("/:id/upvote", protect, upvoteDoubt);
+router.delete("/:id", protect, deleteDoubt);
+router.delete("/:id/replies/:replyId", protect, deleteReply);
 
 module.exports = router;

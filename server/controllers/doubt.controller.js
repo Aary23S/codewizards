@@ -128,4 +128,42 @@ const upvoteDoubt = async (req, res) => {
     }
 };
 
-module.exports = { getDoubts, getDoubt, createDoubt, addReply, toggleResolve, upvoteDoubt };
+// DELETE /api/v1/doubts/:id  (admin or author)
+const deleteDoubt = async (req, res) => {
+  try {
+    const doubt = await Doubt.findById(req.params.id);
+    if (!doubt) return res.status(404).json({ success: false, message: "Not found" });
+
+    if (doubt.author.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Not allowed" });
+    }
+
+    await doubt.deleteOne();
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// DELETE /api/v1/doubts/:id/replies/:replyId  (admin or reply author)
+const deleteReply = async (req, res) => {
+  try {
+    const doubt = await Doubt.findById(req.params.id);
+    if (!doubt) return res.status(404).json({ success: false, message: "Not found" });
+
+    const reply = doubt.replies.id(req.params.replyId);
+    if (!reply) return res.status(404).json({ success: false, message: "Reply not found" });
+
+    if (reply.author.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Not allowed" });
+    }
+
+    reply.deleteOne();
+    await doubt.save();
+    res.json({ success: true, message: "Reply deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getDoubts, getDoubt, createDoubt, addReply, toggleResolve, upvoteDoubt, deleteDoubt, deleteReply };
