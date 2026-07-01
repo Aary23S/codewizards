@@ -67,10 +67,12 @@ const Admin = () => {
     applyLink: "",
     deadline: "",
   });
-  const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
+  const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "", subtitle: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
+  const [newTeamImageFile, setNewTeamImageFile] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [editingOpportunity, setEditingOpportunity] = useState(null);
   const [editingTeamMember, setEditingTeamMember] = useState(null);
+  const [editingTeamImageFile, setEditingTeamImageFile] = useState(null);
   const [suspendModal, setSuspendModal] = useState(null); // { user, reason }
 
   useEffect(() => {
@@ -226,34 +228,52 @@ const Admin = () => {
   };
 
   const createTeamMemberHandler = async () => {
-    const payload = {
-      ...newTeamMember,
-      batch: newTeamMember.batch ? Number(newTeamMember.batch) : undefined,
-      domain: newTeamMember.domain ? newTeamMember.domain.split(",").map((d) => d.trim()) : [],
-    };
-    const res = await createTeamMember(payload);
+    const formData = new FormData();
+    Object.entries(newTeamMember).forEach(([key, value]) => {
+      if (key === "domain") {
+        formData.append(key, value ? value.split(",").map((d) => d.trim()).filter(Boolean).join(",") : "");
+        return;
+      }
+
+      if (key === "batch" || key === "order") {
+        formData.append(key, value === "" ? "" : String(value));
+        return;
+      }
+
+      formData.append(key, value ?? "");
+    });
+
+    if (newTeamImageFile) {
+      formData.append("image", newTeamImageFile);
+    }
+
+    const res = await createTeamMember(formData);
     setTeamMembers([...teamMembers, res.data.data]);
-    setNewTeamMember({ name: "", role: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
+    setNewTeamMember({ name: "", role: "", subtitle: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
+    setNewTeamImageFile(null);
   };
 
   const saveTeamMemberUpdate = async () => {
-    const payload = {
-      ...editingTeamMember,
-      batch: editingTeamMember.batch
-        ? Number(editingTeamMember.batch)
-        : undefined,
-      domain: Array.isArray(editingTeamMember.domain)
-        ? editingTeamMember.domain
-        : editingTeamMember.domain
-          .split(",")
-          .map((d) => d.trim())
-          .filter(Boolean),
-    };
+    const payload = new FormData();
+    Object.entries(editingTeamMember || {}).forEach(([key, value]) => {
+      if (key === "_id" || key === "__v" || key === "createdAt" || key === "updatedAt") return;
+      if (key === "domain") {
+        const domainValue = Array.isArray(value) ? value.join(", ") : value || "";
+        payload.append(key, domainValue);
+        return;
+      }
+      if (key === "batch" || key === "order") {
+        payload.append(key, value === "" || value == null ? "" : String(value));
+        return;
+      }
+      payload.append(key, value ?? "");
+    });
 
-    const res = await updateTeamMember(
-      editingTeamMember._id,
-      payload
-    );
+    if (editingTeamImageFile) {
+      payload.append("image", editingTeamImageFile);
+    }
+
+    const res = await updateTeamMember(editingTeamMember._id, payload);
 
     setTeamMembers((prev) =>
       prev.map((m) =>
@@ -264,6 +284,7 @@ const Admin = () => {
     );
 
     setEditingTeamMember(null);
+    setEditingTeamImageFile(null);
   };
   const handleDeleteTeamMember = async (id) => {
     await deleteTeamMember(id);
@@ -645,6 +666,7 @@ const Admin = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input className={ic} placeholder="Name *" value={newTeamMember.name} onChange={(e) => setNewTeamMember({ ...newTeamMember, name: e.target.value })} />
               <input className={ic} placeholder="Role (e.g. Co-Founder) *" value={newTeamMember.role} onChange={(e) => setNewTeamMember({ ...newTeamMember, role: e.target.value })} />
+              <input className={ic} placeholder="Subtitle / Department / Batch note" value={newTeamMember.subtitle} onChange={(e) => setNewTeamMember({ ...newTeamMember, subtitle: e.target.value })} />
               <select className={ic} value={newTeamMember.category} onChange={(e) => setNewTeamMember({ ...newTeamMember, category: e.target.value })}>
                 {["founder", "faculty", "core", "mentor"].map((c) => <option key={c}>{c}</option>)}
               </select>
@@ -652,6 +674,7 @@ const Admin = () => {
               <input className={ic} placeholder="Domains (comma separated)" value={newTeamMember.domain} onChange={(e) => setNewTeamMember({ ...newTeamMember, domain: e.target.value })} />
               <input className={ic} placeholder="Display Order (0 = first)" type="number" value={newTeamMember.order} onChange={(e) => setNewTeamMember({ ...newTeamMember, order: e.target.value })} />
               <input className={ic} placeholder="Image URL" value={newTeamMember.imageUrl} onChange={(e) => setNewTeamMember({ ...newTeamMember, imageUrl: e.target.value })} />
+              <input className={ic} type="file" accept="image/*" onChange={(e) => setNewTeamImageFile(e.target.files?.[0] || null)} />
               <input className={ic} placeholder="LinkedIn URL" value={newTeamMember.linkedin} onChange={(e) => setNewTeamMember({ ...newTeamMember, linkedin: e.target.value })} />
               <input className={ic} placeholder="GitHub URL" value={newTeamMember.github} onChange={(e) => setNewTeamMember({ ...newTeamMember, github: e.target.value })} />
             </div>
@@ -662,17 +685,18 @@ const Admin = () => {
               <div key={m._id} className="border border-gray-800 rounded-xl p-4 bg-gray-900 flex items-center justify-between gap-4">
                 <div>
                   <p className="text-white font-medium">{m.name}</p>
-                  <p className="text-gray-500 text-xs capitalize">{m.category} · {m.role} {m.batch ? `· Batch ${m.batch}` : ""}</p>
+                  <p className="text-gray-500 text-xs capitalize">{m.category} · {m.role}{m.subtitle ? ` · ${m.subtitle}` : ""}{m.batch ? ` · Batch ${m.batch}` : ""}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       setEditingTeamMember({
                         ...m,
                         domain: Array.isArray(m.domain) ? m.domain.join(", ") : m.domain || "",
                         batch: m.batch || "",
-                      })
-                    }
+                      });
+                      setEditingTeamImageFile(null);
+                    }}
                     className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-3 py-1 rounded-lg transition-colors"
                   >
                     Edit
@@ -785,6 +809,9 @@ const Admin = () => {
             <input className={ic} placeholder="Role" value={editingTeamMember.role || ""}
               onChange={(e) => setEditingTeamMember({ ...editingTeamMember, role: e.target.value })} />
 
+            <input className={ic} placeholder="Subtitle / Department / Batch note" value={editingTeamMember.subtitle || ""}
+              onChange={(e) => setEditingTeamMember({ ...editingTeamMember, subtitle: e.target.value })} />
+
             <select className={ic} value={editingTeamMember.category || "core"}
               onChange={(e) => setEditingTeamMember({ ...editingTeamMember, category: e.target.value })}>
               {["founder", "faculty", "core", "mentor"].map((c) => (
@@ -800,6 +827,9 @@ const Admin = () => {
 
             <input className={ic} placeholder="Image URL" value={editingTeamMember.imageUrl || ""}
               onChange={(e) => setEditingTeamMember({ ...editingTeamMember, imageUrl: e.target.value })} />
+
+            <input className={ic} type="file" accept="image/*"
+              onChange={(e) => setEditingTeamImageFile(e.target.files?.[0] || null)} />
 
             <input className={ic} placeholder="LinkedIn URL" value={editingTeamMember.linkedin || ""}
               onChange={(e) => setEditingTeamMember({ ...editingTeamMember, linkedin: e.target.value })} />
