@@ -47,6 +47,7 @@ const Admin = () => {
   const [doubts, setDoubts] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
+  const [resources, setResources] = useState([]);
   const [pointRules, setPointRules] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [contactInfo, setContactInfo] = useState({});
@@ -57,16 +58,37 @@ const Admin = () => {
   const [newAnnouncement, setNewAnnouncement] = useState({ title: "", body: "", important: false });
   const [newTimeline, setNewTimeline] = useState({ year: "", month: "", title: "", description: "" });
   const [newGallery, setNewGallery] = useState({ title: "", imageUrl: "", category: "event", eventRef: "" });
+  const [newOpportunity, setNewOpportunity] = useState({
+    title: "",
+    company: "",
+    type: "internship",
+    domain: "",
+    description: "",
+    applyLink: "",
+    deadline: "",
+  });
   const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
   const [editingRule, setEditingRule] = useState(null);
+  const [editingOpportunity, setEditingOpportunity] = useState(null);
+  const [editingTeamMember, setEditingTeamMember] = useState(null);
   const [suspendModal, setSuspendModal] = useState(null); // { user, reason }
 
   useEffect(() => {
     Promise.all([
-      getUsers(), getProjects(), getEvents(), getAnnouncements(),
-      getTimeline(), getGallery(), getDoubts(), getBlogs(),
-      getOpportunities(), getPointRules(), getTeam(), getContact(),
-    ]).then(([u, p, e, a, tl, g, d, bl, op, pr, tm, ct]) => {
+      getUsers(),
+      getProjects(),
+      getEvents(),
+      getAnnouncements(),
+      getTimeline(),
+      getGallery(),
+      getDoubts(),
+      getBlogs(),
+      getOpportunities(),
+      getResources(),
+      getPointRules(),
+      getTeam(),
+      getContact(),
+]).then(([u, p, e, a, tl, g, d, bl, op, r, pr, tm, ct]) => {
       setUsers(u.data.data);
       setProjects(p.data.data);
       setEvents(e.data.data);
@@ -76,6 +98,7 @@ const Admin = () => {
       setDoubts(d.data.data);
       setBlogs(bl.data.data);
       setOpportunities(op.data.data);
+      setResources(r.data.data);
       setPointRules(pr.data.data);
       setTeamMembers(tm.data.data);
       setContactInfo(ct.data.data || {});
@@ -164,6 +187,39 @@ const Admin = () => {
     setBlogs((prev) => prev.filter((b) => b._id !== id));
   };
 
+  const saveOpportunityUpdate = async () => {
+  const res = await updateOpportunity(
+    editingOpportunity._id,
+    editingOpportunity
+  );
+
+  setOpportunities((prev) =>
+    prev.map((o) =>
+      o._id === editingOpportunity._id ? res.data.data : o
+    )
+  );
+
+  setEditingOpportunity(null);
+};
+  const createOpportunityHandler = async () => {
+  const payload = { ...newOpportunity };
+
+  if (!payload.deadline) delete payload.deadline;
+
+  const res = await createOpportunity(payload);
+
+  setOpportunities((prev) => [res.data.data, ...prev]);
+
+  setNewOpportunity({
+    title: "",
+    company: "",
+    type: "internship",
+    domain: "",
+    description: "",
+    applyLink: "",
+    deadline: "",
+  });
+};
   const handleDeleteOpportunity = async (id) => {
     await deleteOpportunity(id);
     setOpportunities((prev) => prev.filter((o) => o._id !== id));
@@ -180,6 +236,35 @@ const Admin = () => {
     setNewTeamMember({ name: "", role: "", category: "core", batch: "", domain: "", imageUrl: "", linkedin: "", github: "", order: 0 });
   };
 
+  const saveTeamMemberUpdate = async () => {
+  const payload = {
+    ...editingTeamMember,
+    batch: editingTeamMember.batch
+      ? Number(editingTeamMember.batch)
+      : undefined,
+    domain: Array.isArray(editingTeamMember.domain)
+      ? editingTeamMember.domain
+      : editingTeamMember.domain
+          .split(",")
+          .map((d) => d.trim())
+          .filter(Boolean),
+  };
+
+  const res = await updateTeamMember(
+    editingTeamMember._id,
+    payload
+  );
+
+  setTeamMembers((prev) =>
+    prev.map((m) =>
+      m._id === editingTeamMember._id
+        ? res.data.data
+        : m
+    )
+  );
+
+  setEditingTeamMember(null);
+};
   const handleDeleteTeamMember = async (id) => {
     await deleteTeamMember(id);
     setTeamMembers((prev) => prev.filter((m) => m._id !== id));
@@ -206,9 +291,8 @@ const Admin = () => {
       <div className="flex flex-wrap gap-2 mb-10">
         {TABS.map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`text-xs px-4 py-2 rounded-full border capitalize transition-colors ${
-              tab === t ? "bg-white text-black border-white font-semibold" : "border-gray-700 text-gray-400 hover:border-gray-500"
-            }`}>
+            className={`text-xs px-4 py-2 rounded-full border capitalize transition-colors ${tab === t ? "bg-white text-black border-white font-semibold" : "border-gray-700 text-gray-400 hover:border-gray-500"
+              }`}>
             {t}
           </button>
         ))}
@@ -225,6 +309,7 @@ const Admin = () => {
           <StatBox label="Opportunities" value={opportunities.length} />
           <StatBox label="Doubts" value={doubts.length} />
           <StatBox label="Gallery Items" value={gallery.length} />
+          <StatBox label="Resources" value={resources.length} />
         </div>
       )}
 
@@ -246,11 +331,10 @@ const Admin = () => {
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setSuspendModal({ user: u, reason: u.suspendedReason || "" })}
-                  className={`text-xs border px-3 py-1.5 rounded-lg transition-colors ${
-                    u.isSuspended
+                  className={`text-xs border px-3 py-1.5 rounded-lg transition-colors ${u.isSuspended
                       ? "border-green-900 text-green-400 hover:border-green-400"
                       : "border-yellow-900 text-yellow-400 hover:border-yellow-400"
-                  }`}>
+                    }`}>
                   {u.isSuspended ? "Unsuspend" : "Suspend"}
                 </button>
                 {u._id !== adminUser?._id && (
@@ -603,11 +687,10 @@ const Admin = () => {
             )}
             <div className="flex gap-3">
               <button onClick={handleSuspend}
-                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                  suspendModal.user.isSuspended
+                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${suspendModal.user.isSuspended
                     ? "bg-green-600 text-white hover:bg-green-700"
                     : "bg-red-600 text-white hover:bg-red-700"
-                }`}>
+                  }`}>
                 {suspendModal.user.isSuspended ? "Restore Access" : "Confirm Suspend"}
               </button>
               <button onClick={() => setSuspendModal(null)}
