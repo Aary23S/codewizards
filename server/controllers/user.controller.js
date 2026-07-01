@@ -121,16 +121,16 @@ const suspendUser = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/users/:id  (admin only)
-const deleteUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    res.json({ success: true, message: "User deleted" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+// // DELETE /api/v1/users/:id  (admin only)
+// const deleteUser = async (req, res) => {
+//   try {
+//     const user = await User.findByIdAndDelete(req.params.id);
+//     if (!user) return res.status(404).json({ success: false, message: "User not found" });
+//     res.json({ success: true, message: "User deleted" });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 
 module.exports = { getUsers, getUserById, updateUser, suspendUser, deleteUser, createUser };
 // module.exports = { getUsers, getUserById, createUser, updateUser, deleteUser };
