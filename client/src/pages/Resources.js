@@ -3,6 +3,9 @@ import { getResources } from "../services/api";
 
 const CATEGORIES = ["All", "PDF", "GitHub", "YouTube", "Docs", "Other"];
 
+const shellCard =
+  "rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+
 const Resources = () => {
   const [resources, setResources] = useState([]);
   const [category, setCategory] = useState("All");
@@ -18,40 +21,80 @@ const Resources = () => {
   }, [category]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-20">
-      <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">Learn</p>
-      <h1 className="text-4xl font-bold text-white mb-8">Resources</h1>
-
-      <div className="flex flex-wrap gap-2 mb-10">
-        {CATEGORIES.map((c) => (
-          <button key={c} onClick={() => setCategory(c)}
-            className={`text-xs px-4 py-2 rounded-full border transition-colors ${
-              category === c ? "bg-white text-black border-white font-semibold" : "border-gray-700 text-gray-400 hover:border-gray-500"
-            }`}>
-            {c}
-          </button>
-        ))}
+    <div className="relative min-h-screen overflow-hidden bg-[#050816] px-4 py-14 text-white md:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-10%] top-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute right-[-12%] top-[18%] h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
 
-      {loading ? (
-        <p className="text-gray-600 text-sm">Loading...</p>
-      ) : resources.length === 0 ? (
-        <p className="text-gray-600 text-sm">No resources yet. Check back soon.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {resources.map((r) => (
-            <a key={r._id} href={r.url} target="_blank" rel="noreferrer"
-              className="border border-gray-800 rounded-xl p-5 bg-gray-900 hover:border-gray-600 transition-colors block">
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <p className="text-white font-semibold">{r.title}</p>
-                <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md shrink-0">{r.category}</span>
-              </div>
-              {r.description && <p className="text-gray-400 text-sm">{r.description}</p>}
-              {r.domain && <p className="text-gray-600 text-xs mt-2">{r.domain}</p>}
-            </a>
-          ))}
-        </div>
-      )}
+      <div className="relative mx-auto max-w-6xl">
+        <section className={`${shellCard} overflow-hidden px-6 py-8 md:px-8 md:py-10`}>
+          <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Learn</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">Resources</h1>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+            A unified library for guides, references, and learning materials across the community.
+          </p>
+        </section>
+
+        <section className={`${shellCard} mt-6 p-6 md:p-7`}>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((item) => (
+              <button
+                key={item}
+                onClick={() => setCategory(item)}
+                className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.3em] transition ${
+                  category === item
+                    ? "border-white bg-white text-black"
+                    : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-6">
+          {loading ? (
+            <div className={`${shellCard} p-6 text-sm text-white/55`}>Loading...</div>
+          ) : resources.length === 0 ? (
+            <div className={`${shellCard} p-6 text-sm text-white/55`}>
+              No resources yet. Check back soon.
+            </div>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2">
+              {resources.map((resource) => (
+                <a
+                  key={resource._id}
+                  href={resource.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${shellCard} group block p-6 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/8`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-lg font-semibold text-white">{resource.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-white/60">
+                        {resource.description || "Open this resource for more details."}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-white/55">
+                      {resource.category}
+                    </span>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-cyan-200/70">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                      Open resource
+                    </span>
+                    {resource.domain && <span>{resource.domain}</span>}
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 };

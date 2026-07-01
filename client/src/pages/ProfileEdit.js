@@ -23,6 +23,9 @@ const DOMAIN_OPTIONS = [
   "App Dev",
 ];
 
+const shellCard =
+  "rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl";
+
 const ProfileEdit = () => {
   const { id } = useParams();
   const { user: currentUser } = useAuth();
@@ -79,12 +82,9 @@ const ProfileEdit = () => {
           portfolio: u.portfolio || "",
           domain: Array.isArray(u.domain) ? u.domain : [],
           isMentor: !!u.isMentor,
-          codeforcesHandle:
-            u.codeforcesHandle || u.externalStats?.codeforces?.handle || "",
-          leetcodeUsername:
-            u.leetcodeUsername || u.externalStats?.leetcode?.username || "",
-          githubUsername:
-            u.githubUsername || u.externalStats?.github?.username || "",
+          codeforcesHandle: u.codeforcesHandle || u.externalStats?.codeforces?.handle || "",
+          leetcodeUsername: u.leetcodeUsername || u.externalStats?.leetcode?.username || "",
+          githubUsername: u.githubUsername || u.externalStats?.github?.username || "",
         });
       })
       .catch((err) => {
@@ -93,15 +93,14 @@ const ProfileEdit = () => {
       .finally(() => setLoading(false));
   }, [id, currentUser, navigate]);
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const toggleDomain = (d) => {
+  const toggleDomain = (domain) => {
     setForm((prev) => ({
       ...prev,
-      domain: prev.domain.includes(d)
-        ? prev.domain.filter((x) => x !== d)
-        : [...prev.domain, d],
+      domain: prev.domain.includes(domain)
+        ? prev.domain.filter((item) => item !== domain)
+        : [...prev.domain, domain],
     }));
   };
 
@@ -109,10 +108,7 @@ const ProfileEdit = () => {
     const handle = form[handleKey];
 
     if (!handle?.trim()) {
-      setSyncStatus((prev) => ({
-        ...prev,
-        [platform]: "Enter a username first",
-      }));
+      setSyncStatus((prev) => ({ ...prev, [platform]: "Enter a username first" }));
       return;
     }
 
@@ -121,11 +117,7 @@ const ProfileEdit = () => {
 
     try {
       await syncFn(handle.trim());
-
-      setSyncStatus((prev) => ({
-        ...prev,
-        [platform]: "✓ Synced successfully",
-      }));
+      setSyncStatus((prev) => ({ ...prev, [platform]: "✓ Synced successfully" }));
     } catch (err) {
       setSyncStatus((prev) => ({
         ...prev,
@@ -152,278 +144,207 @@ const ProfileEdit = () => {
   };
 
   if (loading) {
-    return <div className="text-center text-gray-500 py-32">Loading...</div>;
+    return (
+      <div className="min-h-[70vh] bg-[#050816] px-4 py-24 text-center text-white/55">
+        Loading...
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-20">
-      <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">
-        Your Profile
-      </p>
+    <div className="relative min-h-screen overflow-hidden bg-[#050816] px-4 py-12 text-white md:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-8%] top-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute right-[-8%] top-[16%] h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
+      </div>
 
-      <h1 className="text-3xl font-bold text-white mb-10">Edit Profile</h1>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <FormInput
-          label="Full Name"
-          type="text"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          required
-        />
-
-        {/* Bio */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs uppercase tracking-widest text-gray-500">
-            Bio
-          </label>
-
-          <textarea
-            name="bio"
-            value={form.bio}
-            onChange={handleChange}
-            rows={3}
-            placeholder="Tell others about yourself..."
-            className="bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-gray-400 resize-none"
-          />
-        </div>
-
-        {/* Domains */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs uppercase tracking-widest text-gray-500">
-            Domains
-          </label>
-
-          <div className="flex flex-wrap gap-2">
-            {DOMAIN_OPTIONS.map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => toggleDomain(d)}
-                className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${form.domain.includes(d)
-                    ? "bg-white text-black border-white font-semibold"
-                    : "border-gray-700 text-gray-400 hover:border-gray-500"
-                  }`}
-              >
-                {d}
-              </button>
-            ))}
+      <div className="relative mx-auto max-w-4xl">
+        <section className={`${shellCard} overflow-hidden`}>
+          <div className="bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.12),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.12),transparent_35%)] px-6 py-8 md:px-8 md:py-10">
+            <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Your profile</p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">Edit Profile</h1>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+              Keep your identity, domains, social links, and competition handles current without changing the existing data flow.
+            </p>
           </div>
-        </div>
+        </section>
 
-        {/* Mentor toggle */}
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="isMentor"
-            checked={form.isMentor}
-            onChange={(e) =>
-              setForm({ ...form, isMentor: e.target.checked })
-            }
-            className="w-4 h-4 accent-white"
-          />
-
-          <label htmlFor="isMentor" className="text-sm text-gray-300">
-            I'm open to mentoring juniors
-          </label>
-        </div>
-
-        {/* Links */}
-        <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-4">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500">
-            Platform Links
-          </h2>
-
-          <FormInput
-            label="GitHub URL"
-            type="url"
-            name="github"
-            value={form.github}
-            onChange={handleChange}
-            placeholder="https://github.com/username"
-          />
-
-          <FormInput
-            label="LinkedIn URL"
-            type="url"
-            name="linkedin"
-            value={form.linkedin}
-            onChange={handleChange}
-            placeholder="https://linkedin.com/in/username"
-          />
-
-          <FormInput
-            label="LeetCode URL"
-            type="url"
-            name="leetcode"
-            value={form.leetcode}
-            onChange={handleChange}
-            placeholder="https://leetcode.com/username"
-          />
-
-          <FormInput
-            label="Codeforces URL"
-            type="url"
-            name="codeforces"
-            value={form.codeforces}
-            onChange={handleChange}
-            placeholder="https://codeforces.com/profile/username"
-          />
-
-          <FormInput
-            label="Portfolio URL"
-            type="url"
-            name="portfolio"
-            value={form.portfolio}
-            onChange={handleChange}
-            placeholder="https://yourportfolio.com"
-          />
-        </div>
-
-        {/* External Platform Sync */}
-        <div className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-5">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500">
-            Sync Competitive Stats
-          </h2>
-
-          <p className="text-gray-500 text-xs -mt-3">
-            Connect your profiles to count toward the leaderboard. Re-sync
-            anytime to update your stats.
-          </p>
-
-          {/* Codeforces */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs text-gray-400">Codeforces Handle</label>
-
-            <div className="flex gap-2">
-              <input
-                name="codeforcesHandle"
-                value={form.codeforcesHandle || ""}
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div className="grid gap-5">
+              <FormInput
+                label="Full Name"
+                type="text"
+                name="name"
+                value={form.name}
                 onChange={handleChange}
-                placeholder="tourist"
-                className="flex-1 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gray-400"
+                required
               />
 
-              <button
-                type="button"
-                onClick={() =>
-                  handleSync("codeforces", syncCodeforces, "codeforcesHandle")
-                }
-                disabled={syncing.codeforces}
-                className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-40 shrink-0"
-              >
-                {syncing.codeforces ? "Syncing..." : "Sync"}
-              </button>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">
+                  Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={form.bio}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Tell others about yourself..."
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Domains</p>
+                <p className="mt-2 text-sm text-white/60">Choose the areas that best represent your work.</p>
+              </div>
             </div>
 
-            {syncStatus.codeforces && (
-              <p
-                className={`text-xs ${syncStatus.codeforces.startsWith("✓")
-                    ? "text-green-400"
-                    : "text-red-400"
+            <div className="mt-4 flex flex-wrap gap-2">
+              {DOMAIN_OPTIONS.map((domain) => (
+                <button
+                  key={domain}
+                  type="button"
+                  onClick={() => toggleDomain(domain)}
+                  className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.25em] transition ${
+                    form.domain.includes(domain)
+                      ? "border-white bg-white text-black"
+                      : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white"
                   }`}
-              >
-                {syncStatus.codeforces}
-              </p>
-            )}
-          </div>
+                >
+                  {domain}
+                </button>
+              ))}
+            </div>
+          </section>
 
-          {/* LeetCode */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs text-gray-400">LeetCode Username</label>
-
-            <div className="flex gap-2">
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div className="flex items-center gap-3">
               <input
-                name="leetcodeUsername"
-                value={form.leetcodeUsername || ""}
-                onChange={handleChange}
-                placeholder="your_username"
-                className="flex-1 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gray-400"
+                type="checkbox"
+                id="isMentor"
+                checked={form.isMentor}
+                onChange={(e) => setForm({ ...form, isMentor: e.target.checked })}
+                className="h-4 w-4 accent-cyan-300"
               />
+              <label htmlFor="isMentor" className="text-sm text-white/75">
+                I&apos;m open to mentoring juniors
+              </label>
+            </div>
+          </section>
 
-              <button
-                type="button"
-                onClick={() =>
-                  handleSync("leetcode", syncLeetcode, "leetcodeUsername")
-                }
-                disabled={syncing.leetcode}
-                className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-40 shrink-0"
-              >
-                {syncing.leetcode ? "Syncing..." : "Sync"}
-              </button>
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Platform links</p>
+                <p className="mt-2 text-sm text-white/60">Add public links for discovery and profile visibility.</p>
+              </div>
             </div>
 
-            {syncStatus.leetcode && (
-              <p
-                className={`text-xs ${syncStatus.leetcode.startsWith("✓")
-                    ? "text-green-400"
-                    : "text-red-400"
-                  }`}
-              >
-                {syncStatus.leetcode}
+            <div className="mt-5 grid gap-4">
+              <FormInput label="GitHub URL" type="url" name="github" value={form.github} onChange={handleChange} placeholder="https://github.com/username" />
+              <FormInput label="LinkedIn URL" type="url" name="linkedin" value={form.linkedin} onChange={handleChange} placeholder="https://linkedin.com/in/username" />
+              <FormInput label="LeetCode URL" type="url" name="leetcode" value={form.leetcode} onChange={handleChange} placeholder="https://leetcode.com/username" />
+              <FormInput label="Codeforces URL" type="url" name="codeforces" value={form.codeforces} onChange={handleChange} placeholder="https://codeforces.com/profile/username" />
+              <FormInput label="Portfolio URL" type="url" name="portfolio" value={form.portfolio} onChange={handleChange} placeholder="https://yourportfolio.com" />
+            </div>
+          </section>
+
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Sync competitive stats</p>
+              <p className="mt-2 text-sm text-white/60">
+                Connect your profiles to count toward the leaderboard. Re-sync anytime to update your stats.
               </p>
-            )}
-          </div>
-
-          {/* GitHub */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs text-gray-400">GitHub Username</label>
-
-            <div className="flex gap-2">
-              <input
-                name="githubUsername"
-                value={form.githubUsername || ""}
-                onChange={handleChange}
-                placeholder="octocat"
-                className="flex-1 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gray-400"
-              />
-
-              <button
-                type="button"
-                onClick={() =>
-                  handleSync("github", syncGithub, "githubUsername")
-                }
-                disabled={syncing.github}
-                className="text-xs border border-gray-700 text-gray-300 hover:border-white hover:text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-40 shrink-0"
-              >
-                {syncing.github ? "Syncing..." : "Sync"}
-              </button>
             </div>
 
-            {syncStatus.github && (
-              <p
-                className={`text-xs ${syncStatus.github.startsWith("✓")
-                    ? "text-green-400"
-                    : "text-red-400"
-                  }`}
-              >
-                {syncStatus.github}
-              </p>
-            )}
-          </div>
-        </div>
+            <div className="mt-6 space-y-5">
+              {[
+                {
+                  label: "Codeforces Handle",
+                  name: "codeforcesHandle",
+                  placeholder: "tourist",
+                  syncKey: "codeforces",
+                  syncFn: syncCodeforces,
+                },
+                {
+                  label: "LeetCode Username",
+                  name: "leetcodeUsername",
+                  placeholder: "your_username",
+                  syncKey: "leetcode",
+                  syncFn: syncLeetcode,
+                },
+                {
+                  label: "GitHub Username",
+                  name: "githubUsername",
+                  placeholder: "octocat",
+                  syncKey: "github",
+                  syncFn: syncGithub,
+                },
+              ].map((item) => (
+                <div key={item.name} className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.3em] text-white/45">{item.label}</label>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <input
+                      name={item.name}
+                      value={form[item.name] || ""}
+                      onChange={handleChange}
+                      placeholder={item.placeholder}
+                      className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSync(item.syncKey, item.syncFn, item.name)}
+                      disabled={syncing[item.syncKey]}
+                      className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-xs uppercase tracking-[0.3em] text-white/70 transition hover:border-white/20 hover:bg-white/10 hover:text-white disabled:opacity-40"
+                    >
+                      {syncing[item.syncKey] ? "Syncing..." : "Sync"}
+                    </button>
+                  </div>
 
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+                  {syncStatus[item.syncKey] && (
+                    <p
+                      className={`text-xs ${
+                        syncStatus[item.syncKey].startsWith("✓") ? "text-emerald-200" : "text-rose-200"
+                      }`}
+                    >
+                      {syncStatus[item.syncKey]}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
 
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
+          {error && (
+            <div className={`${shellCard} border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100`}>
+              {error}
+            </div>
+          )}
 
-          <button
-            type="button"
-            onClick={() => navigate(`/profile/${id}`)}
-            className="border border-gray-700 text-gray-400 hover:border-white hover:text-white px-6 py-3 rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+          <section className="flex flex-wrap gap-3 pb-4">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/profile/${id}`)}
+              className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+            >
+              Cancel
+            </button>
+          </section>
+        </form>
+      </div>
     </div>
   );
 };
