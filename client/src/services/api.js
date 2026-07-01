@@ -92,7 +92,7 @@ export const deleteBlog = (id) => api.delete(`/blogs/${id}`);
 
 // Users
 export const suspendUser = (id, data) => api.patch(`/users/${id}/suspend`, data);
-export const deleteUser = (id) => api.delete(`/users/${id}`);
+// export const deleteUser = (id) => api.delete(`/users/${id}`);
 
 // Timeline
 export const updateTimeline = (id, data) => api.patch(`/timeline/${id}`, data);
