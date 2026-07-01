@@ -9,9 +9,7 @@ const RankBadge = ({ rank }) => {
     3: "bg-amber-600 text-white",
   };
   return (
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-      styles[rank] || "bg-gray-800 text-gray-400"
-    }`}>
+    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${styles[rank] || "bg-white/10 text-white/45"}`}>
       {rank}
     </div>
   );
@@ -31,47 +29,53 @@ const Leaderboard = () => {
   }, [period]);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-20">
-      <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">Top Contributors</p>
-      <h1 className="text-4xl font-bold text-white mb-8">Leaderboard</h1>
+    <div className="relative mx-auto max-w-4xl px-4 py-20">
+      <div className="absolute left-0 top-16 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+      <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
 
-      <div className="flex gap-2 mb-10">
-        {[
-          { value: "all", label: "All-Time" },
-          { value: "month", label: "This Month" },
-        ].map((opt) => (
-          <button key={opt.value} onClick={() => setPeriod(opt.value)}
-            className={`text-xs px-4 py-2 rounded-full border transition-colors ${
-              period === opt.value
-                ? "bg-white text-black border-white font-semibold"
-                : "border-gray-700 text-gray-400 hover:border-gray-500"
-            }`}>
-            {opt.label}
+      <div className="relative mb-10 max-w-3xl">
+        <p className="text-xs uppercase tracking-[0.3em] text-white/45">Top Contributors</p>
+        <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
+          Leaderboard, presented as a ranked feed.
+        </h1>
+      </div>
+
+      <div className="mb-8 flex gap-2">
+        {[{ value: "all", label: "All-Time" }, { value: "month", label: "This Month" }].map((option) => (
+          <button
+            key={option.value}
+            onClick={() => setPeriod(option.value)}
+            className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em] transition-colors ${
+              period === option.value
+                ? "border-white bg-white text-black"
+                : "border-white/10 bg-white/5 text-white/55 hover:border-white/20 hover:text-white"
+            }`}
+          >
+            {option.label}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <p className="text-gray-600 text-sm">Loading...</p>
-      ) : students.length === 0 ? (
-        <p className="text-gray-600 text-sm">No data yet.</p>
-      ) : (
+        <p className="text-sm text-white/45">Loading...</p>
+      ) : students.length > 0 ? (
         <div className="flex flex-col gap-3">
-          {students.map((s, i) => (
-            <Link key={s._id} to={`/profile/${s._id}`}
-              className="border border-gray-800 rounded-xl p-4 bg-gray-900 hover:border-gray-600 transition-colors flex items-center gap-4">
-              <RankBadge rank={i + 1} />
-              <div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                {s.name.charAt(0)}
+          {students.map((student, index) => (
+            <Link key={student._id} to={`/profile/${student._id}`} className="group flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
+              <RankBadge rank={index + 1} />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white">
+                {student.name.charAt(0)}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-medium text-sm">{s.name}</p>
-                <p className="text-gray-500 text-xs">Batch {s.batch}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-white">{student.name}</p>
+                <p className="text-xs text-white/40">Batch {student.batch}</p>
               </div>
-              <p className="text-white font-bold text-lg shrink-0">{s.points}</p>
+              <p className="text-lg font-semibold text-white">{student.points}</p>
             </Link>
           ))}
         </div>
+      ) : (
+        <p className="text-sm text-white/45">No data yet.</p>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
-import logo from "../assets/logo.jpeg"; // adjust extension if needed
+import logo from "../assets/logo.jpeg";
 import { getDashboardPath } from "../utils/getDashboardPath";
 
 const navLinks = [
@@ -24,91 +24,127 @@ const Navbar = () => {
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
 
-  return (
-    <nav className="bg-black text-white sticky top-0 z-50 shadow-lg border-b border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+  const activeLink = useMemo(() => navLinks.find((link) => link.path === pathname), [pathname]);
 
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
-          <img src={logo} alt="CodeWizards" className="h-10 w-10 rounded-full object-cover" />
-          <span className="text-lg font-bold tracking-wide text-white">CodeWizards</span>
+  return (
+    <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/85 text-white backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+        <Link to="/" className="group flex items-center gap-3">
+          <div className="overflow-hidden rounded-full border border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+            <img src={logo} alt="CodeWizards" className="h-10 w-10 object-cover transition-transform duration-300 group-hover:scale-105" />
+          </div>
+          <span className="text-lg font-semibold tracking-tight text-white">CodeWizards</span>
         </Link>
 
-        {/* Desktop Links */}
-        <ul className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <li key={link.path}>
-              <Link
-                to={link.path}
-                className={`transition-colors hover:text-white ${
-                  pathname === link.path
-                    ? "text-white border-b-2 border-white pb-1"
-                    : "text-gray-400"
-                }`}
-              >
-                {link.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="hidden items-center gap-6 md:flex">
+          <ul className="flex items-center gap-5 text-sm font-medium">
+            {navLinks.map((link) => (
+              <li key={link.path} className="relative">
+                <Link
+                  to={link.path}
+                  className={`transition-colors hover:text-white ${
+                    pathname === link.path ? "text-white" : "text-white/55"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+                {pathname === link.path && (
+                  <span className="absolute -bottom-2 left-0 h-px w-full bg-white" />
+                )}
+              </li>
+            ))}
+          </ul>
 
           {user ? (
-  <>
-    <Link to={getDashboardPath(user.role)} className="text-sm text-gray-400 hover:text-white transition-colors">
-      {user.name?.split(" ")[0]}
-    </Link>
-    <button
-      onClick={logout}
-      className="border border-gray-700 text-gray-300 hover:border-white hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
-    >
-      Logout
-    </button>
-  </>
-) : (
-  <Link to="/login"
-    className="border border-white text-white hover:bg-white hover:text-black px-4 py-2 rounded-lg text-sm font-medium transition-all">
-    Login
-  </Link>
-)}
+            <div className="flex items-center gap-3">
+              <Link to={getDashboardPath(user.role)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition-colors hover:border-white/25 hover:text-white">
+                {user.name?.split(" ")[0]}
+              </Link>
+              <button onClick={logout} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition-colors hover:border-white/25 hover:text-white">
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90">
+              Login
+            </Link>
+          )}
+        </div>
 
-        {/* Mobile Hamburger */}
         <button
-          className="md:hidden text-gray-300"
+          className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 transition-colors hover:border-white/25 hover:text-white md:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle navigation"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {menuOpen
-              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            }
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {menuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
           </svg>
         </button>
       </div>
 
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-gray-950 px-4 pb-4 border-t border-gray-800">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              onClick={() => setMenuOpen(false)}
-              className={`block py-2 text-sm border-b border-gray-800 ${
-                pathname === link.path ? "text-white" : "text-gray-400"
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
-          <Link
-            to="/login"
-            onClick={() => setMenuOpen(false)}
-            className="block mt-3 border border-white text-white text-center py-2 rounded-lg text-sm"
-          >
-            Login
-          </Link>
+      <div
+        className={`overflow-hidden border-t border-white/10 bg-black/95 md:hidden transition-all duration-300 ${
+          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl px-4 py-4">
+          {activeLink && (
+            <p className="mb-4 text-[11px] uppercase tracking-[0.3em] text-white/35">
+              {activeLink.name}
+            </p>
+          )}
+          <div className="grid gap-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setMenuOpen(false)}
+                className={`rounded-2xl border px-4 py-3 text-sm transition-colors ${
+                  pathname === link.path
+                    ? "border-white/20 bg-white/10 text-white"
+                    : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
+          <div className="mt-4">
+            {user ? (
+              <div className="flex gap-3">
+                <Link
+                  to={getDashboardPath(user.role)}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-white/70"
+                >
+                  {user.name?.split(" ")[0]}
+                </Link>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    logout();
+                  }}
+                  className="rounded-full bg-white px-4 py-3 text-sm font-medium text-black"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-full bg-white px-4 py-3 text-center text-sm font-medium text-black"
+              >
+                Login
+              </Link>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </nav>
   );
 };

@@ -1,6 +1,46 @@
 import { useEffect, useState } from "react";
 import { getProjects } from "../services/api";
 
+const ProjectCard = ({ project, index }) => (
+  <div
+    className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+    style={{ transitionDelay: `${index * 60}ms` }}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="relative flex h-full flex-col gap-4">
+      {project.featured && (
+        <span className="w-fit rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-emerald-200">
+          Featured
+        </span>
+      )}
+      <h3 className="text-xl font-semibold text-white">{project.title}</h3>
+      <p className="flex-1 text-sm leading-7 text-white/60">{project.description}</p>
+      <div className="flex flex-wrap gap-2">
+        {project.techStack?.map((tech) => (
+          <span key={tech} className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/70">
+            {tech}
+          </span>
+        ))}
+      </div>
+      {project.contributors?.length > 0 && (
+        <p className="text-xs text-white/40">By {project.contributors.join(", ")}</p>
+      )}
+      <div className="flex gap-3 pt-1">
+        {project.githubUrl && (
+          <a href={project.githubUrl} target="_blank" rel="noreferrer" className="rounded-full border border-white/12 px-4 py-2 text-xs font-medium text-white/75 transition-colors hover:border-white/30 hover:text-white">
+            GitHub
+          </a>
+        )}
+        {project.demoUrl && (
+          <a href={project.demoUrl} target="_blank" rel="noreferrer" className="rounded-full border border-white/12 px-4 py-2 text-xs font-medium text-white/75 transition-colors hover:border-white/30 hover:text-white">
+            Live Demo
+          </a>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,50 +53,31 @@ const Projects = () => {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-20">
-      <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">What We've Built</p>
-      <h1 className="text-4xl font-bold text-white mb-12">Projects</h1>
+    <div className="relative mx-auto max-w-7xl px-4 py-20">
+      <div className="absolute left-0 top-16 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
+      <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
+
+      <div className="relative mb-14 max-w-3xl">
+        <p className="text-xs uppercase tracking-[0.3em] text-white/45">What We Built</p>
+        <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
+          Projects with a sharper presentation layer.
+        </h1>
+        <p className="mt-5 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
+          Same project data, cleaner visual structure, better hierarchy, and softer motion.
+        </p>
+      </div>
 
       {loading ? (
-        <p className="text-gray-600 text-sm">Loading...</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {projects.map((p) => (
-            <div key={p._id}
-              className="border border-gray-800 rounded-xl p-6 bg-gray-900 flex flex-col gap-3 hover:border-gray-600 transition-colors">
-              {p.featured && (
-                <span className="text-xs bg-white text-black px-2 py-0.5 rounded-full font-semibold w-fit">
-                  Featured
-                </span>
-              )}
-              <h3 className="text-white font-semibold text-lg">{p.title}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed flex-1">{p.description}</p>
-              <div className="flex flex-wrap gap-2">
-                {p.techStack?.map((tech) => (
-                  <span key={tech} className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded-md">
-                    {tech}
-                  </span>
-                ))}
-              </div>
-              {p.contributors?.length > 0 && (
-                <p className="text-xs text-gray-600">By {p.contributors.join(", ")}</p>
-              )}
-              <div className="flex gap-3 mt-1">
-                {p.githubUrl && (
-                  <a href={p.githubUrl} target="_blank" rel="noreferrer"
-                    className="text-xs border border-gray-700 text-gray-300 hover:text-white hover:border-white px-3 py-1 rounded-lg transition-colors">
-                    GitHub
-                  </a>
-                )}
-                {p.demoUrl && (
-                  <a href={p.demoUrl} target="_blank" rel="noreferrer"
-                    className="text-xs border border-gray-700 text-gray-300 hover:text-white hover:border-white px-3 py-1 rounded-lg transition-colors">
-                    Live Demo
-                  </a>
-                )}
-              </div>
-            </div>
+        <p className="text-sm text-white/45">Loading...</p>
+      ) : projects.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {projects.map((project, index) => (
+            <ProjectCard key={project._id} project={project} index={index} />
           ))}
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-white/55">
+          No projects found.
         </div>
       )}
     </div>
