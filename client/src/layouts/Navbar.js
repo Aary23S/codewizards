@@ -44,23 +44,25 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
-          <ul className="flex items-center gap-5 text-sm font-medium">
-            {navLinks.map((link) => (
-              <li key={link.path} className="relative">
-                <Link
-                  to={link.path}
-                  className={`transition-colors hover:text-white ${
-                    pathname === link.path ? "text-white" : "text-white/55"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-                {pathname === link.path && (
-                  <span className="absolute -bottom-2 left-0 h-px w-full bg-white" />
-                )}
-              </li>
-            ))}
-          </ul>
+          {user && (
+            <ul className="flex items-center gap-5 text-sm font-medium">
+              {navLinks.map((link) => (
+                <li key={link.path} className="relative">
+                  <Link
+                    to={link.path}
+                    className={`transition-colors hover:text-white ${
+                      pathname === link.path ? "text-white" : "text-white/55"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                  {pathname === link.path && (
+                    <span className="absolute -bottom-2 left-0 h-px w-full bg-white" />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
 
           {user ? (
             <div className="flex items-center gap-3">
@@ -72,9 +74,14 @@ const Navbar = () => {
               </button>
             </div>
           ) : (
-            <Link to="/login" className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90">
-              Login
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link to="/register" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition-colors hover:border-white/25 hover:text-white">
+                Register
+              </Link>
+              <Link to="/login" className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90">
+                Login
+              </Link>
+            </div>
           )}
         </div>
 
@@ -104,22 +111,24 @@ const Navbar = () => {
               {activeLink.name}
             </p>
           )}
-          <div className="grid gap-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setMenuOpen(false)}
-                className={`rounded-2xl border px-4 py-3 text-sm transition-colors ${
-                  pathname === link.path
-                    ? "border-white/20 bg-white/10 text-white"
-                    : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-          </div>
+          {user && (
+            <div className="grid gap-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setMenuOpen(false)}
+                  className={`rounded-2xl border px-4 py-3 text-sm transition-colors ${
+                    pathname === link.path
+                      ? "border-white/20 bg-white/10 text-white"
+                      : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          )}
           <div className="mt-4">
             {user ? (
               <div className="flex gap-3">
@@ -138,13 +147,22 @@ const Navbar = () => {
                 </button>
               </div>
             ) : (
-              <Link
-                to="/login"
-                onClick={() => setMenuOpen(false)}
-                className="block rounded-full bg-white px-4 py-3 text-center text-sm font-medium text-black"
-              >
-                Login
-              </Link>
+              <div className="flex gap-3">
+                <Link
+                  to="/register"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-white/70"
+                >
+                  Register
+                </Link>
+                <Link
+                  to="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex-1 rounded-full bg-white px-4 py-3 text-center text-sm font-medium text-black"
+                >
+                  Login
+                </Link>
+              </div>
             )}
           </div>
         </div>

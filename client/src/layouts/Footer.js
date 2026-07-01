@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.jpeg";
 
 const Footer = () => {
+  const { user } = useAuth();
+
   return (
     <footer className="mt-16 border-t border-white/10 bg-black text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-3">
@@ -17,23 +20,31 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="text-xs uppercase tracking-[0.28em] text-white/45">Quick Links</h4>
-          <ul className="mt-4 space-y-3 text-sm text-white/60">
-            {[
-              { name: "About", path: "/about" },
-              { name: "Projects", path: "/projects" },
-              { name: "Events", path: "/events" },
-              { name: "Legacy", path: "/legacy" },
-              { name: "Team", path: "/team" },
-              { name: "Contact", path: "/contact" },
-            ].map((link) => (
-              <li key={link.path}>
-                <Link to={link.path} className="transition-colors hover:text-white">
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <h4 className="text-xs uppercase tracking-[0.28em] text-white/45">
+            {user ? "Quick Links" : "Locked Access"}
+          </h4>
+          {user ? (
+            <ul className="mt-4 space-y-3 text-sm text-white/60">
+              {[
+                { name: "About", path: "/about" },
+                { name: "Projects", path: "/projects" },
+                { name: "Events", path: "/events" },
+                { name: "Legacy", path: "/legacy" },
+                { name: "Team", path: "/team" },
+                { name: "Contact", path: "/contact" },
+              ].map((link) => (
+                <li key={link.path}>
+                  <Link to={link.path} className="transition-colors hover:text-white">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 max-w-sm text-sm leading-7 text-white/55">
+              Sign in to access the community sections and role-based features.
+            </p>
+          )}
         </div>
 
         <div>

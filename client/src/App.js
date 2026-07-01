@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 import { useAuth } from "./context/AuthContext";
 import Navbar from "./layouts/Navbar";
 import Footer from "./layouts/Footer";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute, { GuestRoute } from "./components/ProtectedRoute";
 import { getDashboardPath } from "./utils/getDashboardPath";
 
 import Home from "./pages/Home";
@@ -66,58 +66,199 @@ function App() {
       <Navbar />
       <main>
         <Routes>
-          {/* Public */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/legacy" element={<Legacy />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/team" element={<Team />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/connect" element={<Connect />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <Login />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <Register />
+              </GuestRoute>
+            }
+          />
 
-          <Route path="/dashboard" element={<DashboardRedirect />} />
-          <Route path="/resources" element={<Resources />} />
-
-          {/* Protected */}
-          <Route path="/student-dashboard" element={
-            <ProtectedRoute roles={["student"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/senior-dashboard" element={
-            <ProtectedRoute roles={["senior"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/alumni-dashboard" element={
-            <ProtectedRoute roles={["alumni"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/admin" element={
-            <ProtectedRoute roles={["admin"]}>
-              <Admin />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/profile/:id" element={<ProfileView />} />
-          <Route path="/profile/:id/edit" element={<OwnProfileEditRoute />} />
-
-          <Route path="/opportunities" element={<Opportunities />} />
-
-          <Route path="/doubts" element={<Doubts />} />
-
-          <Route path="/leaderboard" element={<Leaderboard />} />
-
-          <Route path="/blogs" element={<Blogs />} />
-          <Route path="/blogs/:id" element={<BlogPost />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute>
+                <About />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/legacy"
+            element={
+              <ProtectedRoute>
+                <Legacy />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <Projects />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events"
+            element={
+              <ProtectedRoute>
+                <Events />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gallery"
+            element={
+              <ProtectedRoute>
+                <Gallery />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/team"
+            element={
+              <ProtectedRoute>
+                <Team />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <ProtectedRoute>
+                <Contact />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/connect"
+            element={
+              <ProtectedRoute>
+                <Connect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardRedirect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/resources"
+            element={
+              <ProtectedRoute>
+                <Resources />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student-dashboard"
+            element={
+              <ProtectedRoute roles={["student"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/senior-dashboard"
+            element={
+              <ProtectedRoute roles={["senior"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/alumni-dashboard"
+            element={
+              <ProtectedRoute roles={["alumni"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/:id"
+            element={
+              <ProtectedRoute>
+                <ProfileView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/:id/edit"
+            element={
+              <ProtectedRoute>
+                <OwnProfileEditRoute />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opportunities"
+            element={
+              <ProtectedRoute>
+                <Opportunities />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doubts"
+            element={
+              <ProtectedRoute>
+                <Doubts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/blogs"
+            element={
+              <ProtectedRoute>
+                <Blogs />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/blogs/:id"
+            element={
+              <ProtectedRoute>
+                <BlogPost />
+              </ProtectedRoute>
+            }
+          />
 
         </Routes>
       </main>

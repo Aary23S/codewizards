@@ -16,4 +16,14 @@ const ProtectedRoute = ({ children, roles }) => {
   return children;
 };
 
+export const GuestRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div className="py-32 text-center text-gray-500">Loading...</div>;
+
+  if (user) return <Navigate to="/" replace />;
+
+  return children;
+};
+
 export default ProtectedRoute;

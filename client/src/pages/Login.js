@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -11,10 +11,12 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { user, login } = useAuth();
   const navigate = useNavigate();
-  if (user) {
-  navigate(getDashboardPath(user.role), { replace: true });
-  return null;
-}
+
+  useEffect(() => {
+    if (user) {
+      navigate(getDashboardPath(user.role), { replace: true });
+    }
+  }, [navigate, user]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 

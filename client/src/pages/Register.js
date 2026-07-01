@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -12,8 +12,14 @@ const Register = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "", batch: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate(getDashboardPath(user.role), { replace: true });
+    }
+  }, [navigate, user]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
