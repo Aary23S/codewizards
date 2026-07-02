@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { getDoubts, createDoubt, addReply, toggleResolve, upvoteDoubt } from "../services/api";
+import {
+  getDoubts,
+  createDoubt,
+  addReply,
+  toggleResolve,
+  upvoteDoubt,
+  deleteDoubt,
+  deleteReply,
+} from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const DOMAINS = ["All", "Web", "AI", "Machine Learning", "Flutter", "Backend", "Cyber Security", "Competitive Programming", "Research", "App Dev"];
@@ -12,7 +20,7 @@ const timeAgo = (date) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
-const ReplyThread = ({ doubt, user, onReply, onResolve }) => {
+const ReplyThread = ({ doubt, user, onReply, onResolve, onDeleteReply }) => {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -48,6 +56,14 @@ const ReplyThread = ({ doubt, user, onReply, onResolve }) => {
                 <span className="text-xs text-white/35">{timeAgo(reply.createdAt)}</span>
               </div>
               <p className="mt-2 text-sm leading-7 text-white/70">{reply.body}</p>
+              {user && (user.role === "admin" || reply.author?._id === user._id) && (
+                <button
+                  onClick={() => onDeleteReply(doubt._id, reply._id)}
+                  className="mt-3 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] text-red-200 transition-colors hover:border-red-400/40"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -84,7 +100,7 @@ const ReplyThread = ({ doubt, user, onReply, onResolve }) => {
   );
 };
 
-const DoubtCard = ({ doubt, user, onReply, onResolve, onUpvote }) => {
+const DoubtCard = ({ doubt, user, onReply, onResolve, onUpvote, onDeleteDoubt, onDeleteReply }) => {
   const [expanded, setExpanded] = useState(false);
   const hasUpvoted = user && doubt.upvotes?.map((id) => id.toString()).includes(user._id);
 
@@ -126,8 +142,24 @@ const DoubtCard = ({ doubt, user, onReply, onResolve, onUpvote }) => {
               </button>
             </div>
 
-            {expanded && <ReplyThread doubt={doubt} user={user} onReply={onReply} onResolve={onResolve} />}
+            {expanded && (
+              <ReplyThread
+                doubt={doubt}
+                user={user}
+                onReply={onReply}
+                onResolve={onResolve}
+                onDeleteReply={onDeleteReply}
+              />
+            )}
           </div>
+          {user && (user.role === "admin" || doubt.author?._id === user._id) && (
+            <button
+              onClick={() => onDeleteDoubt(doubt._id)}
+              className="ml-4 mt-4 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] text-red-200 transition-colors hover:border-red-400/40"
+            >
+              Delete
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -201,10 +233,26 @@ const Doubts = () => {
     );
   };
 
+  const handleDeleteDoubt = async (doubtId) => {
+    await deleteDoubt(doubtId);
+    setDoubts((prev) => prev.filter((d) => d._id !== doubtId));
+  };
+
+  const handleDeleteReply = async (doubtId, replyId) => {
+    await deleteReply(doubtId, replyId);
+    setDoubts((prev) =>
+      prev.map((d) =>
+        d._id === doubtId
+          ? { ...d, replies: d.replies?.filter((reply) => reply._id !== replyId) || [] }
+          : d
+      )
+    );
+  };
+
   return (
     <div className="relative mx-auto max-w-5xl px-4 py-20">
-      <div className="absolute left-0 top-16 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
-      <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-rose-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute left-0 top-16 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-28 h-72 w-72 rounded-full bg-rose-500/10 blur-3xl" />
 
       <div className="relative mb-10 max-w-3xl">
         <p className="text-xs uppercase tracking-[0.3em] text-white/45">Ask Anything</p>
@@ -291,7 +339,16 @@ const Doubts = () => {
       ) : doubts.length > 0 ? (
         <div className="flex flex-col gap-4">
           {doubts.map((doubt) => (
-            <DoubtCard key={doubt._id} doubt={doubt} user={user} onReply={handleReply} onResolve={handleResolve} onUpvote={handleUpvote} />
+            <DoubtCard
+              key={doubt._id}
+              doubt={doubt}
+              user={user}
+              onReply={handleReply}
+              onResolve={handleResolve}
+              onUpvote={handleUpvote}
+              onDeleteDoubt={handleDeleteDoubt}
+              onDeleteReply={handleDeleteReply}
+            />
           ))}
         </div>
       ) : (

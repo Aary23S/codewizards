@@ -102,8 +102,8 @@ const Opportunities = () => {
 
   return (
     <div className="relative mx-auto max-w-6xl px-4 py-20">
-      <div className="absolute left-0 top-16 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
-      <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute left-0 top-16 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
 
       <div className="relative mb-10 max-w-3xl">
         <p className="text-xs uppercase tracking-[0.3em] text-white/45">Grow Your Career</p>

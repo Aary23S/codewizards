@@ -118,6 +118,126 @@ const AnnouncementCard = ({ announcement, index }) => (
   </div>
 );
 
+const CarouselShell = ({ title, eyebrow, description, action, items, renderItem, emptyMessage, loading }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(1);
+
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      const width = window.innerWidth;
+      setVisibleCount(width >= 1280 ? 3 : width >= 768 ? 2 : 1);
+    };
+
+    updateVisibleCount();
+    window.addEventListener("resize", updateVisibleCount);
+    return () => window.removeEventListener("resize", updateVisibleCount);
+  }, []);
+
+  const cycleLength = Math.max(1, items.length - visibleCount + 1);
+
+  useEffect(() => {
+    if (cycleLength <= 1 || paused) return undefined;
+
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % cycleLength);
+    }, 4200);
+
+    return () => window.clearInterval(timer);
+  }, [cycleLength, paused]);
+
+  useEffect(() => {
+    if (activeIndex >= cycleLength) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, cycleLength]);
+
+  const maxIndex = Math.max(0, items.length - visibleCount);
+  const safeIndex = Math.min(activeIndex, maxIndex);
+  const slideWidth = 100 / visibleCount;
+  const trackWidth = items.length * slideWidth;
+  const translatePct = items.length > visibleCount ? safeIndex * slideWidth : 0;
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 pb-24">
+      <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
+        <div className="max-w-2xl">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/45">{eyebrow}</p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white md:text-4xl">{title}</h2>
+          {description && <p className="mt-3 text-sm leading-7 text-white/55 md:text-base">{description}</p>}
+        </div>
+        {action}
+      </div>
+
+      {loading ? (
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-white/55">Loading...</div>
+      ) : items.length === 0 ? (
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-white/55">{emptyMessage}</div>
+      ) : (
+        <div
+          className="rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.22)]"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              {items.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    index === safeIndex
+                      ? "w-8 bg-white"
+                      : "w-2.5 bg-white/25 hover:bg-white/45"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveIndex((current) => (current - 1 + cycleLength) % cycleLength)}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.25em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveIndex((current) => (current + 1) % cycleLength)}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.25em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-hidden">
+            <div
+              className="flex gap-4 transition-transform duration-700 ease-out"
+              style={{
+                width: `${trackWidth}%`,
+                transform: `translateX(-${translatePct}%)`,
+              }}
+            >
+              {items.map((item, index) => (
+                <div
+                  key={item._id}
+                  className="min-w-0 shrink-0"
+                  style={{ width: `${slideWidth}%` }}
+                >
+                  {renderItem(item, index)}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
 const Home = () => {
   const [projects, setProjects] = useState([]);
   const [events, setEvents] = useState([]);
@@ -228,27 +348,20 @@ const Home = () => {
         )}
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-24">
-        <SectionHeader
-          eyebrow="Events"
-          title="Recent and upcoming events"
-          description="A compact view of the latest workshops, seminars, and activity around the club."
-          action={
-            <Link to="/events" className="text-sm text-white/55 transition-colors hover:text-white">
-              View all →
-            </Link>
-          }
-        />
-        {loading ? (
-          <p className="text-sm text-white/45">Loading...</p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {events.map((event, index) => (
-              <EventCard key={event._id} event={event} index={index} />
-            ))}
-          </div>
-        )}
-      </section>
+      <CarouselShell
+        eyebrow="Events"
+        title="Recent and upcoming events"
+        description="A compact view of the latest workshops, seminars, and activity around the club."
+        action={
+          <Link to="/events" className="text-sm text-white/55 transition-colors hover:text-white">
+            View all →
+          </Link>
+        }
+        items={events}
+        loading={loading}
+        emptyMessage="No events found."
+        renderItem={(event, index) => <EventCard event={event} index={index} />}
+      />
 
       <section className="mx-auto max-w-7xl px-4 pb-24">
         <div className="rounded-[2rem] border border-white/10 bg-white/5 px-8 py-12 text-center shadow-[0_20px_80px_rgba(0,0,0,0.22)]">

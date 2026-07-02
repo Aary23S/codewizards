@@ -37,4 +37,4 @@ app.use("/api/v1/team", require("./routes/team.routes"));
 app.use("/api/v1/contact", require("./routes/contact.routes"));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}  🎉`));
