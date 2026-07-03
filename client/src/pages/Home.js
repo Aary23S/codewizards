@@ -118,9 +118,35 @@ const AnnouncementCard = ({ announcement, index }) => (
   </div>
 );
 
+const HeroVisual = () => (
+  <div className="hero-visual" aria-hidden="true">
+    <div className="hero-visual__frame">
+      <div className="hero-visual__stage">
+        <div className="hero-visual__terminal">
+          <div className="hero-visual__terminal-bar">
+            <span />
+            <span />
+            <span />
+          </div>
+          <pre className="hero-visual__code">
+{`const magic = () => {
+  return "CodeWizards";
+}`}
+          </pre>
+          <div className="hero-visual__cursor" />
+        </div>
+
+        <div className="hero-visual__chip hero-visual__chip--one">C++</div>
+        <div className="hero-visual__chip hero-visual__chip--two">Python</div>
+        <div className="hero-visual__chip hero-visual__chip--three">AI</div>
+        <div className="hero-visual__chip hero-visual__chip--four">Wizard</div>
+      </div>
+    </div>
+  </div>
+);
+
 const CarouselShell = ({ title, eyebrow, description, action, items, renderItem, emptyMessage, loading }) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [visibleCount, setVisibleCount] = useState(1);
 
   useEffect(() => {
@@ -134,23 +160,12 @@ const CarouselShell = ({ title, eyebrow, description, action, items, renderItem,
     return () => window.removeEventListener("resize", updateVisibleCount);
   }, []);
 
-  const cycleLength = Math.max(1, items.length - visibleCount + 1);
-
   useEffect(() => {
-    if (cycleLength <= 1 || paused) return undefined;
-
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % cycleLength);
-    }, 4200);
-
-    return () => window.clearInterval(timer);
-  }, [cycleLength, paused]);
-
-  useEffect(() => {
-    if (activeIndex >= cycleLength) {
+    const maxCycle = Math.max(1, items.length - visibleCount + 1);
+    if (activeIndex >= maxCycle) {
       setActiveIndex(0);
     }
-  }, [activeIndex, cycleLength]);
+  }, [activeIndex, items.length, visibleCount]);
 
   const maxIndex = Math.max(0, items.length - visibleCount);
   const safeIndex = Math.min(activeIndex, maxIndex);
@@ -174,11 +189,7 @@ const CarouselShell = ({ title, eyebrow, description, action, items, renderItem,
       ) : items.length === 0 ? (
         <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-white/55">{emptyMessage}</div>
       ) : (
-        <div
-          className="rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.22)]"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-        >
+        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               {items.map((_, index) => (
@@ -198,14 +209,14 @@ const CarouselShell = ({ title, eyebrow, description, action, items, renderItem,
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setActiveIndex((current) => (current - 1 + cycleLength) % cycleLength)}
+                onClick={() => setActiveIndex((current) => Math.max(0, current - 1))}
                 className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.25em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
               >
                 Prev
               </button>
               <button
                 type="button"
-                onClick={() => setActiveIndex((current) => (current + 1) % cycleLength)}
+                onClick={() => setActiveIndex((current) => Math.min(maxIndex, current + 1))}
                 className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.25em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
               >
                 Next
@@ -215,7 +226,7 @@ const CarouselShell = ({ title, eyebrow, description, action, items, renderItem,
 
           <div className="overflow-hidden">
             <div
-              className="flex gap-4 transition-transform duration-700 ease-out"
+              className="flex gap-4 transition-transform duration-300 ease-out"
               style={{
                 width: `${trackWidth}%`,
                 transform: `translateX(-${translatePct}%)`,
@@ -273,32 +284,36 @@ const Home = () => {
       </div>
 
       <section className="mx-auto max-w-7xl px-4 pb-20 pt-20 md:pb-24 md:pt-28">
-        <div className="max-w-4xl">
-          <p className="text-xs uppercase tracking-[0.35em] text-white/45">
-            D.Y. Patil Agriculture & Technical University, Talsande
-          </p>
-          <h1 className="mt-5 text-5xl font-semibold tracking-tight text-white md:text-7xl lg:text-8xl">
-            Code.
-            <span className="block text-white/55">Build.</span>
-            <span className="block text-white/85">Grow.</span>
-          </h1>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-white/60 md:text-lg">
-            CodeWizards is the official coding club connecting students with seniors, projects, and opportunities that matter.
-          </p>
-          <div className="mt-10 flex flex-wrap gap-4">
-            <Link
-              to="/connect"
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90"
-            >
-              Find a Mentor
-            </Link>
-            <Link
-              to="/projects"
-              className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-white/30 hover:bg-white/10"
-            >
-              View Projects
-            </Link>
+        <div className="grid gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
+          <div className="max-w-4xl">
+            <p className="text-xs uppercase tracking-[0.35em] text-white/45">
+              D.Y. Patil Agriculture & Technical University, Talsande
+            </p>
+            <h1 className="mt-5 text-5xl font-semibold tracking-tight text-white md:text-7xl lg:text-8xl">
+              Code.
+              <span className="block text-white/55">Build.</span>
+              <span className="block text-white/85">Grow.</span>
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-white/60 md:text-lg">
+              CodeWizards is the official coding club connecting students with seniors, projects, and opportunities that matter.
+            </p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Link
+                to="/connect"
+                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90"
+              >
+                Find a Mentor
+              </Link>
+              <Link
+                to="/projects"
+                className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-white/30 hover:bg-white/10"
+              >
+                View Projects
+              </Link>
+            </div>
           </div>
+
+          <HeroVisual />
         </div>
       </section>
 
