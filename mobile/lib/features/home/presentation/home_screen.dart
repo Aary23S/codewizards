@@ -232,7 +232,7 @@ class _HeroSection extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                  onPressed: () => context.findAncestorStateOfType<AppShellState>()?.selectIndex(2),
+                  onPressed: () => context.findAncestorStateOfType<AppShellState>()?.selectIndex(4),
                   child: const Text('Find a mentor'),
                 ),
               ),
