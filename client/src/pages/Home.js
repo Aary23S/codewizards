@@ -98,21 +98,34 @@ const EventCard = ({ event, index }) => (
 
 const AnnouncementCard = ({ announcement, index }) => (
   <div
-    className={`group relative overflow-hidden rounded-3xl border p-5 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 ${
-      announcement.important ? "border-white/20 bg-white/8" : "border-white/10 bg-white/5"
+    className={`announcement-card group relative overflow-hidden rounded-3xl border p-5 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 ${
+      announcement.important
+        ? "border-amber-400/20 bg-gradient-to-br from-white/10 via-white/8 to-transparent"
+        : "border-white/10 bg-white/5"
     }`}
-    style={{ transitionDelay: `${index * 50}ms` }}
+    style={{ animationDelay: `${index * 90}ms`, transitionDelay: `${index * 50}ms` }}
   >
     <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-    <div className="relative flex items-start gap-3">
-      {announcement.important && (
-        <span className="mt-0.5 shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-black">
-          Important
-        </span>
-      )}
-      <div>
-        <p className="text-sm font-medium text-white">{announcement.title}</p>
-        <p className="mt-1 text-sm leading-7 text-white/60">{announcement.body}</p>
+    <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-amber-400/0 via-amber-300/60 to-sky-300/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="relative flex items-start gap-4">
+      <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/20 text-xs font-semibold text-white/75">
+        {String(index + 1).padStart(2, "0")}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          {announcement.important && (
+            <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-100">
+              Important
+            </span>
+          )}
+          {!announcement.important && (
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-white/45">
+              Update
+            </span>
+          )}
+        </div>
+        <p className="text-sm font-semibold text-white md:text-base">{announcement.title}</p>
+        <p className="mt-2 text-sm leading-7 text-white/60">{announcement.body}</p>
       </div>
     </div>
   </div>
@@ -333,10 +346,37 @@ const Home = () => {
             title="What the club needs to know"
             description="Short updates, important notices, and operational alerts."
           />
-          <div className="grid gap-4">
-            {announcements.map((announcement, index) => (
-              <AnnouncementCard key={announcement._id} announcement={announcement} index={index} />
-            ))}
+          <div className="announcement-shell grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="announcement-panel group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.12),_transparent_30%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="relative">
+                <p className="text-xs uppercase tracking-[0.35em] text-white/45">Club Feed</p>
+                <h3 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+                  Updates that stay readable and feel alive.
+                </h3>
+                <p className="mt-4 max-w-xl text-sm leading-7 text-white/60 md:text-base">
+                  Important notices rise to the top while the rest stay neatly stacked in a calm, premium feed.
+                </p>
+                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Live status</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{announcements.length} posts</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Priority</p>
+                    <p className="mt-2 text-lg font-semibold text-white">
+                      {announcements.some((item) => item.important) ? "Pinned items" : "General updates"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {announcements.map((announcement, index) => (
+                <AnnouncementCard key={announcement._id} announcement={announcement} index={index} />
+              ))}
+            </div>
           </div>
         </section>
       )}
