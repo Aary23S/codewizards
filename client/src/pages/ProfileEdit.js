@@ -33,6 +33,7 @@ const ProfileEdit = () => {
 
   const [form, setForm] = useState({
     name: "",
+    batch: "",
     bio: "",
     github: "",
     linkedin: "",
@@ -74,6 +75,7 @@ const ProfileEdit = () => {
 
         setForm({
           name: u.name || "",
+          batch: u.batch ?? "",
           bio: u.bio || "",
           github: u.github || "",
           linkedin: u.linkedin || "",
@@ -178,7 +180,18 @@ const ProfileEdit = () => {
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                required
+              required
+              />
+
+              <FormInput
+                label="Batch Year"
+                type="number"
+                name="batch"
+                value={form.batch}
+                onChange={handleChange}
+                placeholder="2026"
+                min={2000}
+                max={new Date().getFullYear() + 10}
               />
 
               <div className="flex flex-col gap-1.5">
