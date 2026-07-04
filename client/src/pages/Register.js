@@ -7,9 +7,26 @@ import { getDashboardPath } from "../utils/getDashboardPath";
 
 const currentYear = new Date().getFullYear();
 
+const deriveRolePreview = (batch, programDurationYears) => {
+  const batchYear = Number(batch);
+  if (!Number.isFinite(batchYear)) return "student";
+
+  const duration = Number(programDurationYears) > 0 ? Number(programDurationYears) : 4;
+  const diff = currentYear - batchYear;
+  if (diff < duration) return "student";
+  if (diff === duration) return "senior";
+  return "alumni";
+};
+
 const Register = () => {
-  const [accountType, setAccountType] = useState("student");
-  const [form, setForm] = useState({ name: "", email: "", password: "", batch: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    batch: "",
+    programName: "Engineering",
+    programDurationYears: 4,
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { user, login } = useAuth();
@@ -34,7 +51,11 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const res = await registerUser({ ...form, batch: Number(form.batch), accountType });
+      const res = await registerUser({
+        ...form,
+        batch: Number(form.batch),
+        programDurationYears: Number(form.programDurationYears),
+      });
       const { token, ...userData } = res.data.data;
       login(token, userData);
       navigate(getDashboardPath(userData.role));
@@ -57,13 +78,18 @@ const Register = () => {
           <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Join us</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">Register</h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-white/65 md:text-base">
-            Create a role-based account and join the community in the same interface used across the site.
+            Create an account with the same role rules used across the mobile app and backend.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            {["Students", "Seniors", "Alumni"].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm text-white/70">
-                {item}
+            {[
+              { title: "Program", value: form.programName || "Engineering" },
+              { title: "Duration", value: `${form.programDurationYears || 4} years` },
+              { title: "Role preview", value: deriveRolePreview(form.batch, form.programDurationYears) },
+            ].map((item) => (
+              <div key={item.title} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
+                <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">{item.title}</div>
+                <div className="mt-2 text-sm font-semibold text-white/80">{item.value}</div>
               </div>
             ))}
           </div>
@@ -71,37 +97,17 @@ const Register = () => {
 
         <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.18)] md:p-8">
           <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">Create account</p>
-          <h2 className="mt-3 text-2xl font-semibold text-white">Choose your path</h2>
+          <h2 className="mt-3 text-2xl font-semibold text-white">Enter your academic track</h2>
           <p className="mt-3 text-sm leading-6 text-white/60">
-            Select the account type that matches your role, then continue with the existing registration flow.
+            Role is derived automatically from your batch year and program duration. No manual role selection.
           </p>
-
-          <div className="mt-8 flex gap-3">
-            {[
-              { value: "student", label: "Student" },
-              { value: "senior_alumni", label: "Senior / Alumni" },
-            ].map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setAccountType(opt.value)}
-                className={`flex-1 rounded-full border px-4 py-3 text-sm font-semibold transition ${
-                  accountType === opt.value
-                    ? "border-white bg-white text-black"
-                    : "border-white/10 bg-white/5 text-white/65 hover:border-white/20 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
 
           <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
             <FormInput label="Full Name" type="text" name="name" value={form.name} onChange={handleChange} required />
             <FormInput label="Email" type="email" name="email" value={form.email} onChange={handleChange} required />
             <FormInput label="Password" type="password" name="password" value={form.password} onChange={handleChange} minLength={6} required />
             <FormInput
-              label={accountType === "student" ? "Expected Graduation Year" : "Graduation Batch Year"}
+              label="Batch / joining year"
               type="number"
               name="batch"
               value={form.batch}
@@ -111,6 +117,33 @@ const Register = () => {
               max={currentYear + 10}
               required
             />
+            <FormInput
+              label="Program name"
+              type="text"
+              name="programName"
+              value={form.programName}
+              onChange={handleChange}
+              required
+            />
+            <div>
+              <label className="mb-2 block text-[11px] uppercase tracking-[0.3em] text-white/45">
+                Program duration
+              </label>
+              <select
+                name="programDurationYears"
+                value={form.programDurationYears}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none transition focus:border-white/30"
+              >
+                <option value={2}>2 years</option>
+                <option value={3}>3 years</option>
+                <option value={4}>4 years</option>
+              </select>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/70">
+              Auto role preview:{" "}
+              <span className="font-semibold text-white">{deriveRolePreview(form.batch, form.programDurationYears).toUpperCase()}</span>
+            </div>
 
             {error && (
               <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
