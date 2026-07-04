@@ -5,6 +5,74 @@ class AdminRepository {
 
   final ApiClient _apiClient;
 
+  Future<List<Map<String, dynamic>>> fetchList(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final data = await _apiClient.getData(path, queryParameters: queryParameters);
+    final list = data is List ? data : const [];
+    return list
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> fetchObject(String path) async {
+    final data = await _apiClient.getData(path);
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  Future<Map<String, dynamic>> updateObject(String path, Map<String, dynamic> payload) async {
+    final data = await _apiClient.patchData(path, data: payload);
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  Future<Map<String, dynamic>> createObject(String path, Map<String, dynamic> payload) async {
+    final data = await _apiClient.postData(path, data: payload);
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  Future<void> deleteObject(String path) async {
+    await _apiClient.deleteData(path);
+  }
+
+  Future<Map<String, dynamic>> fetchContact() async {
+    return fetchObject('/contact');
+  }
+
+  Future<Map<String, dynamic>> updateContact(Map<String, dynamic> payload) async {
+    return updateObject('/contact', payload);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPointRules() async {
+    return fetchList('/point-rules');
+  }
+
+  Future<Map<String, dynamic>> updatePointRule(String id, Map<String, dynamic> payload) async {
+    return updateObject('/point-rules/$id', payload);
+  }
+
+  Future<Map<String, dynamic>> createUser(Map<String, dynamic> payload) async {
+    return createObject('/users', payload);
+  }
+
+  Future<Map<String, dynamic>> updateUser(String id, Map<String, dynamic> payload) async {
+    return updateObject('/users/$id', payload);
+  }
+
+  Future<void> deleteUser(String id) async {
+    await deleteObject('/users/$id');
+  }
+
+  Future<Map<String, dynamic>> suspendUser(String id, {required bool isSuspended, String? suspendedReason}) async {
+    final payload = <String, dynamic>{
+      'isSuspended': isSuspended,
+      if (suspendedReason != null && suspendedReason.trim().isNotEmpty) 'suspendedReason': suspendedReason.trim(),
+    };
+    final data = await _apiClient.patchData('/users/$id/suspend', data: payload);
+    return Map<String, dynamic>.from(data as Map);
+  }
+
   Future<AdminOverview> fetchOverview() async {
     final results = await Future.wait([
       _count('/users'),
