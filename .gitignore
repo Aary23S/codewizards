@@ -6,3 +6,8 @@ docs/FLUTTER_BACKEND_CONTRACT.md
 mobile/lib/features/explore/data/doubt_item.dart
 
 mobile/linux/flutter/generated_plugin_registrant.cc
+# Inside mobile/.gitignore
+.metadata
+/linux/flutter/
+/windows/flutter/
+/macos/Flutter/
