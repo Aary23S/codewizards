@@ -105,6 +105,31 @@ class ExploreRepository {
     return _mapList(data, BlogItem.fromJson);
   }
 
+  Future<BlogItem> fetchBlog(String id) async {
+    final data = await _apiClient.getData('/blogs/$id');
+    return BlogItem.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<BlogItem> createBlog({
+    required String title,
+    required String content,
+    String? coverImage,
+    List<String>? tags,
+  }) async {
+    final payload = <String, dynamic>{
+      'title': title,
+      'content': content,
+      if (coverImage != null && coverImage.isNotEmpty) 'coverImage': coverImage,
+      if (tags != null && tags.isNotEmpty) 'tags': tags,
+    };
+    final data = await _apiClient.postData('/blogs', data: payload);
+    return BlogItem.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<void> deleteBlog(String id) async {
+    await _apiClient.deleteData('/blogs/$id');
+  }
+
   Future<ContactInfoItem> fetchContact() async {
     final data = await _apiClient.getData('/contact');
     return ContactInfoItem.fromJson(Map<String, dynamic>.from(data as Map));

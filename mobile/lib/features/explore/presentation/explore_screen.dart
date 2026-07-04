@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/auth_controller.dart';
@@ -766,34 +768,391 @@ class LeaderboardExplorePage extends StatelessWidget {
   }
 }
 
-class BlogExplorePage extends StatelessWidget {
+class BlogExplorePage extends StatefulWidget {
   const BlogExplorePage({super.key});
 
   @override
+  State<BlogExplorePage> createState() => _BlogExplorePageState();
+}
+
+class _BlogExplorePageState extends State<BlogExplorePage> {
+  Future<List<BlogItem>>? _future;
+  String? _errorMessage;
+  String? _activeTag;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ??= context.read<ExploreRepository>().fetchBlogs();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _errorMessage = null;
+      _future = context.read<ExploreRepository>().fetchBlogs();
+    });
+
+    try {
+      await _future;
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = _friendlyError(error));
+    }
+  }
+
+  Future<void> _openBlog(BlogItem blog) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _BlogDetailPage(blogId: blog.id),
+      ),
+    );
+    if (!mounted) return;
+    await _refresh();
+  }
+
+  Future<void> _createBlog() async {
+    final draft = await showModalBottomSheet<_BlogDraft>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const _BlogCreateSheet(),
+    );
+    if (draft == null || !mounted) return;
+
+    try {
+      await context.read<ExploreRepository>().createBlog(
+            title: draft.title,
+            content: draft.content,
+            coverImage: draft.coverImage,
+            tags: draft.tags,
+          );
+      await _refresh();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return _SectionDataPage<BlogItem>(
+    final currentUser = context.watch<AuthController>().user;
+
+    return _SectionScaffold(
       title: 'Blog',
       eyebrow: 'Ideas and learnings',
-      description: 'Fresh posts from the blog feed.',
-      loader: (repo) => repo.fetchBlogs(),
-      emptyMessage: 'No blog posts yet.',
-      itemBuilder: (context, blog, index) => _BlogCard(blog: blog),
+      description: 'Users can post blog entries, browse posts, and read them in a dedicated view.',
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<List<BlogItem>>(
+          future: _future,
+          builder: (context, snapshot) {
+            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+
+            if (snapshot.hasError || _errorMessage != null) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                children: [
+                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                ],
+              );
+            }
+
+            final items = snapshot.data ?? const <BlogItem>[];
+            final tags = <String>{
+              'all',
+              ...items.expand((blog) => blog.tags).map((tag) => tag.toLowerCase()),
+            }.toList();
+            final filtered = _activeTag == null || _activeTag == 'all'
+                ? items
+                : items.where((blog) => blog.tags.map((tag) => tag.toLowerCase()).contains(_activeTag)).toList();
+
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              children: [
+                _SectionBlock(
+                  eyebrow: 'Blog',
+                  title: 'Blog feed, upgraded visually.',
+                  description: 'Write articles, browse posts, and open a dedicated read view for each entry.',
+                  child: loading
+                      ? const _LoadingBlock()
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (currentUser != null)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton.icon(
+                                  onPressed: _createBlog,
+                                  icon: const Icon(Icons.edit_outlined),
+                                  label: const Text('New post'),
+                                ),
+                              ),
+                            if (currentUser != null) const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: tags
+                                  .map(
+                                    (tag) => ChoiceChip(
+                                      label: Text(_prettyFilterLabel(tag)),
+                                      selected: (_activeTag ?? 'all') == tag,
+                                      onSelected: (_) => setState(() => _activeTag = tag),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            if (filtered.isEmpty)
+                              const _EmptyBlock(message: 'No blog posts yet.')
+                            else
+                              Column(
+                                children: filtered
+                                    .map(
+                                      (blog) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 12),
+                                        child: _BlogCard(
+                                          blog: blog,
+                                          onTap: () => _openBlog(blog),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
 
-class ContactExplorePage extends StatelessWidget {
+class ContactExplorePage extends StatefulWidget {
   const ContactExplorePage({super.key});
 
   @override
+  State<ContactExplorePage> createState() => _ContactExplorePageState();
+}
+
+class _ContactExplorePageState extends State<ContactExplorePage> {
+  Future<ContactInfoItem>? _future;
+  String? _errorMessage;
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _messageController = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ??= context.read<ExploreRepository>().fetchContact();
+
+    final currentUser = context.read<AuthController>().user;
+    if (_nameController.text.isEmpty && currentUser != null) {
+      _nameController.text = currentUser.name;
+    }
+    if (_emailController.text.isEmpty && currentUser != null) {
+      _emailController.text = currentUser.email;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _errorMessage = null;
+      _future = context.read<ExploreRepository>().fetchContact();
+    });
+
+    try {
+      await _future;
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = _friendlyError(error));
+    }
+  }
+
+  Future<void> _sendMessage(ContactInfoItem info) async {
+    final targetEmail = info.email?.trim();
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final message = _messageController.text.trim();
+    if (targetEmail == null || targetEmail.isEmpty || message.isEmpty || _sending) return;
+
+    setState(() => _sending = true);
+    try {
+      final subject = Uri.encodeComponent('CodeWizards contact from ${name.isEmpty ? 'mobile app' : name}');
+      final body = Uri.encodeComponent([
+        if (name.isNotEmpty) 'Name: $name',
+        if (email.isNotEmpty) 'Email: $email',
+        '',
+        message,
+      ].join('\n'));
+      final uri = Uri.parse('mailto:$targetEmail?subject=$subject&body=$body');
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } on MissingPluginException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email launcher is initializing. Please fully restart the app once.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return _SectionSinglePage<ContactInfoItem>(
+    return _SectionScaffold(
       title: 'Contact',
-      eyebrow: 'Reach the club',
-      description: 'Direct contact data from the backend.',
-      loader: (repo) => repo.fetchContact(),
-      builder: (context, info) => _ContactCard(info: info),
+      eyebrow: 'Get in touch',
+      description: 'Contact details stay data-driven while the layout matches the web hierarchy on mobile.',
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<ContactInfoItem>(
+          future: _future,
+          builder: (context, snapshot) {
+            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+
+            if (snapshot.hasError || _errorMessage != null) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                children: [
+                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                ],
+              );
+            }
+
+            final info = snapshot.data;
+            if (info == null) {
+              return const SizedBox.shrink();
+            }
+
+            final socialLinks = <_ContactSocialLink>[
+              if (info.github != null && info.github!.isNotEmpty)
+                _ContactSocialLink(label: 'GitHub', url: info.github!),
+              if (info.linkedin != null && info.linkedin!.isNotEmpty)
+                _ContactSocialLink(label: 'LinkedIn', url: info.linkedin!),
+              if (info.instagram != null && info.instagram!.isNotEmpty)
+                _ContactSocialLink(label: 'Instagram', url: info.instagram!),
+              if (info.twitter != null && info.twitter!.isNotEmpty)
+                _ContactSocialLink(label: 'Twitter', url: info.twitter!),
+            ];
+
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+              children: [
+                _SectionBlock(
+                  eyebrow: 'Get in touch',
+                  title: 'Contact, with the same visual system.',
+                  description: 'Contact details stay data-driven while the action area is easier to use on mobile.',
+                  child: loading
+                      ? const _LoadingBlock()
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _ContactInfoBlock(
+                              title: 'Reach Us',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if ((info.email ?? '').isNotEmpty)
+                                    _ContactLine(
+                                      icon: Icons.mail_outline,
+                                      label: 'Email',
+                                      value: info.email!,
+                                      onTap: () => _openExternal(info.email!),
+                                    ),
+                                  if ((info.location ?? '').isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    _ContactLine(
+                                      icon: Icons.location_on_outlined,
+                                      label: 'Location',
+                                      value: info.location!,
+                                    ),
+                                  ],
+                                  if ((info.department ?? '').isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    _ContactLine(
+                                      icon: Icons.apartment_outlined,
+                                      label: 'Department',
+                                      value: info.department!,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _ContactInfoBlock(
+                              title: 'Follow Us',
+                              child: Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: socialLinks
+                                    .map(
+                                      (link) => _LinkBadge(
+                                        label: link.label,
+                                        url: link.url,
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _ContactMessageBlock(
+                              nameController: _nameController,
+                              emailController: _emailController,
+                              messageController: _messageController,
+                              sending: _sending,
+                              onSend: () => _sendMessage(info),
+                              contactEmail: info.email,
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
+  }
+
+  Future<void> _openExternal(String value) async {
+    final uri = Uri.parse('mailto:$value');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } on MissingPluginException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email launcher is initializing. Please fully restart the app once.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the link right now.')),
+      );
+    }
   }
 }
 
@@ -1478,9 +1837,13 @@ class _GalleryCard extends StatelessWidget {
 }
 
 class _BlogCard extends StatelessWidget {
-  const _BlogCard({required this.blog});
+  const _BlogCard({
+    required this.blog,
+    required this.onTap,
+  });
 
   final BlogItem blog;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1488,58 +1851,356 @@ class _BlogCard extends StatelessWidget {
     final publishedText = published?.toIso8601String().split('T').first ?? '';
     final excerpt = blog.content.length > 170 ? '${blog.content.substring(0, 170)}...' : blog.content;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        color: Colors.black.withAlpha(46),
-        border: Border.all(color: Colors.white.withAlpha(20)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (blog.coverImage != null && blog.coverImage!.isNotEmpty)
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: SafeNetworkImage(
-                imageUrl: blog.coverImage,
-                fit: BoxFit.cover,
-                placeholder: Container(color: Colors.white.withAlpha(8)),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (blog.authorName != null && blog.authorName!.isNotEmpty)
-                      _Badge(text: blog.authorName!.toUpperCase(), color: const Color(0xFF5CC8FF)),
-                    if (publishedText.isNotEmpty) _Badge(text: publishedText, color: const Color(0xFF34D399)),
-                  ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          color: Colors.black.withAlpha(46),
+          border: Border.all(color: Colors.white.withAlpha(20)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (blog.coverImage != null && blog.coverImage!.isNotEmpty)
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: SafeNetworkImage(
+                  imageUrl: blog.coverImage,
+                  fit: BoxFit.cover,
+                  placeholder: Container(color: Colors.white.withAlpha(8)),
                 ),
-                const SizedBox(height: 8),
-                Text(blog.title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 6),
-                Text(excerpt, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
-                if (blog.tags.isNotEmpty) ...[
-                  const SizedBox(height: 10),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: blog.tags.take(3).map((tag) => _MiniChip(text: tag)).toList(),
+                    children: [
+                      if (blog.authorName != null && blog.authorName!.isNotEmpty)
+                        _Badge(text: blog.authorName!.toUpperCase(), color: const Color(0xFF5CC8FF)),
+                      if (publishedText.isNotEmpty) _Badge(text: publishedText, color: const Color(0xFF34D399)),
+                    ],
                   ),
+                  const SizedBox(height: 8),
+                  Text(blog.title, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  Text(excerpt, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+                  if (blog.tags.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: blog.tags.take(3).map((tag) => _MiniChip(text: tag)).toList(),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+class _BlogDetailPage extends StatefulWidget {
+  const _BlogDetailPage({required this.blogId});
+
+  final String blogId;
+
+  @override
+  State<_BlogDetailPage> createState() => _BlogDetailPageState();
+}
+
+class _BlogDetailPageState extends State<_BlogDetailPage> {
+  Future<BlogItem>? _future;
+  String? _errorMessage;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ??= context.read<ExploreRepository>().fetchBlog(widget.blogId);
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _errorMessage = null;
+      _future = context.read<ExploreRepository>().fetchBlog(widget.blogId);
+    });
+
+    try {
+      await _future;
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = _friendlyError(error));
+    }
+  }
+
+  Future<void> _deleteBlog(BlogItem blog) async {
+    try {
+      await context.read<ExploreRepository>().deleteBlog(blog.id);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = context.watch<AuthController>().user;
+    final isAdmin = currentUser?.role == 'admin';
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: FutureBuilder<BlogItem>(
+            future: _future,
+            builder: (context, snapshot) {
+              final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+
+              if (snapshot.hasError || _errorMessage != null) {
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  children: [
+                    _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  ],
+                );
+              }
+
+              final blog = snapshot.data;
+              if (blog == null) {
+                return const SizedBox.shrink();
+              }
+
+              final canManage = isAdmin || (currentUser != null && currentUser.id == blog.authorId);
+              final published = blog.createdAt?.toLocal();
+              final publishedText = published == null
+                  ? ''
+                  : '${published.day.toString().padLeft(2, '0')} ${_monthName(published.month)} ${published.year}';
+
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                children: [
+                  _SectionBlock(
+                    eyebrow: 'Read',
+                    title: blog.title,
+                    description: 'Open the full post and review the content in a dedicated view.',
+                    child: loading
+                        ? const _LoadingBlock()
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (blog.coverImage != null && blog.coverImage!.isNotEmpty)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: AspectRatio(
+                                    aspectRatio: 16 / 9,
+                                    child: SafeNetworkImage(
+                                      imageUrl: blog.coverImage,
+                                      fit: BoxFit.cover,
+                                      placeholder: Container(color: Colors.white.withAlpha(8)),
+                                    ),
+                                  ),
+                                ),
+                              if (blog.coverImage != null && blog.coverImage!.isNotEmpty) const SizedBox(height: 14),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  if (blog.authorName != null && blog.authorName!.isNotEmpty)
+                                    _Badge(text: blog.authorName!.toUpperCase(), color: const Color(0xFF5CC8FF)),
+                                  if (publishedText.isNotEmpty) _Badge(text: publishedText, color: const Color(0xFF34D399)),
+                                  if (canManage)
+                                    _Badge(text: 'MANAGE', color: const Color(0xFFF5B14C)),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                blog.content,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.65),
+                              ),
+                              if (blog.tags.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: blog.tags.map((tag) => _MiniChip(text: tag)).toList(),
+                                ),
+                              ],
+                              if (canManage) ...[
+                                const SizedBox(height: 18),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _deleteBlog(blog),
+                                    icon: const Icon(Icons.delete_outline, size: 18),
+                                    label: const Text('Delete post'),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BlogCreateSheet extends StatefulWidget {
+  const _BlogCreateSheet();
+
+  @override
+  State<_BlogCreateSheet> createState() => _BlogCreateSheetState();
+}
+
+class _BlogCreateSheetState extends State<_BlogCreateSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _contentController = TextEditingController();
+  final _coverController = TextEditingController();
+  final _tagsController = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _contentController.dispose();
+    _coverController.dispose();
+    _tagsController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final tags = _tagsController.text
+        .split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+    Navigator.of(context).pop(
+      _BlogDraft(
+        title: _titleController.text.trim(),
+        content: _contentController.text.trim(),
+        coverImage: _coverController.text.trim(),
+        tags: tags,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return SafeArea(
+      top: false,
+      child: FractionallySizedBox(
+        heightFactor: 0.92,
+        child: Material(
+          color: const Color(0xFF0D0D0D),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 14, 20, 20 + bottomInset),
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text('New Post', style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(labelText: 'Title'),
+                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Enter a title' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _contentController,
+                      decoration: const InputDecoration(labelText: 'Write your article here...'),
+                      minLines: 8,
+                      maxLines: 14,
+                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Enter content' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _coverController,
+                      decoration: const InputDecoration(labelText: 'Cover image URL (optional)'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _tagsController,
+                      decoration: const InputDecoration(labelText: 'Tags - comma separated'),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _submit,
+                            child: const Text('Publish Post'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BlogDraft {
+  const _BlogDraft({
+    required this.title,
+    required this.content,
+    required this.coverImage,
+    required this.tags,
+  });
+
+  final String title;
+  final String content;
+  final String coverImage;
+  final List<String> tags;
 }
 
 class _OpportunityCard extends StatelessWidget {
@@ -2490,44 +3151,232 @@ class _LeaderboardCard extends StatelessWidget {
   }
 }
 
-class _ContactCard extends StatelessWidget {
-  const _ContactCard({required this.info});
+class _ContactInfoBlock extends StatelessWidget {
+  const _ContactInfoBlock({
+    required this.title,
+    required this.child,
+  });
 
-  final ContactInfoItem info;
+  final String title;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        color: Colors.black.withAlpha(46),
+        borderRadius: BorderRadius.circular(28),
+        color: Colors.white.withAlpha(10),
         border: Border.all(color: Colors.white.withAlpha(20)),
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (info.email != null) Text(info.email!, style: Theme.of(context).textTheme.bodyMedium),
-          if (info.location != null) ...[
-            const SizedBox(height: 6),
-            Text(info.location!, style: Theme.of(context).textTheme.bodyMedium),
-          ],
-          if (info.department != null) ...[
-            const SizedBox(height: 6),
-            Text(info.department!, style: Theme.of(context).textTheme.bodyMedium),
-          ],
+          Text(
+            title.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  letterSpacing: 3,
+                  color: Colors.white54,
+                ),
+          ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _ContactLine extends StatelessWidget {
+  const _ContactLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 36,
+          width: 36,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white.withAlpha(10),
+            border: Border.all(color: Colors.white.withAlpha(20)),
+          ),
+          child: Icon(icon, size: 18, color: Colors.white70),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (info.github != null) const _MiniChip(text: 'GitHub'),
-              if (info.linkedin != null) const _MiniChip(text: 'LinkedIn'),
-              if (info.instagram != null) const _MiniChip(text: 'Instagram'),
-              if (info.twitter != null) const _MiniChip(text: 'Twitter'),
+              Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white54)),
+              const SizedBox(height: 4),
+              Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (onTap == null) return content;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: content,
+      ),
+    );
+  }
+}
+
+class _ContactMessageBlock extends StatelessWidget {
+  const _ContactMessageBlock({
+    required this.nameController,
+    required this.emailController,
+    required this.messageController,
+    required this.sending,
+    required this.onSend,
+    required this.contactEmail,
+  });
+
+  final TextEditingController nameController;
+  final TextEditingController emailController;
+  final TextEditingController messageController;
+  final bool sending;
+  final VoidCallback onSend;
+  final String? contactEmail;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        color: Colors.white.withAlpha(10),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Send a Message',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  letterSpacing: 3,
+                  color: Colors.white54,
+                ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: nameController,
+            decoration: const InputDecoration(hintText: 'Your Name'),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(hintText: 'Your Email'),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: messageController,
+            minLines: 6,
+            maxLines: 10,
+            decoration: const InputDecoration(hintText: 'Your message...'),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: sending || (contactEmail == null || contactEmail!.isEmpty) ? null : onSend,
+                child: Text(sending ? 'Sending...' : 'Send Message'),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  contactEmail == null || contactEmail!.isEmpty
+                      ? 'No contact email is configured.'
+                      : 'This opens your email app with the message prefilled.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                ),
+              ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ContactSocialLink {
+  const _ContactSocialLink({
+    required this.label,
+    required this.url,
+  });
+
+  final String label;
+  final String url;
+}
+
+class _LinkBadge extends StatelessWidget {
+  const _LinkBadge({
+    required this.label,
+    required this.url,
+  });
+
+  final String label;
+  final String url;
+
+  Future<void> _openLink(BuildContext context) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the link right now.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => _openLink(context),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: const Color(0xFF5CC8FF).withAlpha(26),
+          border: Border.all(color: const Color(0xFF5CC8FF).withAlpha(60)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF5CC8FF),
+                    letterSpacing: 1,
+                  ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(Icons.open_in_new_rounded, size: 14, color: Color(0xFF5CC8FF)),
+          ],
+        ),
       ),
     );
   }
@@ -2802,4 +3651,23 @@ String _friendlyError(Object? error) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }
   return 'Something went wrong while loading the section.';
+}
+
+String _monthName(int month) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  if (month < 1 || month > months.length) return 'Unknown';
+  return months[month - 1];
 }
