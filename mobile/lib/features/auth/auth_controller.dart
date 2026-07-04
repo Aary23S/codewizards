@@ -73,7 +73,8 @@ class AuthController extends ChangeNotifier {
     required String email,
     required String password,
     required int batch,
-    required String accountType,
+    required String programName,
+    required int programDurationYears,
   }) async {
     errorMessage = null;
     status = AuthStatus.loading;
@@ -85,7 +86,8 @@ class AuthController extends ChangeNotifier {
         email: email,
         password: password,
         batch: batch,
-        accountType: accountType,
+        programName: programName,
+        programDurationYears: programDurationYears,
       );
       await _tokenStorage.writeToken(session.token);
       user = await _repository.me();

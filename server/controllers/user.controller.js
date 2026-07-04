@@ -60,7 +60,23 @@ const createUser = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not allowed" });
     }
 
-    const { name, email, password, role = "student", batch, domain = [], bio, isMentor = false, github, linkedin, leetcode, codeforces, portfolio } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role = "student",
+      batch,
+      programName = "",
+      programDurationYears = 4,
+      domain = [],
+      bio,
+      isMentor = false,
+      github,
+      linkedin,
+      leetcode,
+      codeforces,
+      portfolio,
+    } = req.body;
     const exists = await User.findOne({ email });
     if (exists) {
       return res.status(400).json({ success: false, message: "Email already registered" });
@@ -72,6 +88,8 @@ const createUser = async (req, res) => {
       password,
       role,
       batch,
+      programName,
+      programDurationYears,
       domain,
       bio,
       isMentor,

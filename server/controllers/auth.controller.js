@@ -3,24 +3,44 @@ const generateToken = require("../utils/generateToken");
 
 const currentYear = () => new Date().getFullYear();
 
+const deriveRole = ({ batch, programDurationYears }) => {
+  const batchYear = Number(batch);
+  const durationYears = Number(programDurationYears) > 0 ? Number(programDurationYears) : 4;
+
+  if (!Number.isFinite(batchYear)) {
+    return "student";
+  }
+
+  const delta = currentYear() - batchYear;
+  if (delta < durationYears) return "student";
+  if (delta === durationYears) return "senior";
+  return "alumni";
+};
+
 // POST /api/v1/auth/register
 const register = async (req, res) => {
   try {
-    const { name, email, password, batch, accountType } = req.body;
-    // accountType: "student" | "senior_alumni" — comes from the radio choice
-    // role is NEVER trusted directly from client input
+    const { name, email, password, batch, programName, programDurationYears } = req.body;
+    // role is derived from the academic track and never trusted directly from client input
 
     const exists = await User.findOne({ email });
     if (exists) {
       return res.status(400).json({ success: false, message: "Email already registered" });
     }
 
-    let role = "student";
-    if (accountType === "senior_alumni") {
-      role = batch <= currentYear() - 4 ? "alumni" : "senior";
-    }
+    const role = deriveRole({ batch, programDurationYears });
+    const normalizedProgram = (programName || "").toString().trim();
+    const normalizedDuration = Number(programDurationYears) > 0 ? Number(programDurationYears) : 4;
 
-    const user = await User.create({ name, email, password, batch, role });
+    const user = await User.create({
+      name,
+      email,
+      password,
+      batch,
+      role,
+      programName: normalizedProgram,
+      programDurationYears: normalizedDuration,
+    });
 
     res.status(201).json({
       success: true,
@@ -29,6 +49,9 @@ const register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        batch: user.batch,
+        programName: user.programName,
+        programDurationYears: user.programDurationYears,
         token: generateToken(user._id),
       },
     });
@@ -52,6 +75,9 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        batch: user.batch,
+        programName: user.programName,
+        programDurationYears: user.programDurationYears,
         token: generateToken(user._id),
       },
     });

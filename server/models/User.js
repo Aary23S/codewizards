@@ -12,6 +12,8 @@ const userSchema = new mongoose.Schema(
       default: "student",
     },
     batch: Number,                  // Graduation year e.g. 2026
+    programName: { type: String, default: "" },
+    programDurationYears: { type: Number, default: 4 },
     domain: [String],               // ["Web", "AI", "Flutter"]
     bio: String,
     imageUrl: String,               // Cloudinary

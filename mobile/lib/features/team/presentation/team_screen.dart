@@ -336,8 +336,6 @@ class _BatchMembersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final columns = MediaQuery.of(context).size.width >= 700 ? 2 : 1;
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(title: Text('Team ${group.year}')),
@@ -376,14 +374,11 @@ class _BatchMembersPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: columns,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: columns == 1 ? 1.15 : 1.45,
-              children: group.members.map(_MemberCard.new).toList(),
+            ...group.members.map(
+              (member) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _MemberCard(member),
+              ),
             ),
           ],
         ),
@@ -405,69 +400,82 @@ class _MemberCard extends StatelessWidget {
       'founder' => const Color(0xFFF5B14C),
       _ => const Color(0xFF34D399),
     };
+    final chips = <Widget>[
+      if (member.teamYear != 0) _MiniChip(text: 'Team ${member.teamYear}'),
+      if (member.batch != null) _MiniChip(text: 'Batch ${member.batch}'),
+      ...member.domain.take(3).map((domain) => _MiniChip(text: domain)),
+      if (member.domain.isEmpty) const _MiniChip(text: 'Team'),
+    ];
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(20)),
-        color: Colors.white.withAlpha(10),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Avatar(member: member),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(member.name, style: Theme.of(context).textTheme.titleMedium),
-                        _CategoryBadge(text: member.category, color: badgeColor),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(member.role, style: Theme.of(context).textTheme.bodyMedium),
-                    if (_displaySubtitle(member).isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(_displaySubtitle(member), style: Theme.of(context).textTheme.bodySmall),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (member.teamYear != 0) _MiniChip(text: 'Team ${member.teamYear}'),
-              if (member.batch != null) _MiniChip(text: 'Batch ${member.batch}'),
-              ...member.domain.take(3).map((domain) => _MiniChip(text: domain)),
-              if (member.domain.isEmpty) const _MiniChip(text: 'Team'),
-            ],
-          ),
-          const Spacer(),
-          if (member.github != null || member.linkedin != null)
-            Wrap(
-              spacing: 12,
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withAlpha(20)),
+          color: Colors.white.withAlpha(10),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (member.github != null)
-                  _LinkText(label: 'GitHub', url: member.github!),
-                if (member.linkedin != null)
-                  _LinkText(label: 'LinkedIn', url: member.linkedin!),
+                _Avatar(member: member),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            member.name,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          _CategoryBadge(text: member.category, color: badgeColor),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        member.role,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                      ),
+                      if (_displaySubtitle(member).isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _displaySubtitle(member),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
-        ],
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: chips,
+            ),
+            if (member.github != null || member.linkedin != null) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  if (member.github != null) _LinkPill(label: 'GitHub', url: member.github!),
+                  if (member.linkedin != null) _LinkPill(label: 'LinkedIn', url: member.linkedin!),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -558,8 +566,8 @@ class _MiniChip extends StatelessWidget {
   }
 }
 
-class _LinkText extends StatelessWidget {
-  const _LinkText({
+class _LinkPill extends StatelessWidget {
+  const _LinkPill({
     required this.label,
     required this.url,
   });
@@ -587,32 +595,28 @@ class _LinkText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final parsed = Uri.tryParse(url);
-    final host = parsed?.host ?? '';
-
     return InkWell(
       onTap: () => _openLink(context),
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: Colors.white.withAlpha(8),
+          border: Border.all(color: Colors.white.withAlpha(20)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: Colors.white70,
-                    decoration: TextDecoration.underline,
-                    decorationColor: Colors.white38,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              host.isNotEmpty ? host : url,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Colors.white38,
-                  ),
-            ),
+            const SizedBox(width: 6),
+            Icon(Icons.open_in_new_rounded, size: 14, color: Colors.white.withAlpha(170)),
           ],
         ),
       ),

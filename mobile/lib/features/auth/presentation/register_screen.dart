@@ -16,7 +16,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _batchController = TextEditingController();
-  String _accountType = 'student';
+  final _programNameController = TextEditingController(text: 'Engineering');
+  int _programDurationYears = 4;
   bool _submitting = false;
 
   @override
@@ -25,7 +26,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _batchController.dispose();
+    _programNameController.dispose();
     super.dispose();
+  }
+
+  String _previewRole() {
+    final batch = int.tryParse(_batchController.text.trim());
+    if (batch == null) return 'student';
+    final diff = DateTime.now().year - batch;
+    if (diff < _programDurationYears) return 'student';
+    if (diff == _programDurationYears) return 'senior';
+    return 'alumni';
   }
 
   Future<void> _submit() async {
@@ -38,7 +49,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: _emailController.text.trim(),
       password: _passwordController.text,
       batch: int.parse(_batchController.text),
-      accountType: _accountType,
+      programName: _programNameController.text.trim(),
+      programDurationYears: _programDurationYears,
     );
 
     if (!mounted) return;
@@ -80,6 +92,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           'This uses the same /auth/register backend contract as the web app.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Role is calculated automatically from batch and program duration.',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                        ),
                         const SizedBox(height: 20),
                         TextFormField(
                           controller: _nameController,
@@ -116,7 +133,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextFormField(
                           controller: _batchController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Batch year'),
+                          decoration: const InputDecoration(labelText: 'Batch / joining year'),
+                          onChanged: (_) => setState(() {}),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) return 'Enter your batch year';
                             if (int.tryParse(value) == null) return 'Enter a valid year';
@@ -124,18 +142,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                         ),
                         const SizedBox(height: 14),
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(labelText: 'Account type'),
-                          initialValue: _accountType,
+                        TextFormField(
+                          controller: _programNameController,
+                          decoration: const InputDecoration(labelText: 'Program name'),
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) return 'Enter your program name';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        DropdownButtonFormField<int>(
+                          decoration: const InputDecoration(labelText: 'Program duration'),
+                          initialValue: _programDurationYears,
                           items: const [
-                            DropdownMenuItem(value: 'student', child: Text('Student')),
-                            DropdownMenuItem(value: 'senior_alumni', child: Text('Senior / Alumni')),
+                            DropdownMenuItem(value: 2, child: Text('2 years')),
+                            DropdownMenuItem(value: 3, child: Text('3 years')),
+                            DropdownMenuItem(value: 4, child: Text('4 years')),
                           ],
                           onChanged: (value) {
                             if (value != null) {
-                              setState(() => _accountType = value);
+                              setState(() => _programDurationYears = value);
                             }
                           },
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Auto role preview: ${_previewRole().toUpperCase()}',
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70),
+                          ),
                         ),
                         const SizedBox(height: 22),
                         ElevatedButton(
