@@ -778,7 +778,6 @@ class BlogExplorePage extends StatefulWidget {
 class _BlogExplorePageState extends State<BlogExplorePage> {
   Future<List<BlogItem>>? _future;
   String? _errorMessage;
-  String? _activeTag;
 
   @override
   void didChangeDependencies() {
@@ -836,6 +835,17 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
     }
   }
 
+  Future<void> _openAuthorPosts(_BlogAuthorGroup group) async {
+    if (group.posts.isEmpty) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _BlogAuthorPostsPage(group: group),
+      ),
+    );
+    if (!mounted) return;
+    await _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = context.watch<AuthController>().user;
@@ -862,13 +872,14 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
             }
 
             final items = snapshot.data ?? const <BlogItem>[];
-            final tags = <String>{
-              'all',
-              ...items.expand((blog) => blog.tags).map((tag) => tag.toLowerCase()),
-            }.toList();
-            final filtered = _activeTag == null || _activeTag == 'all'
-                ? items
-                : items.where((blog) => blog.tags.map((tag) => tag.toLowerCase()).contains(_activeTag)).toList();
+            final sorted = [...items]
+              ..sort((a, b) {
+                final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                return bDate.compareTo(aDate);
+              });
+            final latestPosts = sorted.take(10).toList();
+            final authorGroups = _groupBlogAuthors(sorted);
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -876,8 +887,8 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
               children: [
                 _SectionBlock(
                   eyebrow: 'Blog',
-                  title: 'Blog feed, upgraded visually.',
-                  description: 'Write articles, browse posts, and open a dedicated read view for each entry.',
+                  title: 'Blog authors and latest posts.',
+                  description: 'Browse by writer first, then jump straight into the latest 10 posts with a dedicated reader.',
                   child: loading
                       ? const _LoadingBlock()
                       : Column(
@@ -893,31 +904,51 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
                                 ),
                               ),
                             if (currentUser != null) const SizedBox(height: 14),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: tags
-                                  .map(
-                                    (tag) => ChoiceChip(
-                                      label: Text(_prettyFilterLabel(tag)),
-                                      selected: (_activeTag ?? 'all') == tag,
-                                      onSelected: (_) => setState(() => _activeTag = tag),
-                                    ),
-                                  )
-                                  .toList(),
+                            _SectionMiniHeader(
+                              title: 'Browse by author',
+                              description: 'Tap a writer to see all of their posts.',
                             ),
-                            const SizedBox(height: 16),
-                            if (filtered.isEmpty)
+                            const SizedBox(height: 12),
+                            if (authorGroups.isEmpty)
+                              const _EmptyBlock(message: 'No authors found yet.')
+                            else
+                              SizedBox(
+                                height: 160,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: authorGroups.length,
+                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                                  itemBuilder: (context, index) {
+                                    final group = authorGroups[index];
+                                    return SizedBox(
+                                      width: 250,
+                                      child: _BlogAuthorCard(
+                                        group: group,
+                                        onTap: () => _openAuthorPosts(group),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            const SizedBox(height: 18),
+                            _SectionMiniHeader(
+                              title: 'Latest 10 posts',
+                              description: 'Quick read cards for the most recent uploads.',
+                            ),
+                            const SizedBox(height: 12),
+                            if (latestPosts.isEmpty)
                               const _EmptyBlock(message: 'No blog posts yet.')
                             else
                               Column(
-                                children: filtered
+                                children: latestPosts
                                     .map(
                                       (blog) => Padding(
                                         padding: const EdgeInsets.only(bottom: 12),
                                         child: _BlogCard(
                                           blog: blog,
                                           onTap: () => _openBlog(blog),
+                                          onReadMore: () => _openBlog(blog),
+                                          compact: true,
                                         ),
                                       ),
                                     )
@@ -1154,6 +1185,58 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
       );
     }
   }
+}
+
+class _BlogAuthorGroup {
+  const _BlogAuthorGroup({
+    required this.key,
+    required this.name,
+    required this.posts,
+  });
+
+  final String key;
+  final String name;
+  final List<BlogItem> posts;
+
+  BlogItem get latestPost => posts.first;
+}
+
+List<_BlogAuthorGroup> _groupBlogAuthors(List<BlogItem> items) {
+  final groups = <String, List<BlogItem>>{};
+  final names = <String, String>{};
+
+  for (final blog in items) {
+    final authorKey = (blog.authorId?.trim().isNotEmpty ?? false)
+        ? blog.authorId!.trim()
+        : (blog.authorName?.trim().isNotEmpty ?? false)
+            ? blog.authorName!.trim().toLowerCase()
+            : 'unknown-author';
+    final authorName = (blog.authorName?.trim().isNotEmpty ?? false) ? blog.authorName!.trim() : 'Unknown author';
+    groups.putIfAbsent(authorKey, () => <BlogItem>[]).add(blog);
+    names[authorKey] = authorName;
+  }
+
+  final result = groups.entries
+      .map(
+        (entry) => _BlogAuthorGroup(
+          key: entry.key,
+          name: names[entry.key] ?? 'Unknown author',
+          posts: [...entry.value]
+            ..sort((a, b) {
+              final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+              final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+              return bDate.compareTo(aDate);
+            }),
+        ),
+      )
+      .toList();
+
+  result.sort((a, b) {
+    final aDate = a.latestPost.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final bDate = b.latestPost.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return bDate.compareTo(aDate);
+  });
+  return result;
 }
 
 class ConnectExplorePage extends StatefulWidget {
@@ -1840,16 +1923,21 @@ class _BlogCard extends StatelessWidget {
   const _BlogCard({
     required this.blog,
     required this.onTap,
+    this.onReadMore,
+    this.compact = false,
   });
 
   final BlogItem blog;
   final VoidCallback onTap;
+  final VoidCallback? onReadMore;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final published = blog.createdAt?.toLocal();
     final publishedText = published?.toIso8601String().split('T').first ?? '';
-    final excerpt = blog.content.length > 170 ? '${blog.content.substring(0, 170)}...' : blog.content;
+    final excerptLimit = compact ? 130 : 170;
+    final excerpt = blog.content.length > excerptLimit ? '${blog.content.substring(0, excerptLimit)}...' : blog.content;
 
     return Material(
       color: Colors.transparent,
@@ -1876,7 +1964,7 @@ class _BlogCard extends StatelessWidget {
                   ),
                 ),
               Padding(
-                padding: const EdgeInsets.all(14),
+                padding: EdgeInsets.all(compact ? 12 : 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1889,7 +1977,7 @@ class _BlogCard extends StatelessWidget {
                         if (publishedText.isNotEmpty) _Badge(text: publishedText, color: const Color(0xFF34D399)),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: compact ? 7 : 8),
                     Text(blog.title, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 6),
                     Text(excerpt, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
@@ -1898,7 +1986,17 @@ class _BlogCard extends StatelessWidget {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: blog.tags.take(3).map((tag) => _MiniChip(text: tag)).toList(),
+                        children: blog.tags.take(compact ? 2 : 3).map((tag) => _MiniChip(text: tag)).toList(),
+                      ),
+                    ],
+                    if (onReadMore != null) ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: OutlinedButton(
+                          onPressed: onReadMore,
+                          child: const Text('Read more'),
+                        ),
                       ),
                     ],
                   ],
@@ -1906,6 +2004,193 @@ class _BlogCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionMiniHeader extends StatelessWidget {
+  const _SectionMiniHeader({
+    required this.title,
+    required this.description,
+  });
+
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 18),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          description,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.4),
+        ),
+      ],
+    );
+  }
+}
+
+class _BlogAuthorCard extends StatelessWidget {
+  const _BlogAuthorCard({
+    required this.group,
+    required this.onTap,
+  });
+
+  final _BlogAuthorGroup group;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = _initialOf(group.name);
+    final latest = group.latestPost.createdAt?.toLocal();
+    final latestText = latest == null ? 'No date' : '${latest.day.toString().padLeft(2, '0')} ${_monthName(latest.month)} ${latest.year}';
+    final previewPosts = group.posts.take(2).toList();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            color: Colors.black.withAlpha(46),
+            border: Border.all(color: Colors.white.withAlpha(20)),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    height: 46,
+                    width: 46,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      color: const Color(0xFF5CC8FF),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initial,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${group.posts.length} posts',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Latest: $latestText',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+              ),
+              if (previewPosts.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  previewPosts.first.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                ),
+              ],
+              const Spacer(),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'Tap to open',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.white54,
+                        letterSpacing: 0.8,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BlogAuthorPostsPage extends StatelessWidget {
+  const _BlogAuthorPostsPage({required this.group});
+
+  final _BlogAuthorGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: const Text('Author posts'),
+      ),
+      body: SafeArea(
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          children: [
+            _SectionBlock(
+              eyebrow: 'Blog author',
+              title: group.name,
+              description: 'Open any post to read the full article.',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _MiniChip(text: '${group.posts.length} posts'),
+                  ),
+                  const SizedBox(height: 16),
+                  if (group.posts.isEmpty)
+                    const _EmptyBlock(message: 'No posts found for this author.')
+                  else
+                    Column(
+                      children: group.posts
+                          .map(
+                            (blog) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _BlogCard(
+                                blog: blog,
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => BlogDetailScreen(blogId: blog.id),
+                                  ),
+                                ),
+                                onReadMore: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => BlogDetailScreen(blogId: blog.id),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
