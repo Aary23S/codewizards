@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/auth_controller.dart';
 import '../auth/data/user_profile.dart';
@@ -459,6 +460,7 @@ class _SocialLinksBlock extends StatelessWidget {
                 .map(
                   (link) => _LinkChip(
                     label: link.label,
+                    url: profile.socialLinks.urlFor(link.label),
                   ),
                 )
                 .toList(),
@@ -685,24 +687,73 @@ class _ActionPill extends StatelessWidget {
 class _LinkChip extends StatelessWidget {
   const _LinkChip({
     required this.label,
+    required this.url,
   });
 
   final String label;
+  final String? url;
+
+  Future<void> _openLink(BuildContext context) async {
+    final link = url?.trim();
+    if (link == null || link.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No link available for this profile.')),
+      );
+      return;
+    }
+
+    final uri = Uri.tryParse(link);
+    if (uri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This link is not valid.')),
+      );
+      return;
+    }
+
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open the link right now.')),
+        );
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the link right now.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        color: Colors.white.withAlpha(13),
-        border: Border.all(color: Colors.white.withAlpha(26)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Colors.white70,
+    final enabled = url != null && url!.trim().isNotEmpty;
+
+    return InkWell(
+      onTap: enabled ? () => _openLink(context) : null,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: enabled ? Colors.white.withAlpha(18) : Colors.white.withAlpha(13),
+          border: Border.all(color: enabled ? Colors.white.withAlpha(40) : Colors.white.withAlpha(26)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: enabled ? Colors.white : Colors.white70,
+                  ),
             ),
+            if (enabled) ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.open_in_new_rounded, size: 14, color: Colors.white70),
+            ],
+          ],
+        ),
       ),
     );
   }

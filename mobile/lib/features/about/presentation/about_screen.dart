@@ -5,6 +5,38 @@ import '../../../core/widgets/safe_network_image.dart';
 import '../../team/data/team_member_item.dart';
 import '../../team/data/team_repository.dart';
 
+const List<Map<String, dynamic>> _fallbackFounders = [
+  {
+    'name': 'Aary Satardekar',
+    'role': 'Co-Founder',
+    'subtitle': 'Founding Team',
+    'batch': 2022,
+    'category': 'founder',
+  },
+  {
+    'name': 'Aarya Dalal',
+    'role': 'Co-Founder',
+    'subtitle': 'Founding Team',
+    'batch': 2022,
+    'category': 'founder',
+  },
+];
+
+const List<Map<String, dynamic>> _fallbackFaculty = [
+  {
+    'name': 'Mr. Somnath Salunkhe',
+    'role': 'Faculty Coordinator',
+    'subtitle': 'Computer Science & Engineering',
+    'category': 'faculty',
+  },
+  {
+    'name': 'Dr. Vidya Baddadare',
+    'role': 'Faculty Coordinator',
+    'subtitle': 'Computer Science & Engineering',
+    'category': 'faculty',
+  },
+];
+
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
 
@@ -57,8 +89,14 @@ class _AboutScreenState extends State<AboutScreen> {
             }
 
             final members = snapshot.data ?? const <TeamMemberItem>[];
-            final founders = members.where((m) => m.category == 'founder').toList();
-            final faculty = members.where((m) => m.category == 'faculty').toList();
+            final founders = members.where((m) => m.category.toLowerCase() == 'founder').toList();
+            final faculty = members.where((m) => m.category.toLowerCase() == 'faculty').toList();
+            final visibleFounders = founders.isNotEmpty
+                ? founders
+                : _fallbackFounders.map(TeamMemberItem.fromJson).toList();
+            final visibleFaculty = faculty.isNotEmpty
+                ? faculty
+                : _fallbackFaculty.map(TeamMemberItem.fromJson).toList();
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -91,25 +129,19 @@ class _AboutScreenState extends State<AboutScreen> {
                 if (loading)
                   const _LoadingBlock()
                 else ...[
-                  _SectionHeader(title: 'Founders', count: founders.length, tone: 'FOUNDER'),
+                  _SectionHeader(title: 'Founders', count: visibleFounders.length, tone: 'FOUNDER'),
                   const SizedBox(height: 12),
-                  if (founders.isEmpty)
-                    const _EmptyBlock(message: 'No founders found.')
-                  else
-                    ...founders.map((member) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _MemberCard(member: member),
-                        )),
+                  ...visibleFounders.map((member) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _MemberCard(member: member),
+                      )),
                   const SizedBox(height: 10),
-                  _SectionHeader(title: 'Faculty coordinators', count: faculty.length, tone: 'FACULTY'),
+                  _SectionHeader(title: 'Faculty coordinators', count: visibleFaculty.length, tone: 'FACULTY'),
                   const SizedBox(height: 12),
-                  if (faculty.isEmpty)
-                    const _EmptyBlock(message: 'No faculty coordinators found.')
-                  else
-                    ...faculty.map((member) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _MemberCard(member: member),
-                        )),
+                  ...visibleFaculty.map((member) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _MemberCard(member: member),
+                      )),
                 ],
               ],
             );
@@ -245,8 +277,8 @@ class _MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFounder = member.category == 'founder';
-    final isFaculty = member.category == 'faculty';
+    final isFounder = member.category.toLowerCase() == 'founder';
+    final isFaculty = member.category.toLowerCase() == 'faculty';
     final accent = isFounder ? const Color(0xFFF5B14C) : const Color(0xFF5CC8FF);
 
     return Container(
@@ -384,25 +416,6 @@ class _LoadingBlock extends StatelessWidget {
         color: Colors.white.withAlpha(10),
       ),
       child: const Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
-    );
-  }
-}
-
-class _EmptyBlock extends StatelessWidget {
-  const _EmptyBlock({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(20)),
-        color: Colors.white.withAlpha(10),
-      ),
-      child: Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
     );
   }
 }
