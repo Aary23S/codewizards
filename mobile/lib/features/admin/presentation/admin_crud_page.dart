@@ -28,6 +28,7 @@ class AdminRecordCardData {
     this.canEdit = true,
     this.canDelete = true,
     this.extraActionLabel,
+    this.secondaryActionLabel,
   });
 
   final String title;
@@ -36,6 +37,7 @@ class AdminRecordCardData {
   final bool canEdit;
   final bool canDelete;
   final String? extraActionLabel;
+  final String? secondaryActionLabel;
 }
 
 class AdminCrudConfig {
@@ -55,6 +57,7 @@ class AdminCrudConfig {
     this.emptyMessage = 'No records found.',
     this.formTitle,
     this.extraAction,
+    this.secondaryAction,
   });
 
   final String title;
@@ -72,6 +75,7 @@ class AdminCrudConfig {
   final String emptyMessage;
   final String? formTitle;
   final Future<void> Function(Map<String, dynamic> item)? extraAction;
+  final Future<void> Function(Map<String, dynamic> item)? secondaryAction;
 }
 
 class AdminCrudPage extends StatefulWidget {
@@ -227,6 +231,7 @@ class _AdminCrudPageState extends State<AdminCrudPage> {
                           onEdit: widget.config.canEdit ? () => _openEditor(initial: item) : null,
                           onDelete: () => _deleteItem(item),
                           onExtraAction: widget.config.extraAction == null ? null : () => widget.config.extraAction!(item),
+                          onSecondaryAction: widget.config.secondaryAction == null ? null : () => widget.config.secondaryAction!(item),
                         ),
                       ),
                     ),
@@ -404,12 +409,14 @@ class _AdminRecordCard extends StatelessWidget {
     required this.onDelete,
     this.onEdit,
     this.onExtraAction,
+    this.onSecondaryAction,
   });
 
   final AdminRecordCardData data;
   final VoidCallback onDelete;
   final VoidCallback? onEdit;
   final VoidCallback? onExtraAction;
+  final VoidCallback? onSecondaryAction;
 
   @override
   Widget build(BuildContext context) {
@@ -423,31 +430,62 @@ class _AdminRecordCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final narrow = constraints.maxWidth < 420;
+              final actionButtons = <Widget>[
+                if (data.extraActionLabel != null && onExtraAction != null)
+                  TextButton(onPressed: onExtraAction, child: Text(data.extraActionLabel!)),
+                if (data.secondaryActionLabel != null && onSecondaryAction != null)
+                  TextButton(onPressed: onSecondaryAction, child: Text(data.secondaryActionLabel!)),
+                if (data.canEdit && onEdit != null)
+                  TextButton(onPressed: onEdit, child: const Text('Edit')),
+                if (data.canDelete)
+                  TextButton(onPressed: onDelete, child: const Text('Delete')),
+              ];
+
+              if (narrow) {
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(data.title, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 6),
-                    Text(data.subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(data.title, style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 6),
+                        Text(data.subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: actionButtons,
+                    ),
                   ],
-                ),
-              ),
-              Wrap(
-                spacing: 8,
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (data.extraActionLabel != null && onExtraAction != null)
-                    TextButton(onPressed: onExtraAction, child: Text(data.extraActionLabel!)),
-                  if (data.canEdit && onEdit != null)
-                    TextButton(onPressed: onEdit, child: const Text('Edit')),
-                  if (data.canDelete)
-                    TextButton(onPressed: onDelete, child: const Text('Delete')),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(data.title, style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 6),
+                        Text(data.subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4)),
+                      ],
+                    ),
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: actionButtons,
+                  ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
           if (data.badges.isNotEmpty) ...[
             const SizedBox(height: 10),

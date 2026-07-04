@@ -5,6 +5,13 @@ import '../../auth/auth_controller.dart';
 import '../data/admin_repository.dart';
 import 'admin_crud_page.dart';
 
+const Set<String> _protectedAdminEmails = {
+  'aary.s@codewizards.com',
+  'satardekaraary@gmail.com',
+};
+
+const String _primaryAdminEmail = 'aary.s@codewizards.com';
+
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
 
@@ -184,6 +191,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         update: (id, payload) => repo.updateUser(id, _normalizeUserPayload(payload, creating: false)),
         delete: repo.deleteUser,
         extraAction: (item) async {
+          if (_isProtectedAdmin(item)) return;
+          if (_isAdminRole(item)) return;
           final id = _id(item);
           if (id == null) return;
           final suspended = _boolLabel(item['isSuspended']);
@@ -192,6 +201,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             isSuspended: !suspended,
             suspendedReason: suspended ? null : _string(item['suspendedReason'], fallback: 'Suspended by admin'),
           );
+        },
+        secondaryAction: (item) async {
+          final id = _id(item);
+          if (id == null) return;
+          final currentRole = _string(item['role'], fallback: 'student').toLowerCase();
+          final isPrimary = _isPrimaryAdmin(item);
+          final targetRole = currentRole == 'admin' ? 'student' : 'admin';
+          if (isPrimary && targetRole != 'admin') return;
+          await repo.updateUser(id, {'role': targetRole});
         },
         fields: const [
           AdminFieldSpec(key: 'name', label: 'Name'),
@@ -220,16 +238,22 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           final name = _string(item['name'], fallback: 'Unnamed user');
           final email = _string(item['email'], fallback: 'No email');
           final batch = _string(item['batch'], fallback: 'N/A');
+          final isProtected = _isProtectedAdmin(item);
+          final isPrimary = _isPrimaryAdmin(item);
+          final role = _string(item['role'], fallback: 'student').toLowerCase();
           final badges = <String>[
             _displayRole(_string(item['role'], fallback: 'student')),
             if (_boolLabel(item['isMentor'])) 'Mentor',
             if (_boolLabel(item['isSuspended'])) 'Suspended',
+            if (isPrimary) 'Super Admin',
           ];
           return AdminRecordCardData(
             title: name,
             subtitle: '$email • Batch $batch',
             badges: badges,
-            extraActionLabel: _boolLabel(item['isSuspended']) ? 'Unsuspend' : 'Suspend',
+            canDelete: !isProtected,
+            extraActionLabel: isProtected || role == 'admin' ? null : (_boolLabel(item['isSuspended']) ? 'Unsuspend' : 'Suspend'),
+            secondaryActionLabel: isPrimary ? null : (role == 'admin' ? 'Demote Admin' : 'Promote Admin'),
           );
         },
       ),
@@ -1440,11 +1464,7 @@ List<String> _csvItems(dynamic value) {
   }
   final text = value?.toString().trim();
   if (text == null || text.isEmpty) return const [];
-  return text
-      .split(',')
-      .map((item) => item.trim())
-      .where((item) => item.isNotEmpty)
-      .toList();
+  return text.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
 }
 
 String _excerpt(String value, [int maxLength = 96]) {
@@ -1458,6 +1478,9 @@ Map<String, dynamic> _normalizeUserPayload(Map<String, dynamic> payload, {requir
   data['domain'] = _csvItems(data['domain']);
   if (_string(data['password']).isEmpty) {
     data.remove('password');
+  }
+  if (_isPrimaryAdminEmail(_string(data['email']))) {
+    data['role'] = 'admin';
   }
   if (!creating && !_boolLabel(data['isSuspended'])) {
     data.remove('suspendedReason');
@@ -1489,22 +1512,40 @@ Map<String, dynamic> _normalizeOpportunityPayload(Map<String, dynamic> payload) 
   return data;
 }
 
-  Map<String, dynamic> _normalizeTeamPayload(Map<String, dynamic> payload) {
-    final data = Map<String, dynamic>.from(payload);
-    data['domain'] = _csvItems(data['domain']);
-    return data;
-  }
+Map<String, dynamic> _normalizeTeamPayload(Map<String, dynamic> payload) {
+  final data = Map<String, dynamic>.from(payload);
+  data['domain'] = _csvItems(data['domain']);
+  return data;
+}
 
-  Map<String, dynamic> _normalizeEventPayload(Map<String, dynamic> payload) {
-    final data = Map<String, dynamic>.from(payload);
-    if (_string(data['venue']).isEmpty) {
-      data.remove('venue');
-    }
-    if (_string(data['registrationLink']).isEmpty) {
-      data.remove('registrationLink');
-    }
-    if (_string(data['imageUrl']).isEmpty) {
-      data.remove('imageUrl');
-    }
-    return data;
+Map<String, dynamic> _normalizeEventPayload(Map<String, dynamic> payload) {
+  final data = Map<String, dynamic>.from(payload);
+  if (_string(data['venue']).isEmpty) {
+    data.remove('venue');
   }
+  if (_string(data['registrationLink']).isEmpty) {
+    data.remove('registrationLink');
+  }
+  if (_string(data['imageUrl']).isEmpty) {
+    data.remove('imageUrl');
+  }
+  return data;
+}
+
+bool _isPrimaryAdminEmail(String email) {
+  return email.toLowerCase() == _primaryAdminEmail;
+}
+
+bool _isProtectedAdmin(Map<String, dynamic> item) {
+  final email = _string(item['email']).toLowerCase();
+  return _protectedAdminEmails.contains(email);
+}
+
+bool _isPrimaryAdmin(Map<String, dynamic> item) {
+  final email = _string(item['email']).toLowerCase();
+  return email == _primaryAdminEmail;
+}
+
+bool _isAdminRole(Map<String, dynamic> item) {
+  return _string(item['role']).toLowerCase() == 'admin';
+}
