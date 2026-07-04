@@ -26,7 +26,8 @@ class AuthRepository {
     required String email,
     required String password,
     required int batch,
-    required String accountType,
+    required String programName,
+    required int programDurationYears,
   }) async {
     final data = await _apiClient.postData(
       '/auth/register',
@@ -35,7 +36,8 @@ class AuthRepository {
         'email': email,
         'password': password,
         'batch': batch,
-        'accountType': accountType,
+        'programName': programName,
+        'programDurationYears': programDurationYears,
       },
     );
     return _parseSession(data);

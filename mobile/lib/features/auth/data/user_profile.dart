@@ -7,6 +7,8 @@ class UserProfile {
     required this.email,
     required this.role,
     this.batch,
+    this.programName,
+    this.programDurationYears,
     this.domain = const [],
     this.bio,
     this.imageUrl,
@@ -19,6 +21,8 @@ class UserProfile {
   final String email;
   final String role;
   final int? batch;
+  final String? programName;
+  final int? programDurationYears;
   final List<String> domain;
   final String? bio;
   final String? imageUrl;
@@ -32,6 +36,8 @@ class UserProfile {
       email: readString(json['email']),
       role: readString(json['role']),
       batch: readInt(json['batch']),
+      programName: _readNullableText(json['programName']),
+      programDurationYears: readInt(json['programDurationYears']),
       domain: readStringList(json['domain']),
       bio: _readNullableText(json['bio']),
       imageUrl: readHttpUrl(json['imageUrl']),

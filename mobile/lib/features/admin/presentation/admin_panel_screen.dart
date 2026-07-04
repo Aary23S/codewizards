@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../auth/presentation/login_screen.dart';
 import '../../explore/presentation/explore_screen.dart' show BlogDetailScreen;
 import '../data/admin_repository.dart';
 import 'admin_crud_page.dart';
@@ -46,6 +47,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   Future<void> _logout() async {
     await context.read<AuthController>().logout();
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   @override
