@@ -36,7 +36,7 @@ class CodeWizardsApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'CodeWizards Mobile',
+        title: 'CodeWizards',
         theme: buildAppTheme(),
         home: const AuthGate(),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../auth_controller.dart';
+import '../../../shared/widgets/brand_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -71,7 +72,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final loading = _submitting || auth.isBusy;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
+      appBar: AppBar(
+        title: const BrandLogo(size: 32, showLabel: true),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -86,6 +89,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const BrandLogo(size: 72),
+                        const SizedBox(height: 18),
                         Text('Join CodeWizards', style: Theme.of(context).textTheme.headlineSmall),
                         const SizedBox(height: 6),
                         Text(
