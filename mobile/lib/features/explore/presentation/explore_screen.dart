@@ -1280,10 +1280,97 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
     );
   }
 
+  Future<String?> _chooseDomain(List<String> domains) async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        var query = '';
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final filteredDomains = domains.where((domain) => domain.toLowerCase().contains(query.toLowerCase())).toList();
+            return Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF111111),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(color: Colors.white.withAlpha(20)),
+              ),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                16 + MediaQuery.of(sheetContext).padding.bottom,
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text('Choose domain', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 12),
+                    TextField(
+                      onChanged: (value) => setSheetState(() => query = value),
+                      decoration: InputDecoration(
+                        hintText: 'Search domains',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: Colors.white.withAlpha(8),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Colors.white.withAlpha(16)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 360),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: filteredDomains.length + 1,
+                        separatorBuilder: (context, index) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return _DomainChoiceTile(
+                              label: 'All domains',
+                              selected: _selectedDomain == 'all',
+                              onTap: () => Navigator.of(sheetContext).pop('all'),
+                            );
+                          }
+                          final domain = filteredDomains[index - 1];
+                          return _DomainChoiceTile(
+                            label: _prettyFilterLabel(domain),
+                            selected: _selectedDomain == domain,
+                            onTap: () => Navigator.of(sheetContext).pop(domain),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final roleOptions = const ['all', 'student', 'mentor', 'alumni', 'senior', 'admin'];
-
     return _SectionScaffold(
       title: 'Connect',
       eyebrow: 'Find your guide',
@@ -1311,15 +1398,14 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
               ...items.expand((user) => user.domain).map((domain) => domain.toLowerCase()),
             }.toList();
 
-            final filtered = items.where((user) {
-              final role = user.role.toLowerCase();
-              final roleOk = _selectedRole == 'all' ||
-                  (_selectedRole == 'mentor' ? user.isMentor : role == _selectedRole);
-              final domainOk = _selectedDomain == 'all' || user.domain.map((d) => d.toLowerCase()).contains(_selectedDomain);
-              return roleOk && domainOk;
-            }).toList();
+            final grouped = _groupConnectProfiles(items, _selectedDomain);
+            final filtered = grouped[_selectedRole] ?? const <UserProfile>[];
 
             final mentorCount = items.where((user) => user.isMentor).length;
+            final studentCount = grouped['student']?.length ?? 0;
+            final seniorCount = grouped['senior']?.length ?? 0;
+            final alumniCount = grouped['alumni']?.length ?? 0;
+            final mentorGroupCount = grouped['mentor']?.length ?? 0;
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -1342,40 +1428,67 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
                               ],
                             ),
                             const SizedBox(height: 14),
-                            Text('Role', style: Theme.of(context).textTheme.titleSmall),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: roleOptions
-                                  .map(
-                                    (role) => ChoiceChip(
-                                      label: Text(_prettyFilterLabel(role)),
-                                      selected: _selectedRole == role,
-                                      onSelected: (_) => setState(() => _selectedRole = role),
-                                    ),
-                                  )
-                                  .toList(),
+                            _SectionMiniHeader(
+                              title: 'Browse by group',
+                              description: 'Tap a group card to switch between students, seniors, alumni, and mentors.',
+                            ),
+                            const SizedBox(height: 10),
+                            GridView.count(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                              childAspectRatio: 1.35,
+                              children: [
+                                _RoleFilterCard(
+                                  title: 'Students',
+                                  count: studentCount,
+                                  selected: _selectedRole == 'student',
+                                  onTap: () => setState(() => _selectedRole = 'student'),
+                                ),
+                                _RoleFilterCard(
+                                  title: 'Seniors',
+                                  count: seniorCount,
+                                  selected: _selectedRole == 'senior',
+                                  onTap: () => setState(() => _selectedRole = 'senior'),
+                                ),
+                                _RoleFilterCard(
+                                  title: 'Alumni',
+                                  count: alumniCount,
+                                  selected: _selectedRole == 'alumni',
+                                  onTap: () => setState(() => _selectedRole = 'alumni'),
+                                ),
+                                _RoleFilterCard(
+                                  title: 'Mentors',
+                                  count: mentorGroupCount,
+                                  selected: _selectedRole == 'mentor',
+                                  onTap: () => setState(() => _selectedRole = 'mentor'),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 14),
-                            Text('Domain', style: Theme.of(context).textTheme.titleSmall),
+                            _SectionMiniHeader(
+                              title: 'Domain filter',
+                              description: 'Pick one domain instead of scanning a long chip list.',
+                            ),
                             const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: domains
-                                  .map(
-                                    (domain) => ChoiceChip(
-                                      label: Text(_prettyFilterLabel(domain)),
-                                      selected: _selectedDomain == domain,
-                                      onSelected: (_) => setState(() => _selectedDomain = domain),
-                                    ),
-                                  )
-                                  .toList(),
+                            _DomainPickerCard(
+                              value: _selectedDomain,
+                              onTap: () async {
+                                final choice = await _chooseDomain(domains);
+                                if (choice == null || !mounted) return;
+                                setState(() => _selectedDomain = choice);
+                              },
                             ),
                             const SizedBox(height: 16),
+                            _SectionMiniHeader(
+                              title: _selectedRole == 'all' ? 'All users' : _prettyFilterLabel(_selectedRole),
+                              description: 'Tap a profile card to open the full public profile.',
+                            ),
+                            const SizedBox(height: 10),
                             if (filtered.isEmpty)
-                              const _EmptyBlock(message: 'No users found for these filters.')
+                              const _EmptyBlock(message: 'No users found for this group and domain.')
                             else
                               Column(
                                 children: filtered
@@ -1396,6 +1509,194 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+Map<String, List<UserProfile>> _groupConnectProfiles(List<UserProfile> items, String selectedDomain) {
+  final grouped = <String, List<UserProfile>>{
+    'student': <UserProfile>[],
+    'senior': <UserProfile>[],
+    'alumni': <UserProfile>[],
+    'mentor': <UserProfile>[],
+    'admin': <UserProfile>[],
+    'all': <UserProfile>[],
+  };
+
+  bool matchesDomain(UserProfile user) {
+    if (selectedDomain == 'all') return true;
+    return user.domain.map((d) => d.toLowerCase()).contains(selectedDomain);
+  }
+
+  for (final user in items.where(matchesDomain)) {
+    final role = user.isMentor ? 'mentor' : user.role.toLowerCase();
+    final normalizedRole = switch (role) {
+      'student' => 'student',
+      'senior' => 'senior',
+      'alumni' => 'alumni',
+      'mentor' => 'mentor',
+      'admin' => 'admin',
+      _ => 'all',
+    };
+    grouped['all']!.add(user);
+    grouped[normalizedRole]!.add(user);
+  }
+
+  return grouped;
+}
+
+class _RoleFilterCard extends StatelessWidget {
+  const _RoleFilterCard({
+    required this.title,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = selected ? const Color(0xFFF2C86D) : Colors.white.withAlpha(20);
+    final background = selected ? const Color(0xFF2B2210) : Colors.white.withAlpha(8);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: background,
+            border: Border.all(color: accent),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontSize: 17,
+                      color: selected ? Colors.white : Colors.white.withAlpha(220),
+                    ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '$count users',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white54,
+                        ),
+                  ),
+                  Icon(
+                    selected ? Icons.radio_button_checked : Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: selected ? const Color(0xFFF2C86D) : Colors.white38,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DomainPickerCard extends StatelessWidget {
+  const _DomainPickerCard({
+    required this.value,
+    required this.onTap,
+  });
+
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: Colors.white.withAlpha(8),
+            border: Border.all(color: Colors.white.withAlpha(18)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Icon(Icons.filter_list_rounded, color: Colors.white.withAlpha(190)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Domain', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white54)),
+                    const SizedBox(height: 2),
+                    Text(_prettyFilterLabel(value), style: Theme.of(context).textTheme.titleMedium),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withAlpha(140)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DomainChoiceTile extends StatelessWidget {
+  const _DomainChoiceTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: selected ? const Color(0xFFF2C86D).withAlpha(32) : Colors.white.withAlpha(8),
+            border: Border.all(color: selected ? const Color(0xFFF2C86D) : Colors.white.withAlpha(18)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.check_circle : Icons.circle_outlined,
+                size: 18,
+                color: selected ? const Color(0xFFF2C86D) : Colors.white54,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+              ),
+            ],
+          ),
         ),
       ),
     );
