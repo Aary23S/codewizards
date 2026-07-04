@@ -36,7 +36,7 @@ class TeamMemberItem {
       id: readString(json['_id'] ?? json['id']),
       name: readString(json['name']),
       role: readString(json['role'], fallback: 'member'),
-      category: readString(json['category'], fallback: 'core'),
+      category: readString(json['category'], fallback: 'core').toLowerCase(),
       teamYear: readInt(json['teamYear']) ?? readInt(json['batch']) ?? 0,
       order: readInt(json['order']) ?? 0,
       batch: readInt(json['batch']),

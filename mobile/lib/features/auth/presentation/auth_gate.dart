@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../auth_controller.dart';
 import '../../shell/app_shell.dart';
+import '../../admin/presentation/admin_panel_screen.dart';
 import 'login_screen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -18,8 +19,46 @@ class AuthGate extends StatelessWidget {
       case AuthStatus.unauthenticated:
         return const LoginScreen();
       case AuthStatus.authenticated:
+        if (auth.user?.role == 'admin') {
+          return AdminBootstrapGate(child: const AppShell());
+        }
         return const AppShell();
     }
+  }
+}
+
+class AdminBootstrapGate extends StatefulWidget {
+  const AdminBootstrapGate({
+    super.key,
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  State<AdminBootstrapGate> createState() => _AdminBootstrapGateState();
+}
+
+class _AdminBootstrapGateState extends State<AdminBootstrapGate> {
+  bool _openedPanel = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_openedPanel) return;
+    _openedPanel = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AdminPanelScreen()),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
 

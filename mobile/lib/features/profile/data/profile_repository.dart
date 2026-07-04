@@ -20,6 +20,44 @@ class ProfileRepository {
     return UserProfile.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
+  Future<List<UserProfile>> fetchUsers({
+    String? role,
+    String? domain,
+    bool? isMentor,
+  }) async {
+    final queryParameters = <String, dynamic>{};
+    if (role != null && role.isNotEmpty && role != 'all') {
+      queryParameters['role'] = role;
+    }
+    if (domain != null && domain.isNotEmpty && domain != 'all') {
+      queryParameters['domain'] = domain;
+    }
+    if (isMentor != null) {
+      queryParameters['isMentor'] = isMentor.toString();
+    }
+
+    final data = await _apiClient.getData('/users', queryParameters: queryParameters.isEmpty ? null : queryParameters);
+    final list = data is List ? data : const [];
+    return list
+        .whereType<Map>()
+        .map((item) => UserProfile.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
+  Future<MentorshipRequestItem> createMentorshipRequest({
+    required String mentorId,
+    required String message,
+  }) async {
+    final data = await _apiClient.postData(
+      '/mentorship/request',
+      data: {
+        'mentorId': mentorId,
+        'message': message,
+      },
+    );
+    return MentorshipRequestItem.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
   Future<List<MentorshipRequestItem>> fetchMyRequests() async {
     final data = await _apiClient.getData('/mentorship/my-requests');
     final list = data is List ? data : const [];

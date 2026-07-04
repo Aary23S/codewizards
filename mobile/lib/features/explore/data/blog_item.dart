@@ -9,6 +9,7 @@ class BlogItem {
     this.coverImage,
     this.tags = const [],
     this.authorName,
+    this.authorId,
   });
 
   final String id;
@@ -18,10 +19,12 @@ class BlogItem {
   final String? coverImage;
   final List<String> tags;
   final String? authorName;
+  final String? authorId;
 
   factory BlogItem.fromJson(Map<String, dynamic> json) {
     final author = json['author'];
     final authorName = author is Map ? author['name']?.toString() : null;
+    final authorId = author is Map ? author['_id']?.toString() ?? author['id']?.toString() : null;
     return BlogItem(
       id: readString(json['_id'] ?? json['id']),
       title: readString(json['title']),
@@ -30,6 +33,7 @@ class BlogItem {
       coverImage: readHttpUrl(json['coverImage']),
       tags: readStringList(json['tags']),
       authorName: authorName,
+      authorId: authorId,
     );
   }
 }

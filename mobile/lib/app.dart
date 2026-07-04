@@ -6,6 +6,7 @@ import 'core/storage/token_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/auth_repository.dart';
+import 'features/admin/data/admin_repository.dart';
 import 'features/events/data/event_repository.dart';
 import 'features/explore/data/explore_repository.dart';
 import 'features/home/data/home_repository.dart';
@@ -23,6 +24,7 @@ class CodeWizardsApp extends StatelessWidget {
         Provider<TokenStorage>(create: (_) => TokenStorage()),
         Provider<ApiClient>(create: (context) => ApiClient(context.read<TokenStorage>())),
         Provider<AuthRepository>(create: (context) => AuthRepository(context.read<ApiClient>())),
+        Provider<AdminRepository>(create: (context) => AdminRepository(context.read<ApiClient>())),
         Provider<HomeRepository>(create: (context) => HomeRepository(context.read<ApiClient>())),
         Provider<EventRepository>(create: (context) => EventRepository(context.read<ApiClient>())),
         Provider<ExploreRepository>(create: (context) => ExploreRepository(context.read<ApiClient>())),

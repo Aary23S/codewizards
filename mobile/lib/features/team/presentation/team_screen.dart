@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/widgets/safe_network_image.dart';
 import '../data/team_member_item.dart';
@@ -77,10 +78,10 @@ class _TeamScreenState extends State<TeamScreen> {
                 _StatGrid(
                   members: totalMembers,
                   years: groups.length,
-                  founders: members.where((item) => item.category == 'founder').length,
-                  faculty: members.where((item) => item.category == 'faculty').length,
+                  founders: members.where((item) => item.category.toLowerCase() == 'founder').length,
+                  faculty: members.where((item) => item.category.toLowerCase() == 'faculty').length,
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 16),
                 if (loading)
                   const _LoadingBlock()
                 else if (groups.isEmpty)
@@ -92,11 +93,11 @@ class _TeamScreenState extends State<TeamScreen> {
                     description:
                         'Founders and faculty stay fixed in About. This page shows the evolving annual teams, grouped by the year they belong to.',
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   ...groups.map(
                     (group) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: _YearSection(group: group),
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _BatchSection(group: group),
                     ),
                   ),
                 ],
@@ -123,7 +124,7 @@ List<_YearGroup> _groupMembers(List<TeamMemberItem> members) {
   final grouped = <String, List<TeamMemberItem>>{};
 
   for (final member in members) {
-    if (member.category == 'founder' || member.category == 'faculty') {
+    if (member.category.toLowerCase() == 'founder' || member.category.toLowerCase() == 'faculty') {
       continue;
     }
 
@@ -252,8 +253,84 @@ class _StatGrid extends StatelessWidget {
   }
 }
 
-class _YearSection extends StatelessWidget {
-  const _YearSection({required this.group});
+class _BatchSection extends StatelessWidget {
+  const _BatchSection({required this.group});
+
+  final _YearGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(26),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => _BatchMembersPage(group: group),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(color: Colors.white.withAlpha(20)),
+          color: Colors.white.withAlpha(10),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'TEAM YEAR',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            letterSpacing: 3,
+                            color: Colors.white54,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(group.year, style: Theme.of(context).textTheme.headlineSmall),
+                  ],
+                ),
+                Text(
+                  '${group.members.length} members',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        letterSpacing: 2.2,
+                        color: Colors.white54,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: group.members.take(3).map((member) => _MiniChip(text: member.name)).toList(),
+            ),
+            if (group.members.length > 3) ...[
+              const SizedBox(height: 10),
+              Text(
+                '+ ${group.members.length - 3} more members',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 1,
+                      color: Colors.white54,
+                    ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BatchMembersPage extends StatelessWidget {
+  const _BatchMembersPage({required this.group});
 
   final _YearGroup group;
 
@@ -261,47 +338,56 @@ class _YearSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final columns = MediaQuery.of(context).size.width >= 700 ? 2 : 1;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(title: Text('Team ${group.year}')),
+      body: SafeArea(
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'TEAM YEAR',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        letterSpacing: 3,
-                        color: Colors.white54,
-                      ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF141414), Color(0xFF090909)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 6),
-                Text(group.year, style: Theme.of(context).textTheme.headlineSmall),
-              ],
-            ),
-            Text(
-              '${group.members.length} members',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    letterSpacing: 2.2,
-                    color: Colors.white54,
+                border: Border.all(color: Colors.white.withAlpha(20)),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('TEAM YEAR', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 3, color: Colors.white54)),
+                      const SizedBox(height: 6),
+                      Text(group.year, style: Theme.of(context).textTheme.headlineSmall),
+                    ],
                   ),
+                  Text(
+                    '${group.members.length} members',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2.2, color: Colors.white54),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: columns,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: columns == 1 ? 1.15 : 1.45,
+              children: group.members.map(_MemberCard.new).toList(),
             ),
           ],
         ),
-        const SizedBox(height: 14),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: columns,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: columns == 1 ? 1.0 : 1.35,
-          children: group.members.map(_MemberCard.new).toList(),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -313,7 +399,7 @@ class _MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badgeColor = switch (member.category) {
+    final badgeColor = switch (member.category.toLowerCase()) {
       'mentor' => const Color(0xFFF87171),
       'faculty' => const Color(0xFF60A5FA),
       'founder' => const Color(0xFFF5B14C),
@@ -326,7 +412,7 @@ class _MemberCard extends StatelessWidget {
         border: Border.all(color: Colors.white.withAlpha(20)),
         color: Colors.white.withAlpha(10),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -481,30 +567,55 @@ class _LinkText extends StatelessWidget {
   final String label;
   final String url;
 
+  Future<void> _openLink(BuildContext context) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open the link right now.')),
+        );
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the link right now.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final parsed = Uri.tryParse(url);
     final host = parsed?.host ?? '';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Colors.white70,
-                decoration: TextDecoration.underline,
-                decorationColor: Colors.white38,
-              ),
+    return InkWell(
+      onTap: () => _openLink(context),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Colors.white70,
+                    decoration: TextDecoration.underline,
+                    decorationColor: Colors.white38,
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              host.isNotEmpty ? host : url,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Colors.white38,
+                  ),
+            ),
+          ],
         ),
-        const SizedBox(height: 2),
-        Text(
-          host.isNotEmpty ? host : url,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.white38,
-              ),
-        ),
-      ],
+      ),
     );
   }
 }

@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+mobile/linux/flutter/generated_plugin_registrant.cc
+# Inside mobile/.gitignore
+.metadata
+/linux/flutter/
+/windows/flutter/
+/macos/Flutter/

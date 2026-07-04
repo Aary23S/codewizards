@@ -232,15 +232,15 @@ class _HeroSection extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                  onPressed: () => context.findAncestorStateOfType<AppShellState>()?.selectIndex(2),
+                  onPressed: () => context.findAncestorStateOfType<AppShellState>()?.selectIndex(4),
                   child: const Text('Find a mentor'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => context.findAncestorStateOfType<AppShellState>()?.selectIndex(5),
-                  child: const Text('View profile'),
+                  onPressed: () => context.findAncestorStateOfType<AppShellState>()?.selectIndex(3),
+                  child: const Text('View Events'),
                 ),
               ),
             ],
@@ -682,7 +682,7 @@ class _ConnectSection extends StatelessWidget {
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: onBrowseTap,
+                  onPressed: () => context.findAncestorStateOfType<AppShellState>()?.selectIndex(4),
                   child: const Text('Browse Seniors'),
                 ),
               ),
