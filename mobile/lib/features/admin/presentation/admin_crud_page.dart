@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/brand_logo.dart';
 
 enum AdminFieldType { text, multiline, number, boolean, dropdown }
 
@@ -181,7 +182,9 @@ class _AdminCrudPageState extends State<AdminCrudPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: Text(widget.config.title)),
+      appBar: AppBar(
+        title: const BrandLogo(size: 30, showLabel: true),
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../auth_controller.dart';
 import 'register_screen.dart';
+import '../../../shared/widgets/brand_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -136,20 +137,7 @@ class _BrandHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          height: 72,
-          width: 72,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: const LinearGradient(
-              colors: [Color(0xFFF5B14C), Color(0xFF5CC8FF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: const Icon(Icons.code, color: Colors.black, size: 34),
-        ),
+        const BrandLogo(size: 84),
         const SizedBox(height: 18),
         Text(
           'CodeWizards',

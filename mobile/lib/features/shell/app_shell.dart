@@ -9,6 +9,7 @@ import '../events/presentation/events_screen.dart';
 import '../explore/presentation/explore_screen.dart';
 import '../profile/profile_screen.dart';
 import '../team/presentation/team_screen.dart';
+import '../../shared/widgets/brand_logo.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -41,30 +42,7 @@ class AppShellState extends State<AppShell> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 20,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              height: 30,
-              width: 30,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: Colors.white.withAlpha(30)),
-                color: Colors.white.withAlpha(8),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                'CW',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'CodeWizards',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
+        title: const BrandLogo(size: 30, showLabel: true),
         actions: [
           if (isAdmin)
             Padding(
