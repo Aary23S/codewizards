@@ -803,7 +803,7 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
   Future<void> _openBlog(BlogItem blog) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => _BlogDetailPage(blogId: blog.id),
+        builder: (_) => BlogDetailScreen(blogId: blog.id),
       ),
     );
     if (!mounted) return;
@@ -1851,74 +1851,77 @@ class _BlogCard extends StatelessWidget {
     final publishedText = published?.toIso8601String().split('T').first ?? '';
     final excerpt = blog.content.length > 170 ? '${blog.content.substring(0, 170)}...' : blog.content;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(22),
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
-          color: Colors.black.withAlpha(46),
-          border: Border.all(color: Colors.white.withAlpha(20)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (blog.coverImage != null && blog.coverImage!.isNotEmpty)
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: SafeNetworkImage(
-                  imageUrl: blog.coverImage,
-                  fit: BoxFit.cover,
-                  placeholder: Container(color: Colors.white.withAlpha(8)),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      if (blog.authorName != null && blog.authorName!.isNotEmpty)
-                        _Badge(text: blog.authorName!.toUpperCase(), color: const Color(0xFF5CC8FF)),
-                      if (publishedText.isNotEmpty) _Badge(text: publishedText, color: const Color(0xFF34D399)),
-                    ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            color: Colors.black.withAlpha(46),
+            border: Border.all(color: Colors.white.withAlpha(20)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (blog.coverImage != null && blog.coverImage!.isNotEmpty)
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: SafeNetworkImage(
+                    imageUrl: blog.coverImage,
+                    fit: BoxFit.cover,
+                    placeholder: Container(color: Colors.white.withAlpha(8)),
                   ),
-                  const SizedBox(height: 8),
-                  Text(blog.title, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 6),
-                  Text(excerpt, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
-                  if (blog.tags.isNotEmpty) ...[
-                    const SizedBox(height: 10),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: blog.tags.take(3).map((tag) => _MiniChip(text: tag)).toList(),
+                      children: [
+                        if (blog.authorName != null && blog.authorName!.isNotEmpty)
+                          _Badge(text: blog.authorName!.toUpperCase(), color: const Color(0xFF5CC8FF)),
+                        if (publishedText.isNotEmpty) _Badge(text: publishedText, color: const Color(0xFF34D399)),
+                      ],
                     ),
+                    const SizedBox(height: 8),
+                    Text(blog.title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 6),
+                    Text(excerpt, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+                    if (blog.tags.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: blog.tags.take(3).map((tag) => _MiniChip(text: tag)).toList(),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _BlogDetailPage extends StatefulWidget {
-  const _BlogDetailPage({required this.blogId});
+class BlogDetailScreen extends StatefulWidget {
+  const BlogDetailScreen({super.key, required this.blogId});
 
   final String blogId;
 
   @override
-  State<_BlogDetailPage> createState() => _BlogDetailPageState();
+  State<BlogDetailScreen> createState() => _BlogDetailScreenState();
 }
 
-class _BlogDetailPageState extends State<_BlogDetailPage> {
+class _BlogDetailScreenState extends State<BlogDetailScreen> {
   Future<BlogItem>? _future;
   String? _errorMessage;
 

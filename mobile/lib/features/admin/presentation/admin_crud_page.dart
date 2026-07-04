@@ -58,6 +58,7 @@ class AdminCrudConfig {
     this.formTitle,
     this.extraAction,
     this.secondaryAction,
+    this.onItemTap,
   });
 
   final String title;
@@ -76,6 +77,7 @@ class AdminCrudConfig {
   final String? formTitle;
   final Future<void> Function(Map<String, dynamic> item)? extraAction;
   final Future<void> Function(Map<String, dynamic> item)? secondaryAction;
+  final Future<void> Function(Map<String, dynamic> item)? onItemTap;
 }
 
 class AdminCrudPage extends StatefulWidget {
@@ -232,6 +234,7 @@ class _AdminCrudPageState extends State<AdminCrudPage> {
                           onDelete: () => _deleteItem(item),
                           onExtraAction: widget.config.extraAction == null ? null : () => widget.config.extraAction!(item),
                           onSecondaryAction: widget.config.secondaryAction == null ? null : () => widget.config.secondaryAction!(item),
+                          onTap: widget.config.onItemTap == null ? null : () => widget.config.onItemTap!(item),
                         ),
                       ),
                     ),
@@ -410,6 +413,7 @@ class _AdminRecordCard extends StatelessWidget {
     this.onEdit,
     this.onExtraAction,
     this.onSecondaryAction,
+    this.onTap,
   });
 
   final AdminRecordCardData data;
@@ -417,10 +421,11 @@ class _AdminRecordCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onExtraAction;
   final VoidCallback? onSecondaryAction;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         color: Colors.white.withAlpha(10),
@@ -508,6 +513,19 @@ class _AdminRecordCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+
+    if (onTap == null) {
+      return card;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: card,
       ),
     );
   }

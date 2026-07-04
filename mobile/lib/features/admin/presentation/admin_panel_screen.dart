@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../explore/presentation/explore_screen.dart' show BlogDetailScreen;
 import '../data/admin_repository.dart';
 import 'admin_crud_page.dart';
 
@@ -487,6 +488,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         create: (payload) => repo.createObject('/blogs', _normalizeBlogPayload(payload)),
         update: (id, payload) => repo.updateObject('/blogs/$id', _normalizeBlogPayload(payload)),
         delete: (id) => repo.deleteObject('/blogs/$id'),
+        onItemTap: (item) async {
+          final id = _id(item);
+          if (id == null || !mounted) return;
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => BlogDetailScreen(blogId: id),
+            ),
+          );
+        },
         fields: const [
           AdminFieldSpec(key: 'title', label: 'Title'),
           AdminFieldSpec(key: 'content', label: 'Content', type: AdminFieldType.multiline),
