@@ -1,5 +1,6 @@
 import '../../../core/network/api_client.dart';
 import '../../auth/data/user_profile.dart';
+import 'coding_profile_item.dart';
 import 'mentorship_request_item.dart';
 
 class ProfileRepository {
@@ -18,6 +19,31 @@ class ProfileRepository {
       data: updates,
     );
     return UserProfile.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<CodingProfileItem> connectCodingProfile(Map<String, dynamic> data) async {
+    final response = await _apiClient.postData(
+      '/coding/connect',
+      data: data,
+    );
+    return CodingProfileItem.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
+  Future<CodingProfileItem?> fetchMyCodingProfile() async {
+    final data = await _apiClient.getData('/coding/profile/me');
+    if (data == null) return null;
+    return CodingProfileItem.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<CodingProfileItem> syncCodingProfile() async {
+    final data = await _apiClient.postData('/coding/sync');
+    return CodingProfileItem.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<CodingProfileItem?> fetchCodingProfilePublic(String id) async {
+    final data = await _apiClient.getData('/coding/public/$id');
+    if (data == null) return null;
+    return CodingProfileItem.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
   Future<List<UserProfile>> fetchUsers({

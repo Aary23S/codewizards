@@ -30,6 +30,7 @@ app.use("/api/v1/resources", require("./routes/resource.routes"));
 app.use("/api/v1/opportunities", require("./routes/opportunities.routes"));
 app.use("/api/v1/doubts", require("./routes/doubt.routes"));
 app.use("/api/v1/sync", require("./routes/sync.routes"));
+app.use("/api/v1/coding", require("./routes/coding.routes"));
 app.use("/api/v1/leaderboard", require("./routes/leaderboard.routes"));
 app.use("/api/v1/point-rules", require("./routes/pointRule.routes"));
 app.use("/api/v1/blogs", require("./routes/blog.routes"));

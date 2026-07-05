@@ -13,6 +13,9 @@ class UserProfile {
     this.bio,
     this.imageUrl,
     this.isMentor = false,
+    this.leetcodeUsername,
+    this.codeforcesHandle,
+    this.githubUsername,
     this.socialLinks = const ProfileSocialLinks(),
   });
 
@@ -27,6 +30,9 @@ class UserProfile {
   final String? bio;
   final String? imageUrl;
   final bool isMentor;
+  final String? leetcodeUsername;
+  final String? codeforcesHandle;
+  final String? githubUsername;
   final ProfileSocialLinks socialLinks;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -42,6 +48,9 @@ class UserProfile {
       bio: _readNullableText(json['bio']),
       imageUrl: readHttpUrl(json['imageUrl']),
       isMentor: readBool(json['isMentor']),
+      leetcodeUsername: _readNullableText(json['leetcodeUsername']),
+      codeforcesHandle: _readNullableText(json['codeforcesHandle']),
+      githubUsername: _readNullableText(json['githubUsername']),
       socialLinks: ProfileSocialLinks.fromJson(json),
     );
   }

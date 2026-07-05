@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   getUserById,
   updateUser,
+  connectCodingProfile,
   syncCodeforces,
   syncLeetcode,
   syncGithub,
@@ -137,6 +138,11 @@ const ProfileEdit = () => {
 
     try {
       await updateUser(id, form);
+      await connectCodingProfile({
+        leetcodeUsername: form.leetcodeUsername || "",
+        codeforcesHandle: form.codeforcesHandle || "",
+        githubUsername: form.githubUsername || "",
+      }).catch(() => {});
       navigate(`/profile/${id}`);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save");

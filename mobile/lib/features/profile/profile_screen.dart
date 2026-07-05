@@ -6,6 +6,7 @@ import '../auth/auth_controller.dart';
 import '../auth/data/user_profile.dart';
 import '../../core/widgets/safe_network_image.dart';
 import '../shell/app_shell.dart';
+import 'data/coding_profile_item.dart';
 import 'data/mentorship_request_item.dart';
 import 'data/profile_repository.dart';
 import 'presentation/profile_edit_screen.dart';
@@ -40,11 +41,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final results = await Future.wait([
         profileRepository.fetchProfile(currentUser.id),
         profileRepository.fetchMyRequests(),
+        profileRepository.fetchMyCodingProfile().catchError((_) => null),
       ]);
 
       return _ProfileDashboardSnapshot(
         profile: results[0] as UserProfile,
         requests: results[1] as List<MentorshipRequestItem>,
+        codingProfile: results[2] as CodingProfileItem?,
       );
     } catch (error) {
       if (error.toString().contains('401')) {
@@ -162,6 +165,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (data.profile.socialLinks.links.isNotEmpty)
                   _SocialLinksBlock(profile: data.profile),
                 if (data.profile.socialLinks.links.isNotEmpty) const SizedBox(height: 16),
+                if (data.codingProfile != null && data.codingProfile!.hasAnyData)
+                  _CodingSnapshotBlock(codingProfile: data.codingProfile!),
+                if (data.codingProfile != null && data.codingProfile!.hasAnyData) const SizedBox(height: 16),
                 _MentorshipBlock(profile: data.profile, requests: data.requests),
               ],
             );
@@ -181,10 +187,12 @@ class _ProfileDashboardSnapshot {
   const _ProfileDashboardSnapshot({
     required this.profile,
     required this.requests,
+    required this.codingProfile,
   });
 
   final UserProfile profile;
   final List<MentorshipRequestItem> requests;
+  final CodingProfileItem? codingProfile;
 }
 
 class _HeroPanel extends StatelessWidget {
@@ -465,6 +473,90 @@ class _SocialLinksBlock extends StatelessWidget {
                 )
                 .toList(),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CodingSnapshotBlock extends StatelessWidget {
+  const _CodingSnapshotBlock({required this.codingProfile});
+
+  final CodingProfileItem codingProfile;
+
+  @override
+  Widget build(BuildContext context) {
+    final leet = codingProfile.leetcode;
+    final cf = codingProfile.codeforces;
+    final gh = codingProfile.github;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        color: Colors.white.withAlpha(10),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Coding contributions',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  letterSpacing: 3,
+                  color: Colors.white54,
+                ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(child: _StatCard(label: 'LeetCode', value: _count(leet.totalSolved), subtitle: _leetcodeLabel(leet))),
+              const SizedBox(width: 10),
+              Expanded(child: _StatCard(label: 'Codeforces', value: _count(cf.rating), subtitle: _codeforcesLabel(cf))),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _StatCard(label: 'GitHub', value: _count(gh.contributions), subtitle: _githubLabel(gh))),
+              const SizedBox(width: 10),
+              Expanded(child: _StatCard(label: 'Sync', value: _formatSyncDate(gh.lastSyncedAt ?? cf.lastSyncedAt ?? leet.lastSyncedAt), subtitle: 'Last updated')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.subtitle,
+  });
+
+  final String label;
+  final String value;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.black.withAlpha(35),
+        border: Border.all(color: Colors.white.withAlpha(16)),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label.toUpperCase(), style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
+          const SizedBox(height: 8),
+          Text(value, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54)),
         ],
       ),
     );
@@ -894,6 +986,35 @@ String _friendlyError(Object? error) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }
   return 'Something went wrong while loading your profile.';
+}
+
+String _count(int? value) => value == null ? 'N/A' : value.toString();
+
+String _leetcodeLabel(CodingLeetCodeStats stats) {
+  final parts = <String>[];
+  if (stats.easySolved != null) parts.add('Easy ${stats.easySolved}');
+  if (stats.mediumSolved != null) parts.add('Med ${stats.mediumSolved}');
+  if (stats.hardSolved != null) parts.add('Hard ${stats.hardSolved}');
+  return parts.isEmpty ? 'No sync yet' : parts.join(' • ');
+}
+
+String _codeforcesLabel(CodingCodeforcesStats stats) {
+  final parts = <String>[];
+  if (stats.rank != null && stats.rank!.isNotEmpty) parts.add(stats.rank!);
+  if (stats.solvedCount != null) parts.add('Solved ${stats.solvedCount}');
+  return parts.isEmpty ? 'No sync yet' : parts.join(' • ');
+}
+
+String _githubLabel(CodingGitHubStats stats) {
+  final parts = <String>[];
+  if (stats.projects != null) parts.add('Repos ${stats.projects}');
+  if (stats.publicRepos != null) parts.add('Public ${stats.publicRepos}');
+  return parts.isEmpty ? 'No sync yet' : parts.join(' • ');
+}
+
+String _formatSyncDate(DateTime? date) {
+  if (date == null) return 'Never';
+  return _formatDate(date);
 }
 
 String _formatDate(DateTime date) {

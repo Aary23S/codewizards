@@ -40,9 +40,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late final TextEditingController _leetcodeController;
   late final TextEditingController _codeforcesController;
   late final TextEditingController _portfolioController;
+  late final TextEditingController _leetcodeUsernameController;
+  late final TextEditingController _codeforcesHandleController;
+  late final TextEditingController _githubUsernameController;
   late List<String> _selectedDomains;
   late bool _isMentor;
   bool _saving = false;
+  bool _syncingCoding = false;
   String? _errorMessage;
 
   @override
@@ -60,6 +64,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _leetcodeController = TextEditingController(text: profile.socialLinks.leetcode ?? '');
     _codeforcesController = TextEditingController(text: profile.socialLinks.codeforces ?? '');
     _portfolioController = TextEditingController(text: profile.socialLinks.portfolio ?? '');
+    _leetcodeUsernameController = TextEditingController(text: profile.leetcodeUsername ?? '');
+    _codeforcesHandleController = TextEditingController(text: profile.codeforcesHandle ?? '');
+    _githubUsernameController = TextEditingController(text: profile.githubUsername ?? '');
     _selectedDomains = List<String>.from(profile.domain);
     _isMentor = profile.isMentor;
   }
@@ -74,6 +81,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _leetcodeController.dispose();
     _codeforcesController.dispose();
     _portfolioController.dispose();
+    _leetcodeUsernameController.dispose();
+    _codeforcesHandleController.dispose();
+    _githubUsernameController.dispose();
     super.dispose();
   }
 
@@ -112,8 +122,19 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           'leetcode': _nullIfBlank(_leetcodeController.text),
           'codeforces': _nullIfBlank(_codeforcesController.text),
           'portfolio': _nullIfBlank(_portfolioController.text),
+          'leetcodeUsername': _nullIfBlank(_leetcodeUsernameController.text),
+          'codeforcesHandle': _nullIfBlank(_codeforcesHandleController.text),
+          'githubUsername': _nullIfBlank(_githubUsernameController.text),
         },
       );
+
+      try {
+        await profileRepository.connectCodingProfile({
+          'leetcodeUsername': _nullIfBlank(_leetcodeUsernameController.text),
+          'codeforcesHandle': _nullIfBlank(_codeforcesHandleController.text),
+          'githubUsername': _nullIfBlank(_githubUsernameController.text),
+        });
+      } catch (_) {}
 
       authController.replaceUser(updated);
 
@@ -128,6 +149,36 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       if (mounted) {
         setState(() {
           _saving = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _syncCodingProfiles() async {
+    setState(() {
+      _syncingCoding = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await context.read<ProfileRepository>().connectCodingProfile({
+        'leetcodeUsername': _nullIfBlank(_leetcodeUsernameController.text),
+        'codeforcesHandle': _nullIfBlank(_codeforcesHandleController.text),
+        'githubUsername': _nullIfBlank(_githubUsernameController.text),
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Coding profiles synced.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = _friendlyError(error);
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _syncingCoding = false;
         });
       }
     }
@@ -229,6 +280,43 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     _LinkField(controller: _codeforcesController, label: 'Codeforces URL', placeholder: 'https://codeforces.com/profile/username'),
                     const SizedBox(height: 14),
                     _LinkField(controller: _portfolioController, label: 'Portfolio URL', placeholder: 'https://yourportfolio.com'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Coding profiles',
+                subtitle: 'Store the usernames that power contribution stats and leaderboard syncing.',
+                child: Column(
+                  children: [
+                    _LinkField(
+                      controller: _leetcodeUsernameController,
+                      label: 'LeetCode username',
+                      placeholder: 'your_username',
+                      keyboardType: TextInputType.text,
+                    ),
+                    const SizedBox(height: 14),
+                    _LinkField(
+                      controller: _codeforcesHandleController,
+                      label: 'Codeforces handle',
+                      placeholder: 'tourist',
+                      keyboardType: TextInputType.text,
+                    ),
+                    const SizedBox(height: 14),
+                    _LinkField(
+                      controller: _githubUsernameController,
+                      label: 'GitHub username',
+                      placeholder: 'octocat',
+                      keyboardType: TextInputType.text,
+                    ),
+                    const SizedBox(height: 14),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton(
+                        onPressed: _syncingCoding ? null : _syncCodingProfiles,
+                        child: Text(_syncingCoding ? 'Syncing...' : 'Sync coding stats'),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -345,17 +433,19 @@ class _LinkField extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.placeholder,
+    this.keyboardType = TextInputType.url,
   });
 
   final TextEditingController controller;
   final String label;
   final String placeholder;
+  final TextInputType keyboardType;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      keyboardType: TextInputType.url,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
         hintText: placeholder,
