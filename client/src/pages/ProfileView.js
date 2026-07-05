@@ -12,6 +12,7 @@ const ProfileView = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [codingProfile, setCodingProfile] = useState(null);
+  const [selectedPlatform, setSelectedPlatform] = useState("leetcode");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
@@ -75,6 +76,8 @@ const ProfileView = () => {
         codingProfile.github?.recentActivity?.length
       )
   );
+
+  const codingInsight = buildCodingInsight(selectedPlatform, codingProfile);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black px-4 py-12 text-white md:px-6 lg:px-8">
@@ -185,60 +188,71 @@ const ProfileView = () => {
 
             {hasCodingData && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Coding contributions</p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">LeetCode</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">
-                      {codingProfile.leetcode?.totalSolved ?? "N/A"}
-                    </p>
-                    <p className="mt-1 text-xs text-white/55">
-                      {[
-                        codingProfile.leetcode?.easySolved != null ? `Easy ${codingProfile.leetcode.easySolved}` : null,
-                        codingProfile.leetcode?.mediumSolved != null ? `Med ${codingProfile.leetcode.mediumSolved}` : null,
-                        codingProfile.leetcode?.hardSolved != null ? `Hard ${codingProfile.leetcode.hardSolved}` : null,
-                      ].filter(Boolean).join(" • ") || "No sync yet"}
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Coding tracker</p>
+                    <h3 className="mt-2 text-2xl font-semibold text-white">One analytics card, switchable by platform.</h3>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
+                      The web view now mirrors mobile: no noisy activity feed, just compact platform analytics with a cleaner desktop hierarchy.
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">Codeforces</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">
-                      {codingProfile.codeforces?.rating ?? "N/A"}
-                    </p>
-                    <p className="mt-1 text-xs text-white/55">
-                      {[
-                        codingProfile.codeforces?.rank || null,
-                        codingProfile.codeforces?.solvedCount != null ? `Solved ${codingProfile.codeforces.solvedCount}` : null,
-                      ].filter(Boolean).join(" • ") || "No sync yet"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">GitHub</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">
-                      {codingProfile.github?.contributions ?? "N/A"}
-                    </p>
-                    <p className="mt-1 text-xs text-white/55">
-                      {[
-                        codingProfile.github?.projects != null ? `Repos ${codingProfile.github.projects}` : null,
-                        codingProfile.github?.publicRepos != null ? `Public ${codingProfile.github.publicRepos}` : null,
-                      ].filter(Boolean).join(" • ") || "No sync yet"}
-                    </p>
+                  <div className="flex flex-wrap gap-2">
+                    {CODING_PLATFORMS.map((platform) => {
+                      const active = selectedPlatform === platform.key;
+                      return (
+                        <button
+                          key={platform.key}
+                          type="button"
+                          onClick={() => setSelectedPlatform(platform.key)}
+                          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                            active
+                              ? "border-white bg-white text-black"
+                              : "border-white/10 bg-black/20 text-white/75 hover:border-white/20 hover:bg-white/8"
+                          }`}
+                        >
+                          {platform.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {codingProfile.leetcode?.recentSubmissions?.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-xs uppercase tracking-[0.3em] text-white/45">Recent submissions</p>
-                    {codingProfile.leetcode.recentSubmissions.slice(0, 3).map((item) => (
-                      <div key={`${item.title}-${item.url}`} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                        <p className="text-sm font-semibold text-white">{item.problem || item.title}</p>
-                        <p className="mt-1 text-xs text-white/55">{item.verdict || item.language || "Submission"}</p>
-                      </div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <StatPill label="Total" value={formatCount(codingInsight.total)} />
+                  <StatPill label={codingInsight.primaryLabel} value={formatCount(codingInsight.primaryValue)} />
+                  <StatPill label="Last sync" value={syncAgeLabel(codingInsight.lastSync)} />
+                </div>
+
+                <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5 md:p-6">
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">{codingInsight.eyebrow}</p>
+                  <h4 className="mt-3 text-xl font-semibold text-white">{codingInsight.title}</h4>
+                  <p className="mt-2 text-sm leading-6 text-white/60">{codingInsight.description}</p>
+
+                  <div className="mt-6 space-y-4">
+                    {codingInsight.metrics
+                      .filter((metric) => metric.value != null)
+                      .map((metric) => (
+                        <BarMetric
+                          key={metric.label}
+                          metric={metric}
+                          accent={codingInsight.accent}
+                          maxValue={codingInsight.maxValue}
+                        />
+                      ))}
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {codingInsight.handles.map((handle) => (
+                      <span
+                        key={handle}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70"
+                      >
+                        {handle}
+                      </span>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
@@ -294,6 +308,134 @@ const ProfileView = () => {
       </div>
     </div>
   );
+};
+
+const CODING_PLATFORMS = [
+  { key: "leetcode", label: "LeetCode" },
+  { key: "codeforces", label: "Codeforces" },
+  { key: "github", label: "GitHub" },
+];
+
+const buildCodingInsight = (selectedPlatform, codingProfile) => {
+  const leet = codingProfile?.leetcode || {};
+  const cf = codingProfile?.codeforces || {};
+  const gh = codingProfile?.github || {};
+  const lastSync = gh.lastSyncedAt || cf.lastSyncedAt || leet.lastSyncedAt || null;
+
+  switch (selectedPlatform) {
+    case "codeforces":
+      return {
+        eyebrow: "Codeforces",
+        title: "Contest and problem-solving strength at a glance.",
+        description: "Performance is summarized as counts and rating rather than individual submissions.",
+        primaryLabel: "Rating",
+        primaryValue: cf.rating,
+        total: cf.solvedCount,
+        accent: "#7CE7B3",
+        lastSync,
+        handles: [codingProfile?.codeforcesHandle ? `Codeforces: ${codingProfile.codeforcesHandle}` : null].filter(Boolean),
+        metrics: [
+          { label: "Rating", value: cf.rating },
+          { label: "Max rating", value: cf.maxRating },
+          { label: "Solved", value: cf.solvedCount },
+          { label: "Contests", value: cf.contestHistory?.length },
+          { label: "Recent", value: cf.recentSubmissions?.length },
+        ],
+        maxValue: highestMetricValue([cf.rating, cf.maxRating, cf.solvedCount, cf.contestHistory?.length, cf.recentSubmissions?.length]),
+      };
+    case "github":
+      return {
+        eyebrow: "GitHub",
+        title: "Contribution activity by engagement signals.",
+        description: "A compact tracker for public repo activity and contribution volume.",
+        primaryLabel: "Contribs",
+        primaryValue: gh.contributions,
+        total: gh.contributions,
+        accent: "#6BCBFF",
+        lastSync,
+        handles: [codingProfile?.githubUsername ? `GitHub: ${codingProfile.githubUsername}` : null].filter(Boolean),
+        metrics: [
+          { label: "Contribs", value: gh.contributions },
+          { label: "Projects", value: gh.projects },
+          { label: "Repos", value: gh.publicRepos },
+          { label: "Followers", value: gh.followers },
+          { label: "Following", value: gh.following },
+        ],
+        maxValue: highestMetricValue([gh.contributions, gh.projects, gh.publicRepos, gh.followers, gh.following]),
+      };
+    case "leetcode":
+    default:
+      return {
+        eyebrow: "LeetCode",
+        title: "Solved problems, broken down by difficulty.",
+        description: "A single tracker that shows your solved counts instead of raw activity noise.",
+        primaryLabel: "Solved",
+        primaryValue: leet.totalSolved,
+        total: leet.totalSolved,
+        accent: "#FFC857",
+        lastSync,
+        handles: [codingProfile?.leetcodeUsername ? `LeetCode: ${codingProfile.leetcodeUsername}` : null].filter(Boolean),
+        metrics: [
+          { label: "Easy", value: leet.easySolved },
+          { label: "Medium", value: leet.mediumSolved },
+          { label: "Hard", value: leet.hardSolved },
+          { label: "Total", value: leet.totalSolved },
+          { label: "Rank", value: leet.ranking },
+        ],
+        maxValue: highestMetricValue([leet.easySolved, leet.mediumSolved, leet.hardSolved, leet.totalSolved, leet.ranking]),
+      };
+  }
+};
+
+const StatPill = ({ label, value }) => (
+  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">{label}</p>
+    <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+  </div>
+);
+
+const BarMetric = ({ metric, accent, maxValue }) => {
+  const metricValue = Number(metric.value || 0);
+  const width = metricValue <= 0 ? 8 : Math.min(100, Math.max(8, (metricValue / Math.max(maxValue || 1, 1)) * 100));
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-4">
+        <p className="text-sm font-semibold text-white/90">{metric.label}</p>
+        <p className="text-sm text-white/55">{formatCount(metric.value)}</p>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${width}%`,
+            background: `linear-gradient(90deg, ${accent}, rgba(255,255,255,0.45))`,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const formatCount = (value) => (value == null ? "N/A" : String(value));
+
+const highestMetricValue = (values) =>
+  values.reduce((max, value) => {
+    const numeric = Number(value || 0);
+    return numeric > max ? numeric : max;
+  }, 1);
+
+const syncAgeLabel = (lastSync) => {
+  if (!lastSync) return "Never";
+  const syncedAt = new Date(lastSync);
+  if (Number.isNaN(syncedAt.getTime())) return "Never";
+  const diffMs = Date.now() - syncedAt.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffMinutes < 1) return "Now";
+  if (diffMinutes < 60) return `${diffMinutes}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  return `${diffDays}d`;
 };
 
 export default ProfileView;
