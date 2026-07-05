@@ -46,6 +46,7 @@ const TABS = [
   "doubts",
   "blogs",
   "opportunities",
+  "resources",
   "team",
   "contact",
   "points",
@@ -127,6 +128,13 @@ const Admin = () => {
     applyLink: "",
     deadline: "",
   });
+  const [newResource, setNewResource] = useState({
+    title: "",
+    url: "",
+    category: "Other",
+    domain: "",
+    description: "",
+  });
   const [newTeamMember, setNewTeamMember] = useState({
     name: "",
     role: "",
@@ -143,6 +151,7 @@ const Admin = () => {
   const [newTeamImageFile, setNewTeamImageFile] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [editingOpportunity, setEditingOpportunity] = useState(null);
+  const [editingResource, setEditingResource] = useState(null);
   const [editingTeamMember, setEditingTeamMember] = useState(null);
   const [editingTeamImageFile, setEditingTeamImageFile] = useState(null);
   const [suspendModal, setSuspendModal] = useState(null);
@@ -292,6 +301,33 @@ const Admin = () => {
   const handleDeleteOpportunity = async (id) => {
     await deleteOpportunity(id);
     setOpportunities((prev) => prev.filter((o) => o._id !== id));
+  };
+
+  const createResource = async () => {
+    const payload = {
+      ...newResource,
+      category: newResource.category || "Other",
+    };
+    const res = await api.post("/resources", payload);
+    setResources((prev) => [res.data.data, ...prev]);
+    setNewResource({
+      title: "",
+      url: "",
+      category: "Other",
+      domain: "",
+      description: "",
+    });
+  };
+
+  const saveResourceUpdate = async () => {
+    const res = await api.patch(`/resources/${editingResource._id}`, editingResource);
+    setResources((prev) => prev.map((item) => (item._id === editingResource._id ? res.data.data : item)));
+    setEditingResource(null);
+  };
+
+  const handleDeleteResource = async (id) => {
+    await api.delete(`/resources/${id}`);
+    setResources((prev) => prev.filter((item) => item._id !== id));
   };
 
   const createTeamMemberHandler = async () => {
@@ -780,6 +816,84 @@ const Admin = () => {
                           Edit
                         </button>
                         <button onClick={() => handleDeleteOpportunity(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {tab === "resources" && (
+          <section className="mt-6 space-y-6">
+            <Section title="Add Resource" description="Publish learning materials, guides, and references for the community.">
+              <div className="grid gap-3">
+                <input className={fieldClass} placeholder="Title *" value={newResource.title} onChange={(e) => setNewResource({ ...newResource, title: e.target.value })} />
+                <input className={fieldClass} placeholder="URL *" value={newResource.url} onChange={(e) => setNewResource({ ...newResource, url: e.target.value })} />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <select className={fieldClass} value={newResource.category} onChange={(e) => setNewResource({ ...newResource, category: e.target.value })}>
+                    {["PDF", "GitHub", "YouTube", "Docs", "Other"].map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                  <input className={fieldClass} placeholder="Domain" value={newResource.domain} onChange={(e) => setNewResource({ ...newResource, domain: e.target.value })} />
+                </div>
+                <textarea className={fieldClass} placeholder="Description" rows={3} value={newResource.description} onChange={(e) => setNewResource({ ...newResource, description: e.target.value })} />
+                <button onClick={createResource} className="w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+                  Add Resource
+                </button>
+              </div>
+            </Section>
+            <div className="space-y-4">
+              <p className="text-sm text-white/55">{resources.length} total resources · Admin can edit/delete any item</p>
+              {resources.map((item) => (
+                <div key={item._id} className={`${shellCard} p-5`}>
+                  {editingResource?._id === item._id ? (
+                    <div className="grid gap-3">
+                      <input className={fieldClass} value={editingResource.title || ""} onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })} />
+                      <input className={fieldClass} value={editingResource.url || ""} onChange={(e) => setEditingResource({ ...editingResource, url: e.target.value })} />
+                      <select className={fieldClass} value={editingResource.category || "Other"} onChange={(e) => setEditingResource({ ...editingResource, category: e.target.value })}>
+                        {["PDF", "GitHub", "YouTube", "Docs", "Other"].map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                      <input className={fieldClass} value={editingResource.domain || ""} onChange={(e) => setEditingResource({ ...editingResource, domain: e.target.value })} />
+                      <textarea className={fieldClass} rows={3} value={editingResource.description || ""} onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })} />
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={saveResourceUpdate} className="rounded-full bg-white px-4 py-2 text-xs uppercase tracking-[0.3em] text-black transition hover:bg-cyan-100">
+                          Save
+                        </button>
+                        <button onClick={() => setEditingResource(null)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-white">{item.title}</p>
+                        <p className="mt-2 text-sm text-white/55">
+                          {item.category}
+                          {item.domain ? ` · ${item.domain}` : ""}
+                        </p>
+                        <p className="mt-2 text-sm text-white/55 break-all">{item.url}</p>
+                        {item.description && <p className="mt-2 text-sm text-white/55">{item.description}</p>}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setEditingResource(item)}
+                          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                        >
+                          Edit
+                        </button>
+                        <button onClick={() => handleDeleteResource(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
                           Delete
                         </button>
                       </div>

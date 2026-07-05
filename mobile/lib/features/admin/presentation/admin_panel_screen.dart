@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../auth/presentation/login_screen.dart';
@@ -170,6 +171,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         break;
       case AdminSection.opportunities:
         page = _opportunitiesCrudPage();
+        break;
+      case AdminSection.resources:
+        page = _resourcesCrudPage();
         break;
       case AdminSection.team:
         page = _teamCrudPage();
@@ -564,6 +568,48 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
+  Widget _resourcesCrudPage() {
+    final repo = context.read<AdminRepository>();
+    return AdminCrudPage(
+      config: AdminCrudConfig(
+        title: 'Resources',
+        eyebrow: 'Resources',
+        description: 'Publish learning materials, guides, and references for the community.',
+        createButtonLabel: 'Add Resource',
+        formTitle: 'Add resource',
+        loader: () => repo.fetchList('/resources'),
+        create: (payload) => repo.createObject('/resources', payload),
+        update: (id, payload) => repo.updateObject('/resources/$id', payload),
+        delete: (id) => repo.deleteObject('/resources/$id'),
+        fields: const [
+          AdminFieldSpec(key: 'title', label: 'Title'),
+          AdminFieldSpec(key: 'url', label: 'URL'),
+          AdminFieldSpec(
+            key: 'category',
+            label: 'Category',
+            type: AdminFieldType.dropdown,
+            options: ['PDF', 'GitHub', 'YouTube', 'Docs', 'Other'],
+          ),
+          AdminFieldSpec(key: 'domain', label: 'Domain', required: false),
+          AdminFieldSpec(key: 'description', label: 'Description', type: AdminFieldType.multiline, required: false),
+        ],
+        cardData: (item) => AdminRecordCardData(
+          title: _string(item['title'], fallback: 'Untitled resource'),
+          subtitle: _string(item['url'], fallback: 'No URL'),
+          badges: [
+            _string(item['category'], fallback: 'resource'),
+            if (_string(item['domain']).isNotEmpty) _string(item['domain']),
+          ],
+        ),
+        onItemTap: (item) async {
+          final url = _string(item['url']);
+          if (url.isEmpty) return;
+          await _openExternal(url);
+        },
+      ),
+    );
+  }
+
   Widget _teamCrudPage() {
     final repo = context.read<AdminRepository>();
     return AdminCrudPage(
@@ -847,6 +893,16 @@ String _friendlyError(Object? error) {
   return 'Something went wrong while loading the control panel.';
 }
 
+Future<void> _openExternal(String value) async {
+  final uri = Uri.tryParse(value.trim());
+  if (uri == null) return;
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {
+    // Ignore launcher failures so admin CRUD stays usable offline or on misconfigured platforms.
+  }
+}
+
 enum AdminSection {
   users,
   projects,
@@ -857,6 +913,7 @@ enum AdminSection {
   doubts,
   blogs,
   opportunities,
+  resources,
   team,
   contact,
   points,
@@ -881,6 +938,7 @@ class _AdminSectionsBlock extends StatelessWidget {
       (AdminSection.doubts, 'Doubts', 'Moderate forum'),
       (AdminSection.blogs, 'Blogs', 'Manage posts'),
       (AdminSection.opportunities, 'Opportunities', 'Career feed'),
+      (AdminSection.resources, 'Resources', 'Learning library'),
       (AdminSection.team, 'Team', 'Staff profiles'),
       (AdminSection.contact, 'Contact', 'Update links'),
       (AdminSection.points, 'Points', 'Adjust rules'),
