@@ -2,8 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
-import { getDashboardPath } from "../utils/getDashboardPath";
-
 const primaryLinks = [
   { name: "Home", path: "/" },
   { name: "About", path: "/about" },
@@ -25,11 +23,6 @@ const exploreLinks = [
 const utilityLinks = [
   { name: "Connect", path: "/connect" },
   { name: "Resources", path: "/resources" },
-];
-
-const workspaceLinks = [
-  { name: "Dashboard", path: "/dashboard" },
-  { name: "Profile", path: (user) => (user ? `/profile/${user._id}` : "/") },
 ];
 
 const Navbar = () => {
@@ -129,8 +122,16 @@ const Navbar = () => {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
+              {user.role === "admin" && (
+                <Link
+                  to="/admin"
+                  className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-200/40 hover:bg-cyan-300/15"
+                >
+                  Admin
+                </Link>
+              )}
               <Link
-                to={getDashboardPath(user.role)}
+                to={`/profile/${user._id}`}
                 className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:text-white"
               >
                 {user.name?.split(" ")[0]}
@@ -248,23 +249,30 @@ const Navbar = () => {
               <div>
                 <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-white/35">Workspace</p>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {workspaceLinks.map((link) => {
-                    const path = typeof link.path === "function" ? link.path(user) : link.path;
-                    return (
-                      <Link
-                        key={link.name}
-                        to={path}
-                        onClick={() => setMenuOpen(false)}
-                        className={`rounded-2xl border px-4 py-3 text-sm transition-colors ${
-                          pathname === path
-                            ? "border-white/20 bg-white/10 text-white"
-                            : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
-                        }`}
-                      >
-                        {link.name}
-                      </Link>
-                    );
-                  })}
+                  <Link
+                    to={`/profile/${user._id}`}
+                    onClick={() => setMenuOpen(false)}
+                    className={`rounded-2xl border px-4 py-3 text-sm transition-colors ${
+                      pathname === `/profile/${user._id}`
+                        ? "border-white/20 bg-white/10 text-white"
+                        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
+                    }`}
+                  >
+                    Profile
+                  </Link>
+                  {user.role === "admin" && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setMenuOpen(false)}
+                      className={`rounded-2xl border px-4 py-3 text-sm transition-colors ${
+                        pathname === "/admin"
+                          ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-50"
+                          : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
+                      }`}
+                    >
+                      Admin panel
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
@@ -274,7 +282,7 @@ const Navbar = () => {
             {user ? (
               <div className="flex gap-3">
                 <Link
-                  to={getDashboardPath(user.role)}
+                  to={`/profile/${user._id}`}
                   onClick={() => setMenuOpen(false)}
                   className="flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-white/70"
                 >
