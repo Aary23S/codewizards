@@ -17,6 +17,7 @@ import '../data/explore_repository.dart';
 import '../data/gallery_item.dart';
 import '../data/leaderboard_item.dart';
 import '../data/opportunity_item.dart';
+import '../data/resource_item.dart';
 import '../data/timeline_item.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -51,6 +52,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     7 => const ContactExplorePage(),
                     8 => const ConnectExplorePage(),
                     9 => const ContributionsExplorePage(),
+                    10 => const ResourcesExplorePage(),
                     _ => const ProjectsExplorePage(),
                 },
               ),
@@ -1608,6 +1610,156 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
   }
 }
 
+class ResourcesExplorePage extends StatefulWidget {
+  const ResourcesExplorePage({super.key});
+
+  @override
+  State<ResourcesExplorePage> createState() => _ResourcesExplorePageState();
+}
+
+class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
+  Future<List<ResourceItem>>? _future;
+  String? _errorMessage;
+  String _selectedCategory = 'all';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ??= _load();
+  }
+
+  Future<List<ResourceItem>> _load() {
+    return context.read<ExploreRepository>().fetchResources(category: _selectedCategory);
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _errorMessage = null;
+      _future = _load();
+    });
+
+    try {
+      await _future;
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = _friendlyError(error));
+    }
+  }
+
+  Future<void> _openResource(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } on MissingPluginException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Link launcher is initializing. Please fully restart the app once.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the resource right now.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const categories = ['all', 'PDF', 'GitHub', 'YouTube', 'Docs', 'Other'];
+
+    return _SectionScaffold(
+      title: 'Resources',
+      eyebrow: 'Learn',
+      description: 'A unified library for guides, references, and learning materials across the community.',
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<List<ResourceItem>>(
+          future: _future,
+          builder: (context, snapshot) {
+            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+
+            if (snapshot.hasError || _errorMessage != null) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                children: [
+                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                ],
+              );
+            }
+
+            final resources = snapshot.data ?? <ResourceItem>[];
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              children: [
+                _SectionBlock(
+                  eyebrow: 'Learn',
+                  title: 'Resources, organized by category.',
+                  description: 'Browse the same backend collection as web with a mobile-first layout and quick filters.',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: categories.map((category) {
+                          final active = _selectedCategory == category;
+                          return ChoiceChip(
+                            selected: active,
+                            label: Text(category == 'all' ? 'All' : category),
+                            onSelected: (_) {
+                              setState(() {
+                                _selectedCategory = category;
+                                _future = _load();
+                              });
+                            },
+                            labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: active ? Colors.black : Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                            selectedColor: Colors.white,
+                            backgroundColor: const Color(0xFF1A1A1A),
+                            side: BorderSide(color: Colors.white.withAlpha(28)),
+                            showCheckmark: false,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      if (loading)
+                        const _LoadingBlock()
+                      else if (resources.isEmpty)
+                        const _EmptyBlock(message: 'No resources yet. Check back soon.')
+                      else
+                        Column(
+                          children: resources
+                              .asMap()
+                              .entries
+                              .map(
+                                (entry) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _ResourceCard(
+                                    resource: entry.value,
+                                    onTap: () => _openResource(entry.value.url),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 class _BlogAuthorGroup {
   const _BlogAuthorGroup({
     required this.key,
@@ -2451,6 +2603,7 @@ class _ExploreTileGrid extends StatelessWidget {
       ('Contact', 7),
       ('Connect', 8),
       ('Contributions', 9),
+      ('Resources', 10),
     ];
 
     return GridView.count(
@@ -2576,6 +2729,70 @@ class _ProjectCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _ResourceCard extends StatelessWidget {
+  const _ResourceCard({
+    required this.resource,
+    required this.onTap,
+  });
+
+  final ResourceItem resource;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          color: Colors.black.withAlpha(46),
+          border: Border.all(color: Colors.white.withAlpha(20)),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _Badge(text: resource.category.toUpperCase(), color: const Color(0xFF5CC8FF)),
+                if ((resource.domain ?? '').isNotEmpty) _Badge(text: resource.domain!.toUpperCase(), color: const Color(0xFFFFC857)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              resource.title,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              resource.description?.trim().isNotEmpty == true
+                  ? resource.description!
+                  : 'Open this resource for more details.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5, color: Colors.white70),
+            ),
+            const SizedBox(height: 14),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton(
+                onPressed: onTap,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withAlpha(30)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                ),
+                child: const Text('Open resource'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

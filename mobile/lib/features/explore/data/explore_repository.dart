@@ -6,6 +6,7 @@ import 'doubt_item.dart';
 import 'gallery_item.dart';
 import 'leaderboard_item.dart';
 import 'opportunity_item.dart';
+import 'resource_item.dart';
 import 'timeline_item.dart';
 
 class ExploreRepository {
@@ -133,6 +134,18 @@ class ExploreRepository {
   Future<ContactInfoItem> fetchContact() async {
     final data = await _apiClient.getData('/contact');
     return ContactInfoItem.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<List<ResourceItem>> fetchResources({String? category}) async {
+    final queryParameters = <String, dynamic>{};
+    if (category != null && category.isNotEmpty && category.toLowerCase() != 'all') {
+      queryParameters['category'] = category;
+    }
+    final data = await _apiClient.getData(
+      '/resources',
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
+    );
+    return _mapList(data, ResourceItem.fromJson);
   }
 
   List<T> _mapList<T>(dynamic data, T Function(Map<String, dynamic>) builder) {

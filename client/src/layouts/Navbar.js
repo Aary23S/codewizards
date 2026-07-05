@@ -18,6 +18,7 @@ const exploreLinks = [
   { name: "Leaderboard", path: "/leaderboard" },
   { name: "Blog", path: "/blogs" },
   { name: "Contact", path: "/contact" },
+  { name: "Resources", path: "/resources" },
 ];
 
 const utilityLinks = [
