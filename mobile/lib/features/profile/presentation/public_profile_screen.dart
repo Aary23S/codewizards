@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../auth/auth_controller.dart';
 import '../../auth/data/user_profile.dart';
 import '../../../core/widgets/safe_network_image.dart';
+import '../data/coding_profile_item.dart';
 import '../data/profile_repository.dart';
 
 class PublicProfileScreen extends StatefulWidget {
@@ -21,7 +22,7 @@ class PublicProfileScreen extends StatefulWidget {
 }
 
 class _PublicProfileScreenState extends State<PublicProfileScreen> {
-  Future<UserProfile>? _future;
+  Future<_PublicProfileSnapshot>? _future;
   String? _errorMessage;
   final _requestController = TextEditingController();
   bool _submittingRequest = false;
@@ -29,7 +30,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<ProfileRepository>().fetchProfile(widget.userId);
+    _future ??= _load();
+  }
+
+  Future<_PublicProfileSnapshot> _load() async {
+    final repo = context.read<ProfileRepository>();
+    final results = await Future.wait([
+      repo.fetchProfile(widget.userId),
+      repo.fetchCodingProfilePublic(widget.userId).catchError((_) => null),
+    ]);
+
+    return _PublicProfileSnapshot(
+      profile: results[0] as UserProfile,
+      codingProfile: results[1] as CodingProfileItem?,
+    );
   }
 
   @override
@@ -41,7 +55,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<ProfileRepository>().fetchProfile(widget.userId);
+      _future = _load();
     });
 
     try {
@@ -86,7 +100,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
-          child: FutureBuilder<UserProfile>(
+          child: FutureBuilder<_PublicProfileSnapshot>(
             future: _future,
             builder: (context, snapshot) {
               final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
@@ -104,10 +118,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 );
               }
 
-              final profile = snapshot.data;
-              if (profile == null) {
+              final data = snapshot.data;
+              if (data == null) {
                 return const SizedBox.shrink();
               }
+              final profile = data.profile;
 
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -140,6 +155,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               if (profile.domain.isNotEmpty) const SizedBox(height: 12),
                               if (profile.socialLinks.links.isNotEmpty) _LinksBlock(profile: profile),
                               if (profile.socialLinks.links.isNotEmpty) const SizedBox(height: 12),
+                              if (data.codingProfile?.hasAnyData ?? false) _CodingBlock(codingProfile: data.codingProfile!),
+                              if (data.codingProfile?.hasAnyData ?? false) const SizedBox(height: 12),
                               if (profile.isMentor && currentUser != null && currentUser.id != profile.id)
                                 _RequestBlock(
                                   controller: _requestController,
@@ -157,6 +174,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       ),
     );
   }
+}
+
+class _PublicProfileSnapshot {
+  const _PublicProfileSnapshot({
+    required this.profile,
+    required this.codingProfile,
+  });
+
+  final UserProfile profile;
+  final CodingProfileItem? codingProfile;
 }
 
 class _HeroCard extends StatelessWidget {
@@ -314,6 +341,85 @@ class _LinksBlock extends StatelessWidget {
   }
 }
 
+class _CodingBlock extends StatelessWidget {
+  const _CodingBlock({required this.codingProfile});
+
+  final CodingProfileItem codingProfile;
+
+  @override
+  Widget build(BuildContext context) {
+    final leet = codingProfile.leetcode;
+    final cf = codingProfile.codeforces;
+    final gh = codingProfile.github;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.white.withAlpha(10),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Coding contributions', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 3, color: Colors.white54)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _StatCard(label: 'LeetCode', value: _displayCount(leet.totalSolved), subvalue: _leetcodeSubtitle(leet))),
+              const SizedBox(width: 10),
+              Expanded(child: _StatCard(label: 'Codeforces', value: _displayCount(cf.rating), subvalue: _codeforcesSubtitle(cf))),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _StatCard(label: 'GitHub', value: _displayCount(gh.contributions), subvalue: _githubSubtitle(gh))),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _StatCard(
+                  label: 'Sync',
+                  value: _formatSyncDate(codingProfile.github.lastSyncedAt ?? codingProfile.codeforces.lastSyncedAt ?? codingProfile.leetcode.lastSyncedAt),
+                  subvalue: 'Last updated',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (leet.recentSubmissions.isNotEmpty) ...[
+            Text('Recent submissions', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
+            const SizedBox(height: 8),
+            ...leet.recentSubmissions.take(3).map(
+              (item) => _ActivityRow(
+                title: item.problem.isNotEmpty ? item.problem : item.title,
+                subtitle: item.verdict.isNotEmpty ? item.verdict : item.language,
+              ),
+            ),
+          ] else if (cf.recentSubmissions.isNotEmpty) ...[
+            Text('Recent submissions', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
+            const SizedBox(height: 8),
+            ...cf.recentSubmissions.take(3).map(
+              (item) => _ActivityRow(
+                title: item.problem.isNotEmpty ? item.problem : item.title,
+                subtitle: item.verdict.isNotEmpty ? item.verdict : item.language,
+              ),
+            ),
+          ] else if (gh.recentActivity.isNotEmpty) ...[
+            Text('Recent activity', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
+            const SizedBox(height: 8),
+            ...gh.recentActivity.take(3).map(
+              (item) => _ActivityRow(
+                title: item.problem.isNotEmpty ? item.problem : item.title,
+                subtitle: item.verdict.isNotEmpty ? item.verdict : item.language,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _RequestBlock extends StatelessWidget {
   const _RequestBlock({
     required this.controller,
@@ -418,6 +524,71 @@ class _MetricCard extends StatelessWidget {
           Text(label.toUpperCase(), style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2.2, color: Colors.white54)),
           const SizedBox(height: 8),
           Text(value, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.subvalue,
+  });
+
+  final String label;
+  final String value;
+  final String subvalue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.black.withAlpha(35),
+        border: Border.all(color: Colors.white.withAlpha(16)),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label.toUpperCase(), style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
+          const SizedBox(height: 8),
+          Text(value, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(subvalue, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityRow extends StatelessWidget {
+  const _ActivityRow({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.black.withAlpha(28),
+        border: Border.all(color: Colors.white.withAlpha(16)),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54)),
         ],
       ),
     );
@@ -627,4 +798,52 @@ String _friendlyError(Object? error) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }
   return 'Something went wrong while loading the profile.';
+}
+
+String _displayCount(int? value) => value == null ? 'N/A' : value.toString();
+
+String _leetcodeSubtitle(CodingLeetCodeStats stats) {
+  final parts = <String>[];
+  if (stats.easySolved != null) parts.add('Easy ${stats.easySolved}');
+  if (stats.mediumSolved != null) parts.add('Med ${stats.mediumSolved}');
+  if (stats.hardSolved != null) parts.add('Hard ${stats.hardSolved}');
+  return parts.isEmpty ? 'No sync yet' : parts.join(' • ');
+}
+
+String _codeforcesSubtitle(CodingCodeforcesStats stats) {
+  final parts = <String>[];
+  if (stats.rank != null && stats.rank!.isNotEmpty) parts.add(stats.rank!);
+  if (stats.solvedCount != null) parts.add('Solved ${stats.solvedCount}');
+  return parts.isEmpty ? 'No sync yet' : parts.join(' • ');
+}
+
+String _githubSubtitle(CodingGitHubStats stats) {
+  final parts = <String>[];
+  if (stats.projects != null) parts.add('Repos ${stats.projects}');
+  if (stats.publicRepos != null) parts.add('Public ${stats.publicRepos}');
+  return parts.isEmpty ? 'No sync yet' : parts.join(' • ');
+}
+
+String _formatSyncDate(DateTime? date) {
+  if (date == null) return 'Never';
+  return '${date.day.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}';
+}
+
+String _monthName(int month) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  if (month < 1 || month > 12) return '';
+  return months[month - 1];
 }

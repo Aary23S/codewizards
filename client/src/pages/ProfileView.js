@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getUserById, createMentorshipRequest } from "../services/api";
+import { getUserById, createMentorshipRequest, getPublicCodingProfile } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const shellCard =
@@ -11,6 +11,7 @@ const ProfileView = () => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+  const [codingProfile, setCodingProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
@@ -27,8 +28,14 @@ const ProfileView = () => {
   };
 
   useEffect(() => {
-    getUserById(id)
-      .then((res) => setProfile(res.data.data))
+    Promise.all([
+      getUserById(id),
+      getPublicCodingProfile(id).catch(() => ({ data: { data: null } })),
+    ])
+      .then(([userRes, codingRes]) => {
+        setProfile(userRes.data.data);
+        setCodingProfile(codingRes.data.data || null);
+      })
       .catch(() => navigate("/"))
       .finally(() => setLoading(false));
   }, [id, navigate]);
@@ -53,6 +60,21 @@ const ProfileView = () => {
     { label: "Codeforces", url: profile.codeforces },
     { label: "Portfolio", url: profile.portfolio },
   ].filter((item) => item.url);
+
+  const hasCodingData = Boolean(
+    codingProfile &&
+      (
+        codingProfile.leetcodeUsername ||
+        codingProfile.codeforcesHandle ||
+        codingProfile.githubUsername ||
+        codingProfile.leetcode?.totalSolved != null ||
+        codingProfile.leetcode?.recentSubmissions?.length ||
+        codingProfile.codeforces?.rating != null ||
+        codingProfile.codeforces?.recentSubmissions?.length ||
+        codingProfile.github?.contributions != null ||
+        codingProfile.github?.recentActivity?.length
+      )
+  );
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black px-4 py-12 text-white md:px-6 lg:px-8">
@@ -158,6 +180,65 @@ const ProfileView = () => {
                     </a>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {hasCodingData && (
+              <div className={`${shellCard} p-6 md:p-7`}>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Coding contributions</p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">LeetCode</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">
+                      {codingProfile.leetcode?.totalSolved ?? "N/A"}
+                    </p>
+                    <p className="mt-1 text-xs text-white/55">
+                      {[
+                        codingProfile.leetcode?.easySolved != null ? `Easy ${codingProfile.leetcode.easySolved}` : null,
+                        codingProfile.leetcode?.mediumSolved != null ? `Med ${codingProfile.leetcode.mediumSolved}` : null,
+                        codingProfile.leetcode?.hardSolved != null ? `Hard ${codingProfile.leetcode.hardSolved}` : null,
+                      ].filter(Boolean).join(" • ") || "No sync yet"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">Codeforces</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">
+                      {codingProfile.codeforces?.rating ?? "N/A"}
+                    </p>
+                    <p className="mt-1 text-xs text-white/55">
+                      {[
+                        codingProfile.codeforces?.rank || null,
+                        codingProfile.codeforces?.solvedCount != null ? `Solved ${codingProfile.codeforces.solvedCount}` : null,
+                      ].filter(Boolean).join(" • ") || "No sync yet"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">GitHub</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">
+                      {codingProfile.github?.contributions ?? "N/A"}
+                    </p>
+                    <p className="mt-1 text-xs text-white/55">
+                      {[
+                        codingProfile.github?.projects != null ? `Repos ${codingProfile.github.projects}` : null,
+                        codingProfile.github?.publicRepos != null ? `Public ${codingProfile.github.publicRepos}` : null,
+                      ].filter(Boolean).join(" • ") || "No sync yet"}
+                    </p>
+                  </div>
+                </div>
+
+                {codingProfile.leetcode?.recentSubmissions?.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs uppercase tracking-[0.3em] text-white/45">Recent submissions</p>
+                    {codingProfile.leetcode.recentSubmissions.slice(0, 3).map((item) => (
+                      <div key={`${item.title}-${item.url}`} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                        <p className="text-sm font-semibold text-white">{item.problem || item.title}</p>
+                        <p className="mt-1 text-xs text-white/55">{item.verdict || item.language || "Submission"}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

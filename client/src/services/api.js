@@ -51,6 +51,12 @@ export const createUser = (data) => api.post("/users", data);
 export const updateUser = (id, data) => api.patch(`/users/${id}`, data);
 export const deleteUser = (id) => api.delete(`/users/${id}`);
 
+// --- Coding contributions ---
+export const connectCodingProfile = (data) => api.post("/coding/connect", data);
+export const getMyCodingProfile = () => api.get("/coding/profile/me");
+export const syncCodingProfile = () => api.post("/coding/sync");
+export const getPublicCodingProfile = (id) => api.get(`/coding/public/${id}`);
+
 // --- Mentorship ---
 export const createMentorshipRequest = (data) => api.post("/mentorship/request", data);
 export const getMyMentorshipRequests = () => api.get("/mentorship/my-requests");

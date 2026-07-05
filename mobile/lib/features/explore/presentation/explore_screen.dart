@@ -7,6 +7,7 @@ import '../../auth/auth_controller.dart';
 import '../../auth/data/user_profile.dart';
 import '../../../core/widgets/safe_network_image.dart';
 import '../../home/data/project_item.dart';
+import '../../profile/data/coding_profile_item.dart';
 import '../../profile/data/profile_repository.dart';
 import '../../profile/presentation/public_profile_screen.dart';
 import '../data/blog_item.dart';
@@ -45,11 +46,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     2 => const OpportunitiesExplorePage(),
                     3 => const LegacyExplorePage(),
                     4 => const ForumExplorePage(),
-                  5 => const LeaderboardExplorePage(),
-                  6 => const BlogExplorePage(),
-                  7 => const ContactExplorePage(),
-                  8 => const ConnectExplorePage(),
-                  _ => const ProjectsExplorePage(),
+                    5 => const LeaderboardExplorePage(),
+                    6 => const BlogExplorePage(),
+                    7 => const ContactExplorePage(),
+                    8 => const ConnectExplorePage(),
+                    9 => const ContributionsExplorePage(),
+                    _ => const ProjectsExplorePage(),
                 },
               ),
             );
@@ -763,6 +765,425 @@ class LeaderboardExplorePage extends StatelessWidget {
           );
         },
         child: _LeaderboardCard(rank: index + 1, student: student),
+      ),
+    );
+  }
+}
+
+class _CodingStatsBlock extends StatefulWidget {
+  const _CodingStatsBlock({required this.codingProfile});
+
+  final CodingProfileItem codingProfile;
+
+  @override
+  State<_CodingStatsBlock> createState() => _CodingStatsBlockState();
+}
+
+class _CodingStatsBlockState extends State<_CodingStatsBlock> {
+  _CodingPlatform _selected = _CodingPlatform.leetcode;
+
+  @override
+  Widget build(BuildContext context) {
+    final leet = widget.codingProfile.leetcode;
+    final cf = widget.codingProfile.codeforces;
+    final gh = widget.codingProfile.github;
+    final lastSync = gh.lastSyncedAt ?? cf.lastSyncedAt ?? leet.lastSyncedAt;
+    final insight = _buildInsight();
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF151515), Color(0xFF0B0B0B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tracker',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  letterSpacing: 3,
+                  color: Colors.white54,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'One analytics card, switchable by platform.',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _CodingPlatform.values.map((platform) {
+              final isSelected = platform == _selected;
+              return ChoiceChip(
+                selected: isSelected,
+                label: Text(platform.label),
+                onSelected: (_) => setState(() => _selected = platform),
+                labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: isSelected ? Colors.black : Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                selectedColor: Colors.white,
+                backgroundColor: const Color(0xFF1A1A1A),
+                side: BorderSide(color: Colors.white.withAlpha(28)),
+                showCheckmark: false,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _SummaryCard(label: 'Total', value: _contribCount(insight.total)),
+              _SummaryCard(label: insight.primaryLabel, value: _contribCount(insight.primaryValue)),
+              _SummaryCard(label: 'Last sync', value: _syncAgeLabel(lastSync)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SectionBlock(
+            eyebrow: insight.eyebrow,
+            title: insight.title,
+            description: insight.description,
+            child: insight.metrics.isEmpty
+                ? const _EmptyBlock(
+                    message: 'No stats available yet. Add handles in profile and sync to populate the tracker.',
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _TrackerChart(
+                        metrics: insight.metrics,
+                        accent: insight.accent,
+                      ),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (widget.codingProfile.leetcodeUsername != null) _MiniChip(text: 'LeetCode: ${widget.codingProfile.leetcodeUsername}'),
+                          if (widget.codingProfile.codeforcesHandle != null) _MiniChip(text: 'Codeforces: ${widget.codingProfile.codeforcesHandle}'),
+                          if (widget.codingProfile.githubUsername != null) _MiniChip(text: 'GitHub: ${widget.codingProfile.githubUsername}'),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _CodingTrackerInsight _buildInsight() {
+    final leet = widget.codingProfile.leetcode;
+    final cf = widget.codingProfile.codeforces;
+    final gh = widget.codingProfile.github;
+
+    switch (_selected) {
+      case _CodingPlatform.leetcode:
+        return _CodingTrackerInsight(
+          eyebrow: 'LeetCode',
+          title: 'Solved problems, broken down by difficulty.',
+          description: 'A single tracker that shows your solved counts instead of raw activity noise.',
+          primaryLabel: 'Solved',
+          primaryValue: leet.totalSolved,
+          total: leet.totalSolved,
+          accent: const Color(0xFFFFC857),
+          metrics: [
+            _TrackerMetric(label: 'Easy', value: leet.easySolved),
+            _TrackerMetric(label: 'Medium', value: leet.mediumSolved),
+            _TrackerMetric(label: 'Hard', value: leet.hardSolved),
+            _TrackerMetric(label: 'Total', value: leet.totalSolved),
+            _TrackerMetric(label: 'Rank', value: leet.ranking),
+          ],
+        );
+      case _CodingPlatform.codeforces:
+        return _CodingTrackerInsight(
+          eyebrow: 'Codeforces',
+          title: 'Contest and problem-solving strength at a glance.',
+          description: 'Performance is summarized as counts and rating rather than individual submissions.',
+          primaryLabel: 'Rating',
+          primaryValue: cf.rating,
+          total: cf.solvedCount,
+          accent: const Color(0xFF7CE7B3),
+          metrics: [
+            _TrackerMetric(label: 'Rating', value: cf.rating),
+            _TrackerMetric(label: 'Max rating', value: cf.maxRating),
+            _TrackerMetric(label: 'Solved', value: cf.solvedCount),
+            _TrackerMetric(label: 'Contests', value: cf.contestHistory.length),
+            _TrackerMetric(label: 'Recent', value: cf.recentSubmissions.length),
+          ],
+        );
+      case _CodingPlatform.github:
+        return _CodingTrackerInsight(
+          eyebrow: 'GitHub',
+          title: 'Contribution activity by engagement signals.',
+          description: 'A compact tracker for public repo activity and contribution volume.',
+          primaryLabel: 'Contribs',
+          primaryValue: gh.contributions,
+          total: gh.contributions,
+          accent: const Color(0xFF6BCBFF),
+          metrics: [
+            _TrackerMetric(label: 'Contribs', value: gh.contributions),
+            _TrackerMetric(label: 'Projects', value: gh.projects),
+            _TrackerMetric(label: 'Repos', value: gh.publicRepos),
+            _TrackerMetric(label: 'Followers', value: gh.followers),
+            _TrackerMetric(label: 'Following', value: gh.following),
+          ],
+        );
+    }
+  }
+}
+
+class _TrackerChart extends StatelessWidget {
+  const _TrackerChart({
+    required this.metrics,
+    required this.accent,
+  });
+
+  final List<_TrackerMetric> metrics;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final available = metrics.where((metric) => metric.value != null).toList();
+    final maxValue = available.isEmpty
+        ? 1.0
+        : available
+            .map((metric) => metric.value!.toDouble())
+            .reduce((a, b) => a > b ? a : b)
+            .clamp(1.0, double.infinity)
+            .toDouble();
+
+    return Column(
+      children: available.map((metric) {
+        final value = metric.value?.toDouble() ?? 0;
+        final widthFactor = value <= 0 ? 0.0 : (value / maxValue).clamp(0.08, 1.0).toDouble();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    metric.label,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    _contribCount(metric.value),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  height: 10,
+                  color: Colors.white.withAlpha(14),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor: widthFactor,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          gradient: LinearGradient(
+                            colors: [
+                              accent.withAlpha(220),
+                              accent.withAlpha(120),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+enum _CodingPlatform { leetcode, codeforces, github }
+
+extension on _CodingPlatform {
+  String get label {
+    switch (this) {
+      case _CodingPlatform.leetcode:
+        return 'LeetCode';
+      case _CodingPlatform.codeforces:
+        return 'Codeforces';
+      case _CodingPlatform.github:
+        return 'GitHub';
+    }
+  }
+}
+
+class _TrackerMetric {
+  const _TrackerMetric({required this.label, required this.value});
+
+  final String label;
+  final int? value;
+}
+
+class _CodingTrackerInsight {
+  const _CodingTrackerInsight({
+    required this.eyebrow,
+    required this.title,
+    required this.description,
+    required this.primaryLabel,
+    required this.primaryValue,
+    required this.total,
+    required this.accent,
+    required this.metrics,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String description;
+  final String primaryLabel;
+  final int? primaryValue;
+  final int? total;
+  final Color accent;
+  final List<_TrackerMetric> metrics;
+}
+
+String _syncAgeLabel(DateTime? lastSync) {
+  if (lastSync == null) return 'Never';
+  final diff = DateTime.now().difference(lastSync);
+  if (diff.inMinutes < 1) return 'Now';
+  if (diff.inHours < 1) return '${diff.inMinutes}m';
+  if (diff.inDays < 1) return '${diff.inHours}h';
+  return '${diff.inDays}d';
+}
+
+class ContributionsExplorePage extends StatefulWidget {
+  const ContributionsExplorePage({super.key});
+
+  @override
+  State<ContributionsExplorePage> createState() => _ContributionsExplorePageState();
+}
+
+class _ContributionsExplorePageState extends State<ContributionsExplorePage> {
+  Future<CodingProfileItem?>? _future;
+  String? _errorMessage;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ??= _load();
+  }
+
+  Future<CodingProfileItem?> _load() async {
+    return context.read<ProfileRepository>().fetchMyCodingProfile();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _errorMessage = null;
+      _future = _load();
+    });
+
+    try {
+      await _future;
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = _friendlyError(error));
+    }
+  }
+
+  Future<void> _syncNow() async {
+    setState(() => _errorMessage = null);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<ProfileRepository>().syncCodingProfile();
+      if (!mounted) return;
+      setState(() {
+        _future = _load();
+      });
+      await _future;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Coding contributions synced.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = _friendlyError(error));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionScaffold(
+      title: 'Contributions',
+      eyebrow: 'Coding profile',
+      description: 'Your connected coding handles and cached contribution stats in one dedicated mobile page.',
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<CodingProfileItem?>(
+          future: _future,
+          builder: (context, snapshot) {
+            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+
+            if (snapshot.hasError || _errorMessage != null) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                children: [
+                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                ],
+              );
+            }
+
+            final codingProfile = snapshot.data;
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              children: [
+                _SectionBlock(
+                  eyebrow: 'Coding',
+                  title: 'Coding contributions, presented more clearly.',
+                  description: 'A wider layout with clean stats, connected handles, and a readable activity feed.',
+                  child: loading
+                      ? const _LoadingBlock()
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (codingProfile != null) ...[
+                              _CodingStatsBlock(codingProfile: codingProfile),
+                              const SizedBox(height: 14),
+                            ] else
+                              const _EmptyBlock(
+                                message: 'No coding profile connected yet. Add usernames in your profile and sync to populate this page.',
+                              ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _syncNow,
+                                child: const Text('Sync now'),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -2029,6 +2450,7 @@ class _ExploreTileGrid extends StatelessWidget {
       ('Blog', 6),
       ('Contact', 7),
       ('Connect', 8),
+      ('Contributions', 9),
     ];
 
     return GridView.count(
@@ -2118,7 +2540,7 @@ class _ExploreHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Text(
-      'Projects, gallery, opportunities, legacy, forum, leaderboard, blog, and contact are each available as their own page.',
+      'Projects, gallery, opportunities, legacy, forum, leaderboard, blog, contact, connect, and contributions are each available as their own page.',
     );
   }
 }
@@ -4241,6 +4663,8 @@ String _friendlyError(Object? error) {
   }
   return 'Something went wrong while loading the section.';
 }
+
+String _contribCount(int? value) => value == null ? 'N/A' : value.toString();
 
 String _monthName(int month) {
   const months = [
