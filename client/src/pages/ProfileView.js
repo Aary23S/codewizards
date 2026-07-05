@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getUserById, createMentorshipRequest, getPublicCodingProfile } from "../services/api";
+import { getUserById, createMentorshipRequest, getPublicCodingProfile, syncCodingProfile } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const shellCard =
@@ -14,6 +14,8 @@ const ProfileView = () => {
   const [codingProfile, setCodingProfile] = useState(null);
   const [selectedPlatform, setSelectedPlatform] = useState("leetcode");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
   const [reqError, setReqError] = useState("");
@@ -78,6 +80,21 @@ const ProfileView = () => {
   );
 
   const codingInsight = buildCodingInsight(selectedPlatform, codingProfile);
+
+  const refreshCodingProfile = async () => {
+    if (!isOwnProfile) return;
+    setSyncError("");
+    setSyncing(true);
+    try {
+      await syncCodingProfile();
+      const codingRes = await getPublicCodingProfile(id).catch(() => ({ data: { data: null } }));
+      setCodingProfile(codingRes.data.data || null);
+    } catch (err) {
+      setSyncError(err.response?.data?.message || "Failed to sync coding stats");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black px-4 py-12 text-white md:px-6 lg:px-8">
@@ -223,6 +240,28 @@ const ProfileView = () => {
                   <StatPill label={codingInsight.primaryLabel} value={formatCount(codingInsight.primaryValue)} />
                   <StatPill label="Last sync" value={syncAgeLabel(codingInsight.lastSync)} />
                 </div>
+
+                {isOwnProfile && (
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={refreshCodingProfile}
+                      disabled={syncing}
+                      className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100 disabled:opacity-50"
+                    >
+                      {syncing ? "Syncing..." : "Sync now"}
+                    </button>
+                    <p className="text-sm text-white/55">
+                      Refresh your LeetCode, Codeforces, and GitHub stats from the backend.
+                    </p>
+                  </div>
+                )}
+
+                {syncError && (
+                  <p className="mt-3 text-sm text-rose-200">
+                    {syncError}
+                  </p>
+                )}
 
                 <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5 md:p-6">
                   <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">{codingInsight.eyebrow}</p>
