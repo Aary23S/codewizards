@@ -1621,6 +1621,7 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
   Future<List<ResourceItem>>? _future;
   String? _errorMessage;
   String _selectedCategory = 'all';
+  String _selectedDomain = 'all';
 
   @override
   void didChangeDependencies() {
@@ -1629,7 +1630,7 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
   }
 
   Future<List<ResourceItem>> _load() {
-    return context.read<ExploreRepository>().fetchResources(category: _selectedCategory);
+    return context.read<ExploreRepository>().fetchResources();
   }
 
   Future<void> _refresh() async {
@@ -1666,8 +1667,6 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
 
   @override
   Widget build(BuildContext context) {
-    const categories = ['all', 'PDF', 'GitHub', 'YouTube', 'Docs', 'Other'];
-
     return _SectionScaffold(
       title: 'Resources',
       eyebrow: 'Learn',
@@ -1690,63 +1689,160 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
             }
 
             final resources = snapshot.data ?? <ResourceItem>[];
+            final categories = <String>{
+              'all',
+              ...resources.map((item) => item.category.trim()).where((value) => value.isNotEmpty),
+            }.toList();
+            final domains = <String>{
+              'all',
+              ...resources
+                  .map((item) => item.domain?.trim())
+                  .whereType<String>()
+                  .where((value) => value.isNotEmpty),
+            }.toList();
+            categories.sort((a, b) {
+              if (a == 'all') return -1;
+              if (b == 'all') return 1;
+              return a.toLowerCase().compareTo(b.toLowerCase());
+            });
+            domains.sort((a, b) {
+              if (a == 'all') return -1;
+              if (b == 'all') return 1;
+              return a.toLowerCase().compareTo(b.toLowerCase());
+            });
+            final filtered = resources.where((item) {
+              final categoryMatch = _selectedCategory == 'all' ||
+                  item.category.trim().toLowerCase() == _selectedCategory.toLowerCase();
+              final domainValue = item.domain?.trim().toLowerCase() ?? '';
+              final domainMatch = _selectedDomain == 'all' || domainValue == _selectedDomain.toLowerCase();
+              return categoryMatch && domainMatch;
+            }).toList();
+            final grouped = <String, List<ResourceItem>>{};
+            for (final item in filtered) {
+              final key = item.category.trim().isNotEmpty ? item.category.trim() : 'Other';
+              grouped.putIfAbsent(key, () => <ResourceItem>[]).add(item);
+            }
+            final groupOrder = ['PDF', 'GitHub', 'YouTube', 'Docs', 'Other'];
+            final orderedGroups = <MapEntry<String, List<ResourceItem>>>[
+              for (final key in groupOrder)
+                if (grouped.containsKey(key)) MapEntry(key, grouped.remove(key)!),
+              ...grouped.entries.toList()
+                ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase())),
+            ];
+
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               children: [
                 _SectionBlock(
                   eyebrow: 'Learn',
-                  title: 'Resources, organized by category.',
-                  description: 'Browse the same backend collection as web with a mobile-first layout and quick filters.',
+                  title: 'Resources, organized for easier browsing.',
+                  description: 'Browse the same backend collection as web with a cleaner editorial layout and quicker filters.',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        children: [
+                          Expanded(child: _MiniStat(label: 'Items', value: resources.length.toString())),
+                          const SizedBox(width: 10),
+                          Expanded(child: _MiniStat(label: 'Types', value: (categories.length - 1).clamp(0, 999).toString())),
+                          const SizedBox(width: 10),
+                          Expanded(child: _MiniStat(label: 'Domains', value: (domains.length - 1).clamp(0, 999).toString())),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Type',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: Colors.white70,
+                              letterSpacing: 1.6,
+                            ),
+                      ),
+                      const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: categories.map((category) {
-                          final active = _selectedCategory == category;
-                          return ChoiceChip(
-                            selected: active,
-                            label: Text(category == 'all' ? 'All' : category),
-                            onSelected: (_) {
-                              setState(() {
-                                _selectedCategory = category;
-                                _future = _load();
-                              });
-                            },
-                            labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: active ? Colors.black : Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                            selectedColor: Colors.white,
-                            backgroundColor: const Color(0xFF1A1A1A),
-                            side: BorderSide(color: Colors.white.withAlpha(28)),
-                            showCheckmark: false,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          );
-                        }).toList(),
+                        children: categories
+                            .map(
+                              (category) => ChoiceChip(
+                                selected: _selectedCategory == category.toLowerCase(),
+                                label: Text(category == 'all' ? 'All' : category),
+                                onSelected: (_) {
+                                  setState(() => _selectedCategory = category.toLowerCase());
+                                },
+                                labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                      color: _selectedCategory == category.toLowerCase() ? Colors.black : Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                selectedColor: Colors.white,
+                                backgroundColor: const Color(0xFF1A1A1A),
+                                side: BorderSide(color: Colors.white.withAlpha(28)),
+                                showCheckmark: false,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Domain',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: Colors.white70,
+                              letterSpacing: 1.6,
+                            ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: domains
+                            .map(
+                              (domain) => ChoiceChip(
+                                selected: _selectedDomain == domain.toLowerCase(),
+                                label: Text(domain == 'all' ? 'All' : domain),
+                                onSelected: (_) {
+                                  setState(() => _selectedDomain = domain.toLowerCase());
+                                },
+                                labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                      color: _selectedDomain == domain.toLowerCase() ? Colors.black : Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                selectedColor: const Color(0xFFFFC857),
+                                backgroundColor: const Color(0xFF1A1A1A),
+                                side: BorderSide(color: Colors.white.withAlpha(28)),
+                                showCheckmark: false,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              ),
+                            )
+                            .toList(),
                       ),
                       const SizedBox(height: 16),
                       if (loading)
                         const _LoadingBlock()
-                      else if (resources.isEmpty)
+                      else if (filtered.isEmpty)
                         const _EmptyBlock(message: 'No resources yet. Check back soon.')
                       else
                         Column(
-                          children: resources
-                              .asMap()
-                              .entries
-                              .map(
-                                (entry) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _ResourceCard(
-                                    resource: entry.value,
-                                    onTap: () => _openResource(entry.value.url),
-                                  ),
-                                ),
-                              )
-                              .toList(),
+                          children: [
+                            for (final group in orderedGroups) ...[
+                              _ResourceGroupHeader(title: group.key, count: group.value.length),
+                              const SizedBox(height: 12),
+                              Column(
+                                children: group.value
+                                    .map(
+                                      (item) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 12),
+                                        child: _ResourceCard(
+                                          resource: item,
+                                          onTap: () => _openResource(item.url),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                              const SizedBox(height: 4),
+                            ],
+                          ],
                         ),
                     ],
                   ),
@@ -2745,6 +2841,8 @@ class _ResourceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final host = Uri.tryParse(resource.url)?.host.replaceFirst(RegExp(r'^www\.'), '');
+    final badges = _resourceHighlights(resource);
     return InkWell(
       borderRadius: BorderRadius.circular(22),
       onTap: onTap,
@@ -2758,20 +2856,48 @@ class _ResourceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
                 _Badge(text: resource.category.toUpperCase(), color: const Color(0xFF5CC8FF)),
-                if ((resource.domain ?? '').isNotEmpty) _Badge(text: resource.domain!.toUpperCase(), color: const Color(0xFFFFC857)),
+                const SizedBox(width: 8),
+                if ((resource.domain ?? '').trim().isNotEmpty)
+                  _Badge(text: resource.domain!.toUpperCase(), color: const Color(0xFFFFC857)),
+                const Spacer(),
+                Icon(Icons.open_in_new_rounded, color: Colors.white.withAlpha(140), size: 18),
               ],
             ),
             const SizedBox(height: 12),
             Text(
               resource.title,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 18),
             ),
-            const SizedBox(height: 8),
+            if (host != null && host.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                host,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Colors.white54,
+                      letterSpacing: 0.8,
+                    ),
+              ),
+            ],
+            if (badges.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: badges.take(3).map((badge) => _Badge(text: badge, color: const Color(0xFF8B5CF6))).toList(),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _Badge(text: 'Open', color: const Color(0xFF34D399)),
+              ],
+            ),
+            const SizedBox(height: 12),
             Text(
               resource.description?.trim().isNotEmpty == true
                   ? resource.description!
@@ -2779,21 +2905,130 @@ class _ResourceCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5, color: Colors.white70),
             ),
             const SizedBox(height: 14),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton(
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
                 onPressed: onTap,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: Colors.white.withAlpha(30)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text('Open resource'),
+                icon: const Icon(Icons.arrow_outward_rounded, size: 18),
+                label: const Text('Open resource'),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+List<String> _resourceHighlights(ResourceItem resource) {
+  final text = [
+    resource.title,
+    resource.description ?? '',
+    resource.category,
+    resource.domain ?? '',
+    resource.url,
+  ].join(' ').toLowerCase();
+
+  final badges = <String>[];
+  void addBadge(String value) {
+    if (!badges.contains(value)) badges.add(value);
+  }
+
+  if (text.contains('beginner') || text.contains('starter') || text.contains('intro')) {
+    addBadge('Beginner');
+  }
+  if (text.contains('interview') || text.contains('placement') || text.contains('dsa') || text.contains('cp')) {
+    addBadge('Interview Prep');
+  }
+  if (text.contains('official') || text.contains('docs') || text.contains('reference')) {
+    addBadge('Core Reference');
+  }
+  if (text.contains('youtube') || text.contains('video')) {
+    addBadge('Video');
+  }
+  if (text.contains('github') || text.contains('repo')) {
+    addBadge('Repo');
+  }
+  if (badges.isEmpty && resource.category.trim().isNotEmpty) {
+    addBadge(resource.category.trim());
+  }
+  return badges;
+}
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withAlpha(8),
+        border: Border.all(color: Colors.white.withAlpha(18)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 24),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.white54,
+                  letterSpacing: 2.2,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResourceGroupHeader extends StatelessWidget {
+  const _ResourceGroupHeader({
+    required this.title,
+    required this.count,
+  });
+
+  final String title;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title.toUpperCase(),
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Colors.white70,
+                letterSpacing: 2.0,
+              ),
+        ),
+        Text(
+          '$count items',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Colors.white38,
+                letterSpacing: 1.0,
+              ),
+        ),
+      ],
     );
   }
 }

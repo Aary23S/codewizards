@@ -21,6 +21,21 @@ const createResource = async (req, res) => {
   }
 };
 
+const updateResource = async (req, res) => {
+  try {
+    const resource = await Resource.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!resource) {
+      return res.status(404).json({ success: false, message: "Resource not found" });
+    }
+    res.json({ success: true, data: resource });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 const deleteResource = async (req, res) => {
   try {
     await Resource.findByIdAndDelete(req.params.id);
@@ -30,4 +45,4 @@ const deleteResource = async (req, res) => {
   }
 };
 
-module.exports = { getResources, createResource, deleteResource };
+module.exports = { getResources, createResource, updateResource, deleteResource };
