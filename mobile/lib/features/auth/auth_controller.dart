@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
 import 'auth_repository.dart';
 import 'data/user_profile.dart';
@@ -123,6 +124,9 @@ class AuthController extends ChangeNotifier {
     if (text.contains('400')) return 'Please check the submitted details.';
     if (text.contains('403')) return 'Your account is not allowed to access this screen.';
     if (text.contains('SocketException') || text.contains('DioException')) {
+      if (AppConfig.apiBaseUrl.contains('10.0.2.2') || AppConfig.apiBaseUrl.contains('localhost')) {
+        return 'This APK is still pointed at a local emulator API host. Rebuild with a reachable backend URL using CODEWIZARDS_API_BASE_URL.';
+      }
       return 'Cannot reach the backend. Check the API URL and network.';
     }
     return 'Something went wrong.';
