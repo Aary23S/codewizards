@@ -57,6 +57,20 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) {
+      document.body.style.overflow = "";
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
   return (
     <nav ref={navbarRef} className="sticky top-0 z-50 border-b border-white/10 bg-black/80 text-white backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
@@ -178,11 +192,11 @@ const Navbar = () => {
       </div>
 
       <div
-        className={`overflow-hidden border-t border-white/10 bg-black/95 lg:hidden transition-all duration-300 ${
-          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+        className={`fixed inset-x-0 top-[73px] z-40 border-t border-white/10 bg-black/95 backdrop-blur-xl lg:hidden transition-all duration-300 ${
+          menuOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 py-4">
+        <div className="mx-auto max-h-[calc(100dvh-73px)] max-w-7xl overflow-y-auto overscroll-contain px-4 py-4">
           {activeLink && (
             <p className="mb-4 text-[11px] uppercase tracking-[0.3em] text-white/35">
               {activeLink.name}
