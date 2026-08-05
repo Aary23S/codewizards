@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
+const cron = require("node-cron");
+const axios = require("axios");
 
 dotenv.config();
 connectDB();
@@ -29,6 +31,17 @@ app.use(
     credentials: true,
   })
 );
+
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
+
+cron.schedule("*/14 * * * *", async () => {
+  try {
+    await axios.get(`${SELF_URL}/`);
+    console.log(`[keepalive] ping ok — ${new Date().toISOString()}`);
+  } catch (err) {
+    console.warn(`[keepalive] ping failed — ${err.message}`);
+  }
+});
 app.use(express.json());
 
 // Health check — confirms server is alive
