@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Register.js
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../services/api";

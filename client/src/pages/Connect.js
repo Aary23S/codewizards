@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Connect.js
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getUsers } from "../services/api";

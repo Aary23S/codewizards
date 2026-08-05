@@ -1,3 +1,4 @@
+// codewizards/server/services/coding/coding.service.js
 const CodingProfile = require("../../models/CodingProfile");
 const User = require("../../models/User");
 const { fetchCodeforces } = require("./adapters/codeforces.adapter");

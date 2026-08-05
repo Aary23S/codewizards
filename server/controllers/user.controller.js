@@ -1,3 +1,4 @@
+//user.controller.js
 const User = require("../models/User");
 
 // GET /api/v1/users/:id — public profile

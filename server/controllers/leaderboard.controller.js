@@ -1,3 +1,4 @@
+//leaderboard.controller.js
 const User = require("../models/User");
 const PointLedger = require("../models/PointLedger");
 const { computeStudentPoints } = require("../utils/pointsEngine");

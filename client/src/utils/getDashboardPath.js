@@ -1,3 +1,4 @@
+// codewizards/client/src/utils/getDashboardPath.js
 const dashboardPathByRole = {
   student: "/student-dashboard",
   senior: "/senior-dashboard",

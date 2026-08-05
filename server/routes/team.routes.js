@@ -10,3 +10,4 @@ router.patch("/:id", protect, requireRole("admin"), upload.single("image"), upda
 router.delete("/:id", protect, requireRole("admin"), deleteMember);
 
 module.exports = router;
+// team.routes.js

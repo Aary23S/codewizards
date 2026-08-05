@@ -7,3 +7,4 @@ router.get("/", protect, requireRole("admin"), getPointRules);
 router.patch("/:id", protect, requireRole("admin"), updatePointRule);
 
 module.exports = router;
+// pointRule.routes.js

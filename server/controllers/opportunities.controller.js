@@ -1,3 +1,4 @@
+//opportunities.controller.js
 const Opportunity = require("../models/Opportunities");
 
 // GET /api/v1/opportunities

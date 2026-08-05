@@ -1,3 +1,4 @@
+//eventRegistration.controller.js
 const EventRegistration = require("../models/EventRegistration");
 const Event = require("../models/Event");
 const PointLedger = require("../models/PointLedger");

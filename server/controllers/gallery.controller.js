@@ -1,3 +1,4 @@
+//gallery.controller.js
 const Gallery = require("../models/Gallery");
 
 const getGallery = async (req, res) => {

@@ -16,3 +16,4 @@ router.delete("/:id", protect, deleteDoubt);
 router.delete("/:id/replies/:replyId", protect, deleteReply);
 
 module.exports = router;
+// doubt.routes.js

@@ -8,3 +8,4 @@ router.post("/login", login);
 router.get("/me", protect, getMe);   // protect runs first, then getMe
 
 module.exports = router;
+// auth.routes.js

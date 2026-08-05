@@ -10,3 +10,4 @@ router.patch("/:id", protect, requireRole("admin"), updateProject);
 router.delete("/:id", protect, requireRole("admin"), deleteProject);
 
 module.exports = router;
+// project.routes.js

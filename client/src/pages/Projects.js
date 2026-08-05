@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Projects.js
 import { useEffect, useState } from "react";
 import { getProjects } from "../services/api";
 

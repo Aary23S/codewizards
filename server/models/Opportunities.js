@@ -1,3 +1,4 @@
+// opportunities.js
 const mongoose = require("mongoose");
 
 const opportunitySchema = new mongoose.Schema(

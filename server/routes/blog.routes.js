@@ -10,3 +10,4 @@ router.patch("/:id", protect, updateBlog);
 router.delete("/:id", protect, deleteBlog);
 
 module.exports = router;
+// blog.routes.js

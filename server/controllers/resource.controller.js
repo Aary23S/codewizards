@@ -1,3 +1,4 @@
+//resource.controller.js
 const Resource = require("../models/Resource");
 
 const getResources = async (req, res) => {

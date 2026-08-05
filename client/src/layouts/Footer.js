@@ -1,3 +1,4 @@
+// codewizards/client/src/layouts/Footer.js
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.jpeg";
