@@ -15,3 +15,4 @@ router.post("/sync", protect, syncCoding);
 router.get("/public/:id", getPublicCodingProfileController);
 
 module.exports = router;
+// coding.routes.js

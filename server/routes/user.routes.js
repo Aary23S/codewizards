@@ -13,3 +13,4 @@ router.patch("/:id/suspend", protect, requireRole("admin"), suspendUser);
 // router.delete("/:id", protect, requireRole("admin"), deleteUser);
 
 module.exports = router;
+// user.routes.js

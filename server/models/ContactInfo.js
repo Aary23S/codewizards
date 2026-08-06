@@ -1,3 +1,4 @@
+// contactInfo.js
 const mongoose = require("mongoose");
 
 const contactInfoSchema = new mongoose.Schema(

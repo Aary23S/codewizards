@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Blogs.js
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getBlogs, createBlog, deleteBlog } from "../services/api";

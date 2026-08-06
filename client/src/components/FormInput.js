@@ -1,3 +1,4 @@
+// FormInput.js
 const FormInput = ({ label, error, className = "", ...props }) => (
   <div className="flex flex-col gap-1.5">
     {label && (

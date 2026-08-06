@@ -14,3 +14,4 @@ router.get("/:id/registrations", protect, requireRole("admin"), getRegistrations
 router.post("/:id/register", protect, requireRole("student"), registerForEvent);
 
 module.exports = router;
+// event.routes.js

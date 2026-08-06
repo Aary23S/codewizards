@@ -1,3 +1,4 @@
+//contact.controller.js
 const ContactInfo = require("../models/ContactInfo");
 
 const getContact = async (req, res) => {

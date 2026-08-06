@@ -1,3 +1,4 @@
+//announcement.controller.js
 const Announcement = require("../models/Announcement");
 
 const getAnnouncements = async (req, res) => {

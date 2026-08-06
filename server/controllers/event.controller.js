@@ -1,3 +1,4 @@
+//event.controller.js
 const Event = require("../models/Event");
 
 // GET /api/v1/events?status=upcoming

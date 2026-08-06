@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Leaderboard.js
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getLeaderboard } from "../services/api";

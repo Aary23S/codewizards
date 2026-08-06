@@ -1,3 +1,4 @@
+// codewizards/client/src/layouts/Navbar.js
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";

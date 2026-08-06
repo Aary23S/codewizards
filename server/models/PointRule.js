@@ -1,3 +1,4 @@
+// pointRule.js
 const mongoose = require("mongoose");
 
 // A single tier/bracket within a rule (e.g. "Specialist: 1400-1599 rating = 50 pts")

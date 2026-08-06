@@ -1,3 +1,4 @@
+// codewizards/server/seedPointRules.js
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const PointRule = require("./models/PointRule");

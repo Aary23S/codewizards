@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Opportunities.js
 import { useEffect, useState } from "react";
 import { getOpportunities, createOpportunity, deleteOpportunity } from "../services/api";
 import { useAuth } from "../context/AuthContext";

@@ -8,3 +8,4 @@ router.post("/leetcode", protect, syncLeetcode);
 router.post("/github", protect, syncGithub);
 
 module.exports = router;
+// sync.routes.js

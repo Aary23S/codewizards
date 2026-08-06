@@ -1,3 +1,4 @@
+//  codewizards/client/src/pages/ProfileView.js
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getUserById, createMentorshipRequest, getPublicCodingProfile, syncCodingProfile } from "../services/api";

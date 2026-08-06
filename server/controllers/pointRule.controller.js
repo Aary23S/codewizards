@@ -1,3 +1,4 @@
+//pointRule.controller.js
 const PointRule = require("../models/PointRule");
 
 // GET /api/v1/point-rules

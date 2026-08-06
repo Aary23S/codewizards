@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Contact.js
 import { useEffect, useState } from "react";
 import { getContact } from "../services/api";
 
