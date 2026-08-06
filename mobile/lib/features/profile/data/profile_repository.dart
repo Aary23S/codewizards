@@ -13,7 +13,7 @@ class ProfileRepository {
     return UserProfile.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
-  Future<UserProfile> updateProfile(String id, Map<String, dynamic> updates) async {
+  Future<UserProfile> updateProfile(String id, Object updates) async {
     final data = await _apiClient.patchData(
       '/users/$id',
       data: updates,
