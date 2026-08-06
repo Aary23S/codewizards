@@ -1,4 +1,57 @@
 const User = require("../models/User");
+const cloudinary = require("../config/cloudinary");
+
+const uploadImage = (fileBuffer, originalName) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "codewizards/users",
+        resource_type: "image",
+        public_id: `${Date.now()}-${originalName.replace(/\.[^.]+$/, "")}`,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+
+    stream.end(fileBuffer);
+  });
+
+const normalizePayload = async (req) => {
+  const payload = { ...(req.body || {}) };
+
+  if (payload.batch !== undefined && payload.batch !== "") {
+    payload.batch = Number(payload.batch);
+  } else {
+    delete payload.batch;
+  }
+
+  if (payload.programDurationYears !== undefined && payload.programDurationYears !== "") {
+    payload.programDurationYears = Number(payload.programDurationYears);
+  } else {
+    delete payload.programDurationYears;
+  }
+
+  if (typeof payload.domain === "string") {
+    payload.domain = payload.domain
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof payload.isMentor === "string") {
+    payload.isMentor = payload.isMentor === "true";
+  }
+
+  if (req.file) {
+    payload.imageUrl = await uploadImage(req.file.buffer, req.file.originalname);
+  } else if (typeof payload.imageUrl === "string" && payload.imageUrl.trim() === "") {
+    delete payload.imageUrl;
+  }
+
+  return payload;
+};
 
 // GET /api/v1/users/:id — public profile
 const getUserById = async (req, res) => {
@@ -28,6 +81,11 @@ const getUsers = async (req, res) => {
 
 // PATCH /api/v1/users/:id — own profile only
 const updateUser = async (req, res) => {
+    console.log("🔥 UPDATE USER CONTROLLER HIT");
+  return res.json({
+    success: true,
+    message: "This is the new controller"
+  });
   try {
     const isAdmin = req.user.role === "admin";
     const isSelf = req.user._id.toString() === req.params.id;
@@ -36,7 +94,8 @@ const updateUser = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not allowed" });
     }
 
-    const { password, ...updates } = req.body;
+    const updates = await normalizePayload(req);
+    delete updates.password;
     if (!isAdmin) {
       delete updates.role;
     }
@@ -70,13 +129,14 @@ const createUser = async (req, res) => {
       programDurationYears = 4,
       domain = [],
       bio,
+      imageUrl,
       isMentor = false,
       github,
       linkedin,
       leetcode,
       codeforces,
       portfolio,
-    } = req.body;
+    } = await normalizePayload(req);
     const exists = await User.findOne({ email });
     if (exists) {
       return res.status(400).json({ success: false, message: "Email already registered" });
@@ -92,6 +152,7 @@ const createUser = async (req, res) => {
       programDurationYears,
       domain,
       bio,
+      imageUrl,
       isMentor,
       github,
       linkedin,
@@ -126,7 +187,7 @@ const deleteUser = async (req, res) => {
 // PATCH /api/v1/users/:id/suspend  (admin only)
 const suspendUser = async (req, res) => {
   try {
-    const { isSuspended, suspendedReason } = req.body;
+    const { isSuspended, suspendedReason } = req.body || {};
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { isSuspended, suspendedReason: isSuspended ? suspendedReason || "" : "" },

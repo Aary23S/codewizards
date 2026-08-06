@@ -47,6 +47,8 @@ const ProfileEdit = () => {
     leetcodeUsername: "",
     githubUsername: "",
   });
+  const [imagePreview, setImagePreview] = useState("");
+  const [imageFile, setImageFile] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -89,6 +91,8 @@ const ProfileEdit = () => {
           leetcodeUsername: u.leetcodeUsername || u.externalStats?.leetcode?.username || "",
           githubUsername: u.githubUsername || u.externalStats?.github?.username || "",
         });
+        setImagePreview(u.imageUrl || "");
+        setImageFile(null);
       })
       .catch((err) => {
         setError(err.response?.data?.message || "Failed to load profile");
@@ -96,7 +100,27 @@ const ProfileEdit = () => {
       .finally(() => setLoading(false));
   }, [id, currentUser, navigate]);
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (imagePreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
 
   const toggleDomain = (domain) => {
     setForm((prev) => ({
@@ -137,7 +161,24 @@ const ProfileEdit = () => {
     setError("");
 
     try {
-      await updateUser(id, form);
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        if (key === "domain") {
+          formData.append(key, Array.isArray(value) ? value.join(", ") : "");
+          return;
+        }
+        if (value === null || value === undefined) return;
+        if (typeof value === "boolean") {
+          formData.append(key, String(value));
+          return;
+        }
+        formData.append(key, String(value));
+      });
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      await updateUser(id, formData);
       await connectCodingProfile({
         leetcodeUsername: form.leetcodeUsername || "",
         codeforcesHandle: form.codeforcesHandle || "",
@@ -180,14 +221,44 @@ const ProfileEdit = () => {
         <form onSubmit={handleSubmit} className="mt-6 space-y-6">
           <section className={`${shellCard} p-6 md:p-7`}>
             <div className="grid gap-5">
+              <div className="grid gap-4 md:grid-cols-[auto,1fr] md:items-center">
+                <div className="h-20 w-20 overflow-hidden rounded-3xl border border-white/10 bg-white/5">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt={form.name || "Profile"} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-white/8 text-2xl font-semibold text-white/60">
+                      {(form.name || "U").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Profile image</p>
+                  <p className="mt-2 text-sm text-white/60">
+                    Upload an image from your device. The backend will store it and reuse the same avatar across web and mobile.
+                  </p>
+                </div>
+              </div>
+
               <FormInput
                 label="Full Name"
                 type="text"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-              required
+                required
               />
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">
+                  Upload Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-xs file:font-semibold file:text-black hover:file:bg-cyan-100"
+                />
+              </div>
 
               <FormInput
                 label="Batch Year"

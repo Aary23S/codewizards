@@ -1,8 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../auth/data/user_profile.dart';
+import '../../../core/widgets/safe_network_image.dart';
 import '../data/profile_repository.dart';
 
 class ProfileEditScreen extends StatefulWidget {
@@ -45,6 +50,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late final TextEditingController _githubUsernameController;
   late List<String> _selectedDomains;
   late bool _isMentor;
+  String? _currentImageUrl;
+  Uint8List? _pickedImageBytes;
+  String? _pickedImageName;
   bool _saving = false;
   bool _syncingCoding = false;
   String? _errorMessage;
@@ -69,6 +77,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _githubUsernameController = TextEditingController(text: profile.githubUsername ?? '');
     _selectedDomains = List<String>.from(profile.domain);
     _isMentor = profile.isMentor;
+    _currentImageUrl = profile.imageUrl;
   }
 
   @override
@@ -97,6 +106,31 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     });
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1600,
+    );
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+
+    setState(() {
+      _pickedImageBytes = bytes;
+      _pickedImageName = file.name;
+    });
+  }
+
+  void _clearPickedImage() {
+    setState(() {
+      _pickedImageBytes = null;
+      _pickedImageName = null;
+    });
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -109,23 +143,37 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     final authController = context.read<AuthController>();
 
     try {
+      final payload = FormData.fromMap({
+        'name': _nameController.text.trim(),
+        'batch': _parseIntOrNull(_batchController.text),
+        'bio': _nullIfBlank(_bioController.text),
+        'domain': _selectedDomains.join(', '),
+        'isMentor': _isMentor.toString(),
+        'github': _nullIfBlank(_githubController.text),
+        'linkedin': _nullIfBlank(_linkedinController.text),
+        'leetcode': _nullIfBlank(_leetcodeController.text),
+        'codeforces': _nullIfBlank(_codeforcesController.text),
+        'portfolio': _nullIfBlank(_portfolioController.text),
+        'leetcodeUsername': _nullIfBlank(_leetcodeUsernameController.text),
+        'codeforcesHandle': _nullIfBlank(_codeforcesHandleController.text),
+        'githubUsername': _nullIfBlank(_githubUsernameController.text),
+      }..removeWhere((key, value) => value == null));
+
+      if (_pickedImageBytes != null) {
+        payload.files.add(
+          MapEntry(
+            'image',
+            MultipartFile.fromBytes(
+              _pickedImageBytes!,
+              filename: _pickedImageName ?? 'profile.jpg',
+            ),
+          ),
+        );
+      }
+
       final updated = await profileRepository.updateProfile(
         widget.initialProfile.id,
-        {
-          'name': _nameController.text.trim(),
-          'batch': _parseIntOrNull(_batchController.text),
-          'bio': _nullIfBlank(_bioController.text),
-          'domain': _selectedDomains,
-          'isMentor': _isMentor,
-          'github': _nullIfBlank(_githubController.text),
-          'linkedin': _nullIfBlank(_linkedinController.text),
-          'leetcode': _nullIfBlank(_leetcodeController.text),
-          'codeforces': _nullIfBlank(_codeforcesController.text),
-          'portfolio': _nullIfBlank(_portfolioController.text),
-          'leetcodeUsername': _nullIfBlank(_leetcodeUsernameController.text),
-          'codeforcesHandle': _nullIfBlank(_codeforcesHandleController.text),
-          'githubUsername': _nullIfBlank(_githubUsernameController.text),
-        },
+        payload,
       );
 
       try {
@@ -203,6 +251,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 subtitle: 'Update the public profile details stored in the backend.',
                 child: Column(
                   children: [
+                    _ImageField(
+                      name: widget.initialProfile.name,
+                      currentImageUrl: _currentImageUrl,
+                      pickedImageBytes: _pickedImageBytes,
+                      onPickImage: _pickImage,
+                      onClearImage: _clearPickedImage,
+                    ),
+                    const SizedBox(height: 14),
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(labelText: 'Full name'),
@@ -390,6 +446,101 @@ class _Header extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ImageField extends StatelessWidget {
+  const _ImageField({
+    required this.name,
+    required this.currentImageUrl,
+    required this.pickedImageBytes,
+    required this.onPickImage,
+    required this.onClearImage,
+  });
+
+  final String name;
+  final String? currentImageUrl;
+  final Uint8List? pickedImageBytes;
+  final Future<void> Function() onPickImage;
+  final VoidCallback onClearImage;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.isNotEmpty ? name.trim()[0].toUpperCase() : 'U';
+    final hasPreview = pickedImageBytes != null || (currentImageUrl?.trim().isNotEmpty ?? false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Profile image',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(letterSpacing: 1.2),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 72,
+              width: 72,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.white.withAlpha(20)),
+                color: Colors.white.withAlpha(8),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: pickedImageBytes != null
+                  ? Image.memory(pickedImageBytes!, fit: BoxFit.cover)
+                  : (currentImageUrl?.trim().isNotEmpty ?? false)
+                      ? SafeNetworkImage(
+                          imageUrl: currentImageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: Center(
+                            child: Text(
+                              initial,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            initial,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => onPickImage(),
+                    icon: const Icon(Icons.upload_rounded, size: 18),
+                    label: const Text('Upload from device'),
+                  ),
+                  if (hasPreview) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: pickedImageBytes != null ? onClearImage : null,
+                      child: const Text('Use current image'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
