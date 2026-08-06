@@ -7,3 +7,4 @@ router.get("/", getContact);
 router.put("/", protect, requireRole("admin"), upsertContact);
 
 module.exports = router;
+// contact.routes.js

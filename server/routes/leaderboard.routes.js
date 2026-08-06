@@ -5,3 +5,4 @@ const { getLeaderboard } = require("../controllers/leaderboard.controller");
 router.get("/", getLeaderboard);
 
 module.exports = router;
+// leaderboard.routes.js

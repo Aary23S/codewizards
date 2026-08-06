@@ -1,3 +1,4 @@
+//blog.controller.js
 const Blog = require("../models/Blogs");
 
 // GET /api/v1/blogs

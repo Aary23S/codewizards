@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Resources.js
 import { useEffect, useState } from "react";
 import { getResources } from "../services/api";
 

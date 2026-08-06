@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Events.js
 import { useEffect, useState } from "react";
 import { getEvents, registerForEvent, getMyRegistrations } from "../services/api";
 import { useAuth } from "../context/AuthContext";

@@ -16,3 +16,4 @@ router.patch("/:id", protect, requireRole("admin"), updateResource);
 router.delete("/:id", protect, requireRole("admin"), deleteResource);
 
 module.exports = router;
+// resource.routes.js

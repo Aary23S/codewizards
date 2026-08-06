@@ -1,3 +1,4 @@
+//doubt.controller.js
 const Doubt = require("../models/Doubt");
 const PointLedger = require("../models/PointLedger");
 

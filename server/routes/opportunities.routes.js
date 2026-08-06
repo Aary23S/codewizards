@@ -14,3 +14,4 @@ router.delete("/:id", protect, deleteOpportunity);
 router.patch("/:id", protect, updateOpportunity);
 
 module.exports = router;
+// opportunities.routes.js

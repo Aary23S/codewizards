@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Admin.js
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api, {

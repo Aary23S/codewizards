@@ -1,3 +1,4 @@
+//sync.controller.js
 const { syncLegacyPlatform } = require("../services/coding/coding.service");
 
 // POST /api/v1/sync/codeforces

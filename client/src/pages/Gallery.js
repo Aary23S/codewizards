@@ -1,3 +1,4 @@
+// codewizards/client/src/pages/Gallery.js
 import { useEffect, useState } from "react";
 import { getGallery } from "../services/api";
 

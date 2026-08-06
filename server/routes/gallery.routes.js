@@ -8,3 +8,4 @@ router.post("/", protect, requireRole("admin"), createGalleryItem);
 router.delete("/:id", protect, requireRole("admin"), deleteGalleryItem);
 
 module.exports = router;
+// gallery.routes.js

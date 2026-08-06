@@ -1,3 +1,4 @@
+// codewizards/client/src/context/AuthContext.js
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { getMe } from "../services/api";
 

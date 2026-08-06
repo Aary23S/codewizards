@@ -1,3 +1,4 @@
+//user.controller.js
 const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 

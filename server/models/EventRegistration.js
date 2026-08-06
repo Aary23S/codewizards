@@ -1,3 +1,5 @@
+
+// eventRegistration.js
 const mongoose = require("mongoose");
 
 const eventRegistrationSchema = new mongoose.Schema(
