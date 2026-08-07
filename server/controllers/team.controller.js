@@ -4,6 +4,10 @@ const cloudinary = require("../config/cloudinary");
 
 const uploadImage = (fileBuffer, originalName) =>
     new Promise((resolve, reject) => {
+        if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+            console.error("Cloudinary credentials are not configured on the server.");
+            return reject(new Error("Cloudinary credentials are not configured on the server. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."));
+        }
         const stream = cloudinary.uploader.upload_stream(
             {
                 folder: "codewizards/team",
@@ -11,7 +15,10 @@ const uploadImage = (fileBuffer, originalName) =>
                 public_id: `${Date.now()}-${originalName.replace(/\.[^.]+$/, "")}`,
             },
             (error, result) => {
-                if (error) return reject(error);
+                if (error) {
+                    console.error("Cloudinary upload failed:", error);
+                    return reject(error);
+                }
                 resolve(result.secure_url);
             }
         );
