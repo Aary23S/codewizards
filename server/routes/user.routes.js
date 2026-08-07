@@ -6,14 +6,14 @@ const upload = require("../middleware/upload");
 
 // user.routes.js — correct order, specific routes before param routes
 router.get("/", getUsers);
-router.post("/", protect, requireRole("admin"), handleUpload, createUser);
+router.post("/", protect, requireRole("admin"), handleUpload.single("image"), createUser);
 
 // Specific sub-routes BEFORE /:id
 router.patch("/:id/suspend", protect, requireRole("admin"), suspendUser);
 
 // Generic param routes LAST
 router.get("/:id", getUserById);
-router.patch("/:id", protect, handleUpload, updateUser);
+router.patch("/:id", protect, handleUpload.single("image"), updateUser);
 router.delete("/:id", protect, requireRole("admin"), deleteUser);
 
 module.exports = router;
