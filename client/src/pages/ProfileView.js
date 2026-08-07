@@ -55,7 +55,13 @@ const ProfileView = () => {
   if (!profile) return null;
 
   const isOwnProfile = currentUser?._id === id;
-  const profileImage = profile.image || profile.avatar || profile.photo || "";
+  const profileImage =
+    profile.imageUrl ||
+    (isOwnProfile ? currentUser?.imageUrl : "") ||
+    profile.image ||
+    profile.avatar ||
+    profile.photo ||
+    "";
 
   const platformLinks = [
     { label: "GitHub", url: profile.github },

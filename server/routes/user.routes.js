@@ -4,13 +4,17 @@ const { getUsers, getUserById, createUser, updateUser, deleteUser, suspendUser }
 const { protect, requireRole } = require("../middleware/auth");
 const upload = require("../middleware/upload");
 
-router.get("/", getUsers);                        // public — used by /connect
-router.get("/:id", getUserById);                  // public — profile view
-router.post("/", protect, requireRole("admin"), upload.single("image"), createUser);
-router.patch("/:id", protect, upload.single("image"), updateUser);        // protected — own profile or admin
-router.delete("/:id", protect, requireRole("admin"), deleteUser);
+// user.routes.js — correct order, specific routes before param routes
+router.get("/", getUsers);
+router.post("/", protect, requireRole("admin"), handleUpload, createUser);
+
+// Specific sub-routes BEFORE /:id
 router.patch("/:id/suspend", protect, requireRole("admin"), suspendUser);
-// router.delete("/:id", protect, requireRole("admin"), deleteUser);
+
+// Generic param routes LAST
+router.get("/:id", getUserById);
+router.patch("/:id", protect, handleUpload, updateUser);
+router.delete("/:id", protect, requireRole("admin"), deleteUser);
 
 module.exports = router;
 // user.routes.js
