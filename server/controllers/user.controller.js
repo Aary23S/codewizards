@@ -82,11 +82,6 @@ const getUsers = async (req, res) => {
 
 // PATCH /api/v1/users/:id — own profile only
 const updateUser = async (req, res) => {
-    console.log("🔥 UPDATE USER CONTROLLER HIT");
-  return res.json({
-    success: true,
-    message: "This is the new controller"
-  });
   try {
     const isAdmin = req.user.role === "admin";
     const isSelf = req.user._id.toString() === req.params.id;
