@@ -80,21 +80,34 @@ const updateGalleryItem = async (req, res) => {
 
     const payload = { ...req.body };
 
+    // Get the retained image URLs list from request
+    let imageUrls = [];
+    if (req.body.imageUrls) {
+      imageUrls = Array.isArray(req.body.imageUrls)
+        ? req.body.imageUrls
+        : [req.body.imageUrls];
+    } else {
+      // If imageUrls was not provided in request body at all, default to existing ones
+      // But if it was sent as empty or we want to overwrite it, we can handle it.
+      // Let's assume if it is explicitly omitted but payload exists, we might want to check.
+      // We will check if the client sent the field (it always sends it if they edit, even if empty).
+      if (req.body.imageUrls === undefined) {
+        imageUrls = existing.imageUrls || [];
+      }
+    }
+
     if (req.files && req.files.length > 0) {
       const urls = await Promise.all(
         req.files.map((file) => uploadImage(file.buffer, file.originalname))
       );
-      payload.imageUrls = [...(existing.imageUrls || []), ...urls];
-      if (!existing.imageUrl && urls[0]) {
-        payload.imageUrl = urls[0];
-      }
+      imageUrls = [...imageUrls, ...urls];
     } else if (req.file) {
       const url = await uploadImage(req.file.buffer, req.file.originalname);
-      payload.imageUrls = [...(existing.imageUrls || []), url];
-      if (!existing.imageUrl) {
-        payload.imageUrl = url;
-      }
+      imageUrls = [...imageUrls, url];
     }
+
+    payload.imageUrls = imageUrls;
+    payload.imageUrl = imageUrls[0] || "";
 
     const item = await Gallery.findByIdAndUpdate(req.params.id, payload, {
       new: true,

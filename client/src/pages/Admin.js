@@ -302,13 +302,23 @@ const Admin = () => {
     formData.append("title", editingGallery.title);
     formData.append("category", editingGallery.category);
     formData.append("eventRef", editingGallery.eventRef || "");
+
+    const currentUrls = editingGallery.imageUrls && editingGallery.imageUrls.length > 0
+      ? editingGallery.imageUrls
+      : editingGallery.imageUrl
+        ? [editingGallery.imageUrl]
+        : [];
+
+    currentUrls.forEach((url) => {
+      formData.append("imageUrls", url);
+    });
+
     if (editingGalleryImageFiles && editingGalleryImageFiles.length > 0) {
       Array.from(editingGalleryImageFiles).forEach((file) => {
         formData.append("images", file);
       });
-    } else {
-      formData.append("imageUrl", editingGallery.imageUrl || "");
     }
+
     const res = await api.patch(`/gallery/${editingGallery._id}`, formData);
     setGallery((prev) => prev.map((item) => (item._id === editingGallery._id ? res.data.data : item)));
     setEditingGallery(null);
@@ -1226,6 +1236,42 @@ const Admin = () => {
               </select>
               <input className={fieldClass} placeholder="Event Reference" value={editingGallery.eventRef || ""} onChange={(e) => setEditingGallery({ ...editingGallery, eventRef: e.target.value })} />
             </div>
+
+            {/* Existing Images Display with Delete Option */}
+            <div className="mt-5">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-2">Current Images (Hover & click Delete to remove)</p>
+              <div className="flex flex-wrap gap-3">
+                {(editingGallery.imageUrls && editingGallery.imageUrls.length > 0
+                  ? editingGallery.imageUrls
+                  : editingGallery.imageUrl
+                    ? [editingGallery.imageUrl]
+                    : []
+                ).map((url, idx) => (
+                  <div key={idx} className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/10 group">
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextUrls = (editingGallery.imageUrls && editingGallery.imageUrls.length > 0
+                          ? editingGallery.imageUrls
+                          : [editingGallery.imageUrl]
+                        ).filter((_, i) => i !== idx);
+                        setEditingGallery({
+                          ...editingGallery,
+                          imageUrls: nextUrls,
+                          imageUrl: nextUrls[0] || "",
+                        });
+                      }}
+                      className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100 text-rose-400 font-semibold text-xs"
+                      title="Delete this image"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-5 flex flex-wrap gap-3">
               <button onClick={saveGalleryItemUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
                 Save
