@@ -41,8 +41,15 @@ const createGalleryItem = async (req, res) => {
   try {
     const payload = { ...req.body };
     
-    if (req.file) {
+    if (req.files && req.files.length > 0) {
+      const urls = await Promise.all(
+        req.files.map((file) => uploadImage(file.buffer, file.originalname))
+      );
+      payload.imageUrls = urls;
+      payload.imageUrl = urls[0] || "";
+    } else if (req.file) {
       payload.imageUrl = await uploadImage(req.file.buffer, req.file.originalname);
+      payload.imageUrls = [payload.imageUrl];
     }
 
     const item = await Gallery.create(payload);

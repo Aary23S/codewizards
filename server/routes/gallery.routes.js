@@ -5,7 +5,7 @@ const { protect, requireRole } = require("../middleware/auth");
 const upload = require("../middleware/upload");
 
 router.get("/", getGallery);
-router.post("/", protect, requireRole("admin"), upload.single("image"), createGalleryItem);
+router.post("/", protect, requireRole("admin"), upload.array("images", 10), createGalleryItem);
 router.delete("/:id", protect, requireRole("admin"), deleteGalleryItem);
 
 module.exports = router;
