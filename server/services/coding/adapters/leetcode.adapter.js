@@ -1,81 +1,77 @@
 // codewizards/server/services/coding/adapters/leetcode.adapter.js
 const axios = require("axios");
 
-const leetcodeClient = axios.create({
-  baseURL: "https://leetcode.com",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    Referer: "https://leetcode.com",
-    Origin: "https://leetcode.com",
-  },
-});
-
 async function fetchLeetcode(username) {
   const safeUsername = username?.trim();
   if (!safeUsername) {
     throw new Error("LeetCode username required");
   }
 
-  const query = {
-    query: `
-      query codingProfile($username: String!) {
-        matchedUser(username: $username) {
-          profile {
-            ranking
-          }
-          submitStatsGlobal {
-            acSubmissionNum {
-              difficulty
-              count
-            }
-          }
-          recentAcSubmissionList(limit: 5) {
-            title
-            titleSlug
-            timestamp
-            statusDisplay
-            lang
-          }
-        }
-      }
-    `,
-    variables: { username: safeUsername },
-  };
+  try {
+    // Primary API: Faisal Shohag LeetCode API
+    const response = await axios.get(`https://leetcode-api-faisalshohag.vercel.app/${safeUsername}`, { timeout: 8000 });
+    const data = response.data;
 
-  const response = await leetcodeClient.post("/graphql", query);
-  const matchedUser = response.data?.data?.matchedUser;
+    if (data && data.totalSolved !== undefined) {
+      const recentSubmissions = (data.recentSubmissions || []).map((item) => ({
+        title: item.title || "",
+        titleSlug: item.titleSlug || "",
+        problem: item.title || "",
+        contestName: "",
+        verdict: item.statusDisplay || "",
+        language: item.lang || "",
+        url: item.titleSlug ? `https://leetcode.com/problems/${item.titleSlug}/` : "",
+        solvedAt: item.timestamp ? new Date(Number(item.timestamp) * 1000) : null,
+      }));
 
-  if (!matchedUser) {
-    throw new Error("LeetCode username not found");
+      return {
+        username: safeUsername,
+        totalSolved: data.totalSolved ?? null,
+        easySolved: data.easySolved ?? null,
+        mediumSolved: data.mediumSolved ?? null,
+        hardSolved: data.hardSolved ?? null,
+        ranking: data.ranking ?? null,
+        recentSubmissions,
+        verified: true,
+      };
+    }
+  } catch (error) {
+    console.warn(`Primary LeetCode API failed for ${safeUsername}, trying backup...`, error.message);
   }
 
-  const counts = new Map(
-    (matchedUser.submitStatsGlobal?.acSubmissionNum || []).map((item) => [String(item.difficulty).toLowerCase(), item.count ?? null])
-  );
+  try {
+    // Backup API: Alfa Leetcode API
+    const response = await axios.get(`https://alfa-leetcode-api.onrender.com/${safeUsername}`, { timeout: 8000 });
+    const data = response.data;
 
-  const recentSubmissions = (matchedUser.recentAcSubmissionList || []).map((item) => ({
-    title: item.title || "",
-    titleSlug: item.titleSlug || "",
-    problem: item.title || "",
-    contestName: "",
-    verdict: item.statusDisplay || "",
-    language: item.lang || "",
-    url: item.titleSlug ? `https://leetcode.com/problems/${item.titleSlug}/` : "",
-    solvedAt: item.timestamp ? new Date(Number(item.timestamp) * 1000) : null,
-  }));
+    if (data && data.totalSolved !== undefined) {
+      const recentSubmissions = (data.recentSubmissions || []).map((item) => ({
+        title: item.title || "",
+        titleSlug: item.titleSlug || "",
+        problem: item.title || "",
+        contestName: "",
+        verdict: item.statusDisplay || "",
+        language: item.lang || "",
+        url: item.titleSlug ? `https://leetcode.com/problems/${item.titleSlug}/` : "",
+        solvedAt: item.timestamp ? new Date(Number(item.timestamp) * 1000) : null,
+      }));
 
-  return {
-    username: safeUsername,
-    totalSolved: counts.get("all") ?? counts.get("total") ?? null,
-    easySolved: counts.get("easy") ?? null,
-    mediumSolved: counts.get("medium") ?? null,
-    hardSolved: counts.get("hard") ?? null,
-    ranking: matchedUser.profile?.ranking ?? null,
-    recentSubmissions,
-    verified: true,
-  };
+      return {
+        username: safeUsername,
+        totalSolved: data.totalSolved ?? null,
+        easySolved: data.easySolved ?? null,
+        mediumSolved: data.mediumSolved ?? null,
+        hardSolved: data.hardSolved ?? null,
+        ranking: data.ranking ?? null,
+        recentSubmissions,
+        verified: true,
+      };
+    }
+  } catch (error) {
+    console.error(`Backup LeetCode API failed for ${safeUsername}`, error.message);
+  }
+
+  throw new Error("Unable to fetch LeetCode profile statistics");
 }
 
 module.exports = {
