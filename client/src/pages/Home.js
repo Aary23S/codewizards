@@ -86,8 +86,8 @@ const EventCard = ({ event, index }) => (
       <div className="relative flex items-start justify-between gap-4">
         <div className="min-w-0">
           <span className="mb-2 block text-[11px] uppercase tracking-[0.28em] text-white/40">{event.type}</span>
-          <h3 className="text-lg font-semibold text-white">{event.title}</h3>
-          <p className="mt-2 text-sm leading-7 text-white/60">{event.description}</p>
+          <h3 className="text-lg font-semibold text-white line-clamp-2">{event.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-white/60 line-clamp-3">{event.description}</p>
           <div className="mt-4 text-xs text-white/40">
             {new Date(event.date).toDateString()} {event.venue && `· ${event.venue}`}
           </div>

@@ -24,8 +24,8 @@ const EventCard = ({ event, user, registered, regError, onRegister, index }) => 
             {event.status}
           </span>
         </div>
-        <h3 className="text-xl font-semibold text-white">{event.title}</h3>
-        <p className="mt-3 text-sm leading-7 text-white/60">{event.description}</p>
+        <h3 className="text-xl font-semibold text-white line-clamp-2">{event.title}</h3>
+        <p className="mt-3 text-sm leading-6 text-white/60 line-clamp-4">{event.description}</p>
         <p className="mt-4 text-xs text-white/40">
           {new Date(event.date).toDateString()} {event.venue && `· ${event.venue}`}
         </p>
