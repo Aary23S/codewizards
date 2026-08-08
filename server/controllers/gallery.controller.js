@@ -71,5 +71,42 @@ const deleteGalleryItem = async (req, res) => {
   }
 };
 
-module.exports = { getGallery, createGalleryItem, deleteGalleryItem };
+const updateGalleryItem = async (req, res) => {
+  try {
+    const existing = await Gallery.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "Not found" });
+    }
+
+    const payload = { ...req.body };
+
+    if (req.files && req.files.length > 0) {
+      const urls = await Promise.all(
+        req.files.map((file) => uploadImage(file.buffer, file.originalname))
+      );
+      payload.imageUrls = [...(existing.imageUrls || []), ...urls];
+      if (!existing.imageUrl && urls[0]) {
+        payload.imageUrl = urls[0];
+      }
+    } else if (req.file) {
+      const url = await uploadImage(req.file.buffer, req.file.originalname);
+      payload.imageUrls = [...(existing.imageUrls || []), url];
+      if (!existing.imageUrl) {
+        payload.imageUrl = url;
+      }
+    }
+
+    const item = await Gallery.findByIdAndUpdate(req.params.id, payload, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.json({ success: true, data: item });
+  } catch (error) {
+    console.error("Update gallery item failed:", error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getGallery, createGalleryItem, updateGalleryItem, deleteGalleryItem };
 

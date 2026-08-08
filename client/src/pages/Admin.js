@@ -159,6 +159,8 @@ const Admin = () => {
   const [editingTeamImageFile, setEditingTeamImageFile] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
   const [editingEventImageFile, setEditingEventImageFile] = useState(null);
+  const [editingGallery, setEditingGallery] = useState(null);
+  const [editingGalleryImageFiles, setEditingGalleryImageFiles] = useState([]);
   const [suspendModal, setSuspendModal] = useState(null);
 
   useEffect(() => {
@@ -293,6 +295,24 @@ const Admin = () => {
     setGallery([res.data.data, ...gallery]);
     setNewGallery({ title: "", imageUrl: "", category: "event", eventRef: "" });
     setNewGalleryImageFiles([]);
+  };
+
+  const saveGalleryItemUpdate = async () => {
+    const formData = new FormData();
+    formData.append("title", editingGallery.title);
+    formData.append("category", editingGallery.category);
+    formData.append("eventRef", editingGallery.eventRef || "");
+    if (editingGalleryImageFiles && editingGalleryImageFiles.length > 0) {
+      Array.from(editingGalleryImageFiles).forEach((file) => {
+        formData.append("images", file);
+      });
+    } else {
+      formData.append("imageUrl", editingGallery.imageUrl || "");
+    }
+    const res = await api.patch(`/gallery/${editingGallery._id}`, formData);
+    setGallery((prev) => prev.map((item) => (item._id === editingGallery._id ? res.data.data : item)));
+    setEditingGallery(null);
+    setEditingGalleryImageFiles([]);
   };
 
   const handleDeleteGallery = async (id) => {
@@ -736,9 +756,20 @@ const Admin = () => {
                   <img src={item.imageUrl} alt={item.title} className="h-40 w-full object-cover" />
                   <div className="flex items-center justify-between gap-3 p-4">
                     <p className="truncate text-sm font-semibold text-white">{item.title}</p>
-                  <button onClick={() => handleDeleteGallery(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
-                      Del
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingGallery({ ...item });
+                          setEditingGalleryImageFiles([]);
+                        }}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                      >
+                        Edit
+                      </button>
+                      <button onClick={() => handleDeleteGallery(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
+                        Del
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1174,6 +1205,32 @@ const Admin = () => {
                 Save
               </button>
               <button onClick={() => setEditingEvent(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {editingGallery && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className={`${shellCard} w-full max-w-2xl p-6 md:p-7`}>
+            <h2 className="text-2xl font-semibold text-white">Edit Gallery Item</h2>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <input className={`${fieldClass} md:col-span-2`} placeholder="Title *" value={editingGallery.title || ""} onChange={(e) => setEditingGallery({ ...editingGallery, title: e.target.value })} />
+              <input className={fieldClass} placeholder="Image URL (existing/fallback)" value={editingGallery.imageUrl || ""} onChange={(e) => setEditingGallery({ ...editingGallery, imageUrl: e.target.value })} />
+              <input className={fieldClass} type="file" accept="image/*" multiple onChange={(e) => setEditingGalleryImageFiles(e.target.files || [])} />
+              <select className={fieldClass} value={editingGallery.category || "event"} onChange={(e) => setEditingGallery({ ...editingGallery, category: e.target.value })}>
+                {["event", "poster", "team", "other"].map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+              <input className={fieldClass} placeholder="Event Reference" value={editingGallery.eventRef || ""} onChange={(e) => setEditingGallery({ ...editingGallery, eventRef: e.target.value })} />
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button onClick={saveGalleryItemUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+                Save
+              </button>
+              <button onClick={() => setEditingGallery(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
                 Cancel
               </button>
             </div>
