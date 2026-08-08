@@ -151,11 +151,14 @@ const Admin = () => {
   });
   const [newTeamImageFile, setNewTeamImageFile] = useState(null);
   const [newGalleryImageFiles, setNewGalleryImageFiles] = useState([]);
+  const [newEventImageFile, setNewEventImageFile] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [editingOpportunity, setEditingOpportunity] = useState(null);
   const [editingResource, setEditingResource] = useState(null);
   const [editingTeamMember, setEditingTeamMember] = useState(null);
   const [editingTeamImageFile, setEditingTeamImageFile] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [editingEventImageFile, setEditingEventImageFile] = useState(null);
   const [suspendModal, setSuspendModal] = useState(null);
 
   useEffect(() => {
@@ -223,9 +226,28 @@ const Admin = () => {
   };
 
   const createEvent = async () => {
-    const res = await api.post("/events", newEvent);
+    const formData = new FormData();
+    Object.entries(newEvent).forEach(([key, value]) => {
+      formData.append(key, value ?? "");
+    });
+    if (newEventImageFile) formData.append("image", newEventImageFile);
+    const res = await api.post("/events", formData);
     setEvents([res.data.data, ...events]);
     setNewEvent({ title: "", type: "workshop", description: "", date: "", venue: "", status: "upcoming" });
+    setNewEventImageFile(null);
+  };
+
+  const saveEventUpdate = async () => {
+    const formData = new FormData();
+    Object.entries(editingEvent || {}).forEach(([key, value]) => {
+      if (["_id", "__v", "createdAt", "updatedAt"].includes(key)) return;
+      formData.append(key, value ?? "");
+    });
+    if (editingEventImageFile) formData.append("image", editingEventImageFile);
+    const res = await api.patch(`/events/${editingEvent._id}`, formData);
+    setEvents((prev) => prev.map((e) => (e._id === editingEvent._id ? res.data.data : e)));
+    setEditingEvent(null);
+    setEditingEventImageFile(null);
   };
 
   const handleDeleteEvent = async (id) => {
@@ -576,15 +598,13 @@ const Admin = () => {
                       <option key={item}>{item}</option>
                     ))}
                   </select>
-                  <select className={fieldClass} value={newEvent.status} onChange={(e) => setNewEvent({ ...newEvent, status: e.target.value })}>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                  <input className={fieldClass} placeholder="External Registration Link" value={newEvent.registrationLink || ""} onChange={(e) => setNewEvent({ ...newEvent, registrationLink: e.target.value })} />
                 </div>
                 <textarea className={fieldClass} placeholder="Description" rows={3} value={newEvent.description} onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })} />
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-3">
                   <input className={fieldClass} type="date" value={newEvent.date} onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })} />
                   <input className={fieldClass} placeholder="Venue" value={newEvent.venue} onChange={(e) => setNewEvent({ ...newEvent, venue: e.target.value })} />
+                  <input className={fieldClass} type="file" accept="image/*" onChange={(e) => setNewEventImageFile(e.target.files?.[0] || null)} />
                 </div>
                 <button onClick={createEvent} className="w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
                   Add Event
@@ -597,12 +617,26 @@ const Admin = () => {
                   <div>
                     <p className="text-base font-semibold text-white">{event.title}</p>
                     <p className="mt-1 text-sm text-white/55">
-                      {event.type} · {event.status} · {new Date(event.date).toDateString()}
+                      {event.type} · {new Date(event.date) < new Date() ? "completed" : "upcoming"} · {new Date(event.date).toDateString()}
                     </p>
                   </div>
-                  <button onClick={() => handleDeleteEvent(event._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
-                    Delete
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingEvent({
+                          ...event,
+                          date: event.date ? event.date.split("T")[0] : "",
+                        });
+                        setEditingEventImageFile(null);
+                      }}
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                    >
+                      Edit
+                    </button>
+                    <button onClick={() => handleDeleteEvent(event._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1117,6 +1151,35 @@ const Admin = () => {
         </div>
       )}
 
+      {editingEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className={`${shellCard} w-full max-w-2xl p-6 md:p-7`}>
+            <h2 className="text-2xl font-semibold text-white">Edit Event</h2>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <input className={fieldClass} placeholder="Title *" value={editingEvent.title || ""} onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })} />
+              <select className={fieldClass} value={editingEvent.type || "other"} onChange={(e) => setEditingEvent({ ...editingEvent, type: e.target.value })}>
+                {["workshop", "hackathon", "contest", "seminar", "other"].map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+              <textarea className={`${fieldClass} md:col-span-2`} placeholder="Description" rows={3} value={editingEvent.description || ""} onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })} />
+              <input className={fieldClass} type="date" value={editingEvent.date || ""} onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })} />
+              <input className={fieldClass} placeholder="Venue" value={editingEvent.venue || ""} onChange={(e) => setEditingEvent({ ...editingEvent, venue: e.target.value })} />
+              <input className={fieldClass} placeholder="Image URL" value={editingEvent.imageUrl || ""} onChange={(e) => setEditingEvent({ ...editingEvent, imageUrl: e.target.value })} />
+              <input className={fieldClass} type="file" accept="image/*" onChange={(e) => setEditingEventImageFile(e.target.files?.[0] || null)} />
+              <input className={`${fieldClass} md:col-span-2`} placeholder="External Registration Link" value={editingEvent.registrationLink || ""} onChange={(e) => setEditingEvent({ ...editingEvent, registrationLink: e.target.value })} />
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button onClick={saveEventUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+                Save
+              </button>
+              <button onClick={() => setEditingEvent(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {suspendModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className={`${shellCard} w-full max-w-md p-6 md:p-7`}>
