@@ -591,54 +591,77 @@ class _EventCard extends StatelessWidget {
         color: Colors.white.withAlpha(10),
       ),
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+          if (event.imageUrl != null && event.imageUrl!.isNotEmpty) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                event.imageUrl!,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _StatusPill(label: eventType, accent: const Color(0xFF5CC8FF)),
-                    _StatusPill(
-                      label: event.status.toUpperCase(),
-                      accent: event.status == 'upcoming' ? Colors.white : const Color(0xFF5CC8FF),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _StatusPill(label: eventType, accent: const Color(0xFF5CC8FF)),
+                        _StatusPill(
+                          label: event.status.toUpperCase(),
+                          accent: event.status == 'upcoming' ? Colors.white : const Color(0xFF5CC8FF),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 10),
+                    Text(event.title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 6),
+                    Text(
+                      event.description,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '$dateText${event.venue != null ? ' · ${event.venue}' : ''}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    if (event.featured) ...[
+                      const SizedBox(height: 10),
+                      const _MiniChip(text: 'Featured'),
+                    ],
+                    if (event.status == 'upcoming' && event.registrationLink != null) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton(
+                        onPressed: () {},
+                        child: const Text('Register'),
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 10),
-                Text(event.title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 6),
-                Text(event.description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
-                const SizedBox(height: 10),
-                Text(
-                  '$dateText${event.venue != null ? ' · ${event.venue}' : ''}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                if (event.featured) ...[
-                  const SizedBox(height: 10),
-                  const _MiniChip(text: 'Featured'),
-                ],
-                if (event.status == 'upcoming' && event.registrationLink != null) ...[
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () {},
-                    child: const Text('Register'),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            '${index + 1}',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 2.4,
-                  color: Colors.white38,
-                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '${index + 1}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 2.4,
+                      color: Colors.white38,
+                    ),
+              ),
+            ],
           ),
         ],
       ),

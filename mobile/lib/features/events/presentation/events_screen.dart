@@ -253,7 +253,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _EventCard extends StatelessWidget {
+class _EventCard extends StatefulWidget {
   const _EventCard({
     required this.event,
     required this.index,
@@ -269,10 +269,18 @@ class _EventCard extends StatelessWidget {
   final VoidCallback onRegister;
 
   @override
+  State<_EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<_EventCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    final canRegister = event.status == 'upcoming' && currentUser?.role == 'student';
-    final dateText = event.date == null ? 'Date TBA' : _formatDate(event.date!);
-    final eventType = event.type?.toUpperCase() ?? 'OTHER';
+    final canRegister = widget.event.status == 'upcoming' && widget.currentUser?.role == 'student';
+    final dateText = widget.event.date == null ? 'Date TBA' : _formatDate(widget.event.date!);
+    final eventType = widget.event.type?.toUpperCase() ?? 'OTHER';
+    final hasLongDescription = widget.event.description.length > 120;
 
     return Container(
       decoration: BoxDecoration(
@@ -281,61 +289,94 @@ class _EventCard extends StatelessWidget {
         color: Colors.white.withAlpha(10),
       ),
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 40,
-            width: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withAlpha(20)),
-              color: Colors.black.withAlpha(32),
+          if (widget.event.imageUrl != null && widget.event.imageUrl!.isNotEmpty) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                widget.event.imageUrl!,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              ),
             ),
-            child: Text('${index + 1}'.padLeft(2, '0'), style: Theme.of(context).textTheme.labelSmall),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+            const SizedBox(height: 12),
+          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 40,
+                width: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withAlpha(20)),
+                  color: Colors.black.withAlpha(32),
+                ),
+                child: Text('${widget.index + 1}'.padLeft(2, '0'), style: Theme.of(context).textTheme.labelSmall),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _StatusPill(label: eventType, accent: const Color(0xFF5CC8FF)),
-                    _StatusPill(
-                      label: event.status.toUpperCase(),
-                      accent: event.status == 'upcoming' ? Colors.white : const Color(0xFF5CC8FF),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _StatusPill(label: eventType, accent: const Color(0xFF5CC8FF)),
+                        _StatusPill(
+                          label: widget.event.status.toUpperCase(),
+                          accent: widget.event.status == 'upcoming' ? Colors.white : const Color(0xFF5CC8FF),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 10),
+                    Text(widget.event.title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.event.description,
+                      maxLines: _expanded ? null : 3,
+                      overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+                    ),
+                    if (hasLongDescription) ...[
+                      const SizedBox(height: 4),
+                      GestureDetector(
+                        onTap: () => setState(() => _expanded = !_expanded),
+                        child: Text(
+                          _expanded ? 'Show Less' : 'Show More',
+                          style: const TextStyle(color: Color(0xFF5CC8FF), fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Text(
+                      '$dateText${widget.event.venue != null ? ' · ${widget.event.venue}' : ''}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    if (widget.event.featured) ...[
+                      const SizedBox(height: 10),
+                      const _MiniChip(text: 'Featured'),
+                    ],
+                    const SizedBox(height: 12),
+                    if (canRegister)
+                      widget.registered
+                          ? const _MiniChip(text: 'Already registered')
+                          : OutlinedButton(onPressed: widget.onRegister, child: const Text('Register'))
+                    else if (widget.currentUser != null && widget.currentUser.role != 'student' && widget.event.status == 'upcoming')
+                      Text(
+                        'Only students can register for events',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Text(event.title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 6),
-                Text(event.description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
-                const SizedBox(height: 10),
-                Text(
-                  '$dateText${event.venue != null ? ' · ${event.venue}' : ''}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                if (event.featured) ...[
-                  const SizedBox(height: 10),
-                  const _MiniChip(text: 'Featured'),
-                ],
-                const SizedBox(height: 12),
-                if (canRegister)
-                  registered
-                      ? const _MiniChip(text: 'Already registered')
-                      : OutlinedButton(onPressed: onRegister, child: const Text('Register'))
-                else if (currentUser != null && currentUser.role != 'student' && event.status == 'upcoming')
-                  Text(
-                    'Only students can register for events',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
