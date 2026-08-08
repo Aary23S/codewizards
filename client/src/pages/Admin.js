@@ -150,6 +150,7 @@ const Admin = () => {
     order: 0,
   });
   const [newTeamImageFile, setNewTeamImageFile] = useState(null);
+  const [newGalleryImageFile, setNewGalleryImageFile] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [editingOpportunity, setEditingOpportunity] = useState(null);
   const [editingResource, setEditingResource] = useState(null);
@@ -255,9 +256,19 @@ const Admin = () => {
   };
 
   const createGalleryItem = async () => {
-    const res = await api.post("/gallery", newGallery);
+    const formData = new FormData();
+    formData.append("title", newGallery.title);
+    formData.append("category", newGallery.category);
+    formData.append("eventRef", newGallery.eventRef || "");
+    if (newGalleryImageFile) {
+      formData.append("image", newGalleryImageFile);
+    } else {
+      formData.append("imageUrl", newGallery.imageUrl || "");
+    }
+    const res = await api.post("/gallery", formData);
     setGallery([res.data.data, ...gallery]);
     setNewGallery({ title: "", imageUrl: "", category: "event", eventRef: "" });
+    setNewGalleryImageFile(null);
   };
 
   const handleDeleteGallery = async (id) => {
@@ -666,7 +677,10 @@ const Admin = () => {
             <Section title="Add Photo" description="Upload or link gallery content.">
               <div className="grid gap-3">
                 <input className={fieldClass} placeholder="Title *" value={newGallery.title} onChange={(e) => setNewGallery({ ...newGallery, title: e.target.value })} />
-                <input className={fieldClass} placeholder="Image URL *" value={newGallery.imageUrl} onChange={(e) => setNewGallery({ ...newGallery, imageUrl: e.target.value })} />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <input className={fieldClass} placeholder="Image URL (or upload below)" value={newGallery.imageUrl} onChange={(e) => setNewGallery({ ...newGallery, imageUrl: e.target.value })} />
+                  <input className={fieldClass} type="file" accept="image/*" onChange={(e) => setNewGalleryImageFile(e.target.files?.[0] || null)} />
+                </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <select className={fieldClass} value={newGallery.category} onChange={(e) => setNewGallery({ ...newGallery, category: e.target.value })}>
                     {["event", "poster", "team", "other"].map((item) => (

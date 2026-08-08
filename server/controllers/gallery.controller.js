@@ -1,5 +1,30 @@
 //gallery.controller.js
 const Gallery = require("../models/Gallery");
+const cloudinary = require("../config/cloudinary");
+
+const uploadImage = (fileBuffer, originalName) =>
+  new Promise((resolve, reject) => {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error("Cloudinary credentials are not configured on the server.");
+      return reject(new Error("Cloudinary credentials are not configured on the server. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."));
+    }
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "codewizards/gallery",
+        resource_type: "image",
+        public_id: `${Date.now()}-${originalName.replace(/\.[^.]+$/, "")}`,
+      },
+      (error, result) => {
+        if (error) {
+          console.error("Cloudinary gallery upload failed:", error);
+          return reject(error);
+        }
+        resolve(result.secure_url);
+      }
+    );
+
+    stream.end(fileBuffer);
+  });
 
 const getGallery = async (req, res) => {
   try {
@@ -14,9 +39,16 @@ const getGallery = async (req, res) => {
 
 const createGalleryItem = async (req, res) => {
   try {
-    const item = await Gallery.create(req.body);
+    const payload = { ...req.body };
+    
+    if (req.file) {
+      payload.imageUrl = await uploadImage(req.file.buffer, req.file.originalname);
+    }
+
+    const item = await Gallery.create(payload);
     res.status(201).json({ success: true, data: item });
   } catch (error) {
+    console.error("Create gallery item failed:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
