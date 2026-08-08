@@ -5,7 +5,8 @@ const mongoose = require("mongoose");
 const gallerySchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
-    imageUrl: { type: String, required: true },  // Cloudinary URL
+    imageUrl: { type: String, default: "" },  // Cloudinary URL (backward compatibility)
+    imageUrls: { type: [String], default: [] }, // Array of Cloudinary URLs
     category: {
       type: String,
       enum: ["event", "poster", "team", "other"],

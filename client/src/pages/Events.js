@@ -9,7 +9,12 @@ const EventCard = ({ event, user, registered, regError, onRegister, index }) => 
     style={{ transitionDelay: `${index * 60}ms` }}
   >
     <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-    <div className="relative flex items-start justify-between gap-4">
+    <div className="relative flex flex-col md:flex-row gap-5 items-start justify-between">
+      {event.imageUrl && (
+        <div className="h-40 w-full md:w-56 shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        </div>
+      )}
       <div className="min-w-0 flex-1">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-white/40">{event.type}</span>

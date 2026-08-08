@@ -150,11 +150,17 @@ const Admin = () => {
     order: 0,
   });
   const [newTeamImageFile, setNewTeamImageFile] = useState(null);
+  const [newGalleryImageFiles, setNewGalleryImageFiles] = useState([]);
+  const [newEventImageFile, setNewEventImageFile] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [editingOpportunity, setEditingOpportunity] = useState(null);
   const [editingResource, setEditingResource] = useState(null);
   const [editingTeamMember, setEditingTeamMember] = useState(null);
   const [editingTeamImageFile, setEditingTeamImageFile] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [editingEventImageFile, setEditingEventImageFile] = useState(null);
+  const [editingGallery, setEditingGallery] = useState(null);
+  const [editingGalleryImageFiles, setEditingGalleryImageFiles] = useState([]);
   const [suspendModal, setSuspendModal] = useState(null);
 
   useEffect(() => {
@@ -222,9 +228,28 @@ const Admin = () => {
   };
 
   const createEvent = async () => {
-    const res = await api.post("/events", newEvent);
+    const formData = new FormData();
+    Object.entries(newEvent).forEach(([key, value]) => {
+      formData.append(key, value ?? "");
+    });
+    if (newEventImageFile) formData.append("image", newEventImageFile);
+    const res = await api.post("/events", formData);
     setEvents([res.data.data, ...events]);
     setNewEvent({ title: "", type: "workshop", description: "", date: "", venue: "", status: "upcoming" });
+    setNewEventImageFile(null);
+  };
+
+  const saveEventUpdate = async () => {
+    const formData = new FormData();
+    Object.entries(editingEvent || {}).forEach(([key, value]) => {
+      if (["_id", "__v", "createdAt", "updatedAt"].includes(key)) return;
+      formData.append(key, value ?? "");
+    });
+    if (editingEventImageFile) formData.append("image", editingEventImageFile);
+    const res = await api.patch(`/events/${editingEvent._id}`, formData);
+    setEvents((prev) => prev.map((e) => (e._id === editingEvent._id ? res.data.data : e)));
+    setEditingEvent(null);
+    setEditingEventImageFile(null);
   };
 
   const handleDeleteEvent = async (id) => {
@@ -255,9 +280,49 @@ const Admin = () => {
   };
 
   const createGalleryItem = async () => {
-    const res = await api.post("/gallery", newGallery);
+    const formData = new FormData();
+    formData.append("title", newGallery.title);
+    formData.append("category", newGallery.category);
+    formData.append("eventRef", newGallery.eventRef || "");
+    if (newGalleryImageFiles && newGalleryImageFiles.length > 0) {
+      Array.from(newGalleryImageFiles).forEach((file) => {
+        formData.append("images", file);
+      });
+    } else {
+      formData.append("imageUrl", newGallery.imageUrl || "");
+    }
+    const res = await api.post("/gallery", formData);
     setGallery([res.data.data, ...gallery]);
     setNewGallery({ title: "", imageUrl: "", category: "event", eventRef: "" });
+    setNewGalleryImageFiles([]);
+  };
+
+  const saveGalleryItemUpdate = async () => {
+    const formData = new FormData();
+    formData.append("title", editingGallery.title);
+    formData.append("category", editingGallery.category);
+    formData.append("eventRef", editingGallery.eventRef || "");
+
+    const currentUrls = editingGallery.imageUrls && editingGallery.imageUrls.length > 0
+      ? editingGallery.imageUrls
+      : editingGallery.imageUrl
+        ? [editingGallery.imageUrl]
+        : [];
+
+    currentUrls.forEach((url) => {
+      formData.append("imageUrls", url);
+    });
+
+    if (editingGalleryImageFiles && editingGalleryImageFiles.length > 0) {
+      Array.from(editingGalleryImageFiles).forEach((file) => {
+        formData.append("images", file);
+      });
+    }
+
+    const res = await api.patch(`/gallery/${editingGallery._id}`, formData);
+    setGallery((prev) => prev.map((item) => (item._id === editingGallery._id ? res.data.data : item)));
+    setEditingGallery(null);
+    setEditingGalleryImageFiles([]);
   };
 
   const handleDeleteGallery = async (id) => {
@@ -563,15 +628,13 @@ const Admin = () => {
                       <option key={item}>{item}</option>
                     ))}
                   </select>
-                  <select className={fieldClass} value={newEvent.status} onChange={(e) => setNewEvent({ ...newEvent, status: e.target.value })}>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                  <input className={fieldClass} placeholder="External Registration Link" value={newEvent.registrationLink || ""} onChange={(e) => setNewEvent({ ...newEvent, registrationLink: e.target.value })} />
                 </div>
                 <textarea className={fieldClass} placeholder="Description" rows={3} value={newEvent.description} onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })} />
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-3">
                   <input className={fieldClass} type="date" value={newEvent.date} onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })} />
                   <input className={fieldClass} placeholder="Venue" value={newEvent.venue} onChange={(e) => setNewEvent({ ...newEvent, venue: e.target.value })} />
+                  <input className={fieldClass} type="file" accept="image/*" onChange={(e) => setNewEventImageFile(e.target.files?.[0] || null)} />
                 </div>
                 <button onClick={createEvent} className="w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
                   Add Event
@@ -584,12 +647,26 @@ const Admin = () => {
                   <div>
                     <p className="text-base font-semibold text-white">{event.title}</p>
                     <p className="mt-1 text-sm text-white/55">
-                      {event.type} · {event.status} · {new Date(event.date).toDateString()}
+                      {event.type} · {new Date(event.date) < new Date() ? "completed" : "upcoming"} · {new Date(event.date).toDateString()}
                     </p>
                   </div>
-                  <button onClick={() => handleDeleteEvent(event._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
-                    Delete
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingEvent({
+                          ...event,
+                          date: event.date ? event.date.split("T")[0] : "",
+                        });
+                        setEditingEventImageFile(null);
+                      }}
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                    >
+                      Edit
+                    </button>
+                    <button onClick={() => handleDeleteEvent(event._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -666,7 +743,10 @@ const Admin = () => {
             <Section title="Add Photo" description="Upload or link gallery content.">
               <div className="grid gap-3">
                 <input className={fieldClass} placeholder="Title *" value={newGallery.title} onChange={(e) => setNewGallery({ ...newGallery, title: e.target.value })} />
-                <input className={fieldClass} placeholder="Image URL *" value={newGallery.imageUrl} onChange={(e) => setNewGallery({ ...newGallery, imageUrl: e.target.value })} />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <input className={fieldClass} placeholder="Image URL (or upload below)" value={newGallery.imageUrl} onChange={(e) => setNewGallery({ ...newGallery, imageUrl: e.target.value })} />
+                  <input className={fieldClass} type="file" accept="image/*" multiple onChange={(e) => setNewGalleryImageFiles(e.target.files || [])} />
+                </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <select className={fieldClass} value={newGallery.category} onChange={(e) => setNewGallery({ ...newGallery, category: e.target.value })}>
                     {["event", "poster", "team", "other"].map((item) => (
@@ -686,9 +766,20 @@ const Admin = () => {
                   <img src={item.imageUrl} alt={item.title} className="h-40 w-full object-cover" />
                   <div className="flex items-center justify-between gap-3 p-4">
                     <p className="truncate text-sm font-semibold text-white">{item.title}</p>
-                  <button onClick={() => handleDeleteGallery(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
-                      Del
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingGallery({ ...item });
+                          setEditingGalleryImageFiles([]);
+                        }}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                      >
+                        Edit
+                      </button>
+                      <button onClick={() => handleDeleteGallery(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
+                        Del
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1101,6 +1192,97 @@ const Admin = () => {
         </div>
       )}
 
+      {editingEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className={`${shellCard} w-full max-w-2xl p-6 md:p-7`}>
+            <h2 className="text-2xl font-semibold text-white">Edit Event</h2>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <input className={fieldClass} placeholder="Title *" value={editingEvent.title || ""} onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })} />
+              <select className={fieldClass} value={editingEvent.type || "other"} onChange={(e) => setEditingEvent({ ...editingEvent, type: e.target.value })}>
+                {["workshop", "hackathon", "contest", "seminar", "other"].map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+              <textarea className={`${fieldClass} md:col-span-2`} placeholder="Description" rows={3} value={editingEvent.description || ""} onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })} />
+              <input className={fieldClass} type="date" value={editingEvent.date || ""} onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })} />
+              <input className={fieldClass} placeholder="Venue" value={editingEvent.venue || ""} onChange={(e) => setEditingEvent({ ...editingEvent, venue: e.target.value })} />
+              <input className={fieldClass} placeholder="Image URL" value={editingEvent.imageUrl || ""} onChange={(e) => setEditingEvent({ ...editingEvent, imageUrl: e.target.value })} />
+              <input className={fieldClass} type="file" accept="image/*" onChange={(e) => setEditingEventImageFile(e.target.files?.[0] || null)} />
+              <input className={`${fieldClass} md:col-span-2`} placeholder="External Registration Link" value={editingEvent.registrationLink || ""} onChange={(e) => setEditingEvent({ ...editingEvent, registrationLink: e.target.value })} />
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button onClick={saveEventUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+                Save
+              </button>
+              <button onClick={() => setEditingEvent(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {editingGallery && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className={`${shellCard} w-full max-w-2xl p-6 md:p-7`}>
+            <h2 className="text-2xl font-semibold text-white">Edit Gallery Item</h2>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <input className={`${fieldClass} md:col-span-2`} placeholder="Title *" value={editingGallery.title || ""} onChange={(e) => setEditingGallery({ ...editingGallery, title: e.target.value })} />
+              <input className={fieldClass} placeholder="Image URL (existing/fallback)" value={editingGallery.imageUrl || ""} onChange={(e) => setEditingGallery({ ...editingGallery, imageUrl: e.target.value })} />
+              <input className={fieldClass} type="file" accept="image/*" multiple onChange={(e) => setEditingGalleryImageFiles(e.target.files || [])} />
+              <select className={fieldClass} value={editingGallery.category || "event"} onChange={(e) => setEditingGallery({ ...editingGallery, category: e.target.value })}>
+                {["event", "poster", "team", "other"].map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+              <input className={fieldClass} placeholder="Event Reference" value={editingGallery.eventRef || ""} onChange={(e) => setEditingGallery({ ...editingGallery, eventRef: e.target.value })} />
+            </div>
+
+            {/* Existing Images Display with Delete Option */}
+            <div className="mt-5">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-2">Current Images (Hover & click Delete to remove)</p>
+              <div className="flex flex-wrap gap-3">
+                {(editingGallery.imageUrls && editingGallery.imageUrls.length > 0
+                  ? editingGallery.imageUrls
+                  : editingGallery.imageUrl
+                    ? [editingGallery.imageUrl]
+                    : []
+                ).map((url, idx) => (
+                  <div key={idx} className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/10 group">
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextUrls = (editingGallery.imageUrls && editingGallery.imageUrls.length > 0
+                          ? editingGallery.imageUrls
+                          : [editingGallery.imageUrl]
+                        ).filter((_, i) => i !== idx);
+                        setEditingGallery({
+                          ...editingGallery,
+                          imageUrls: nextUrls,
+                          imageUrl: nextUrls[0] || "",
+                        });
+                      }}
+                      className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100 text-rose-400 font-semibold text-xs"
+                      title="Delete this image"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button onClick={saveGalleryItemUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+                Save
+              </button>
+              <button onClick={() => setEditingGallery(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {suspendModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className={`${shellCard} w-full max-w-md p-6 md:p-7`}>

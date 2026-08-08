@@ -12,3 +12,5 @@ mobile/linux/flutter/generated_plugin_registrant.cc
 /windows/flutter/
 /macos/Flutter/
 docs/CodeWizards_Architecture.md
+node_modules/
+.env

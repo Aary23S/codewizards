@@ -77,22 +77,29 @@ const EventCard = ({ event, index }) => (
     style={{ transitionDelay: `${index * 60}ms` }}
   >
     <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-    <div className="relative flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <span className="mb-2 block text-[11px] uppercase tracking-[0.28em] text-white/40">{event.type}</span>
-        <h3 className="text-lg font-semibold text-white">{event.title}</h3>
-        <p className="mt-2 text-sm leading-7 text-white/60">{event.description}</p>
-        <div className="mt-4 text-xs text-white/40">
-          {new Date(event.date).toDateString()} {event.venue && `· ${event.venue}`}
+    <div className="relative flex flex-col gap-4">
+      {event.imageUrl && (
+        <div className="h-40 w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         </div>
+      )}
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <span className="mb-2 block text-[11px] uppercase tracking-[0.28em] text-white/40">{event.type}</span>
+          <h3 className="text-lg font-semibold text-white">{event.title}</h3>
+          <p className="mt-2 text-sm leading-7 text-white/60">{event.description}</p>
+          <div className="mt-4 text-xs text-white/40">
+            {new Date(event.date).toDateString()} {event.venue && `· ${event.venue}`}
+          </div>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
+            event.status === "upcoming" ? "bg-white text-black" : "bg-white/8 text-white/55"
+          }`}
+        >
+          {event.status}
+        </span>
       </div>
-      <span
-        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
-          event.status === "upcoming" ? "bg-white text-black" : "bg-white/8 text-white/55"
-        }`}
-      >
-        {event.status}
-      </span>
     </div>
   </div>
 );

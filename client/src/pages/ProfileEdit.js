@@ -30,7 +30,7 @@ const shellCard =
 
 const ProfileEdit = () => {
   const { id } = useParams();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, reloadUser } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -179,12 +179,18 @@ const ProfileEdit = () => {
         formData.append("image", imageFile);
       }
 
-      await updateUser(id, formData);
+      const res = await updateUser(id, formData);
       await connectCodingProfile({
         leetcodeUsername: form.leetcodeUsername || "",
         codeforcesHandle: form.codeforcesHandle || "",
         githubUsername: form.githubUsername || "",
       }).catch(() => {});
+
+      if (res?.data?.data?.imageUrl) {
+        setImagePreview(res.data.data.imageUrl);
+      }
+
+      await reloadUser();
       navigate(`/profile/${id}`);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save");
