@@ -168,7 +168,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (data.codingProfile != null && data.codingProfile!.hasAnyData)
                   _CodingSnapshotBlock(codingProfile: data.codingProfile!),
                 if (data.codingProfile != null && data.codingProfile!.hasAnyData) const SizedBox(height: 16),
-                _MentorshipBlock(profile: data.profile, requests: data.requests),
+                _MentorshipBlock(
+                  profile: data.profile,
+                  requests: data.requests,
+                  onRefresh: _refresh,
+                ),
               ],
             );
           },
@@ -567,17 +571,17 @@ class _MentorshipBlock extends StatelessWidget {
   const _MentorshipBlock({
     required this.profile,
     required this.requests,
+    required this.onRefresh,
   });
 
   final UserProfile profile;
   final List<MentorshipRequestItem> requests;
+  final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    final title = profile.role == 'student' ? 'Student view' : 'Mentor view';
-    final emptyText = profile.role == 'student'
-        ? 'You do not have any mentorship requests yet. Start by finding a mentor from the connect page.'
-        : 'No pending requests yet.';
+    final incoming = requests.where((r) => r.mentor?.id == profile.id).toList();
+    final outgoing = requests.where((r) => r.student?.id == profile.id).toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -591,24 +595,16 @@ class _MentorshipBlock extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title.toUpperCase(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          letterSpacing: 3,
-                          color: Colors.white54,
-                        ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text('Mentorship requests', style: Theme.of(context).textTheme.titleLarge),
-                ],
+              Text(
+                'MENTORSHIP',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 3,
+                      color: Colors.white54,
+                    ),
               ),
               Text(
-                '${requests.length} items',
+                '${requests.length} total',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       letterSpacing: 2,
                       color: Colors.white54,
@@ -616,40 +612,115 @@ class _MentorshipBlock extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          Text('Mentorship requests', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 20),
           if (requests.isEmpty)
             Text(
-              emptyText,
+              'No mentorship requests yet. Send a request to a mentor in the directory to get started.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
             )
-          else
-            ...requests.map(
-              (request) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _MentorshipRequestCard(
-                  request: request,
-                  role: profile.role,
+          else ...[
+            if (incoming.isNotEmpty) ...[
+              Text(
+                'INCOMING REQUESTS (AS MENTOR)',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 2,
+                      color: const Color(0xFF5CC8FF).withAlpha(180),
+                    ),
+              ),
+              const SizedBox(height: 10),
+              ...incoming.map(
+                (request) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _MentorshipRequestCard(
+                    request: request,
+                    profile: profile,
+                    onRefresh: onRefresh,
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(height: 12),
+            ],
+            if (outgoing.isNotEmpty) ...[
+              Text(
+                'SENT REQUESTS (AS STUDENT)',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 2,
+                      color: const Color(0xFF5CC8FF).withAlpha(180),
+                    ),
+              ),
+              const SizedBox(height: 10),
+              ...outgoing.map(
+                (request) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _MentorshipRequestCard(
+                    request: request,
+                    profile: profile,
+                    onRefresh: onRefresh,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );
   }
 }
 
-class _MentorshipRequestCard extends StatelessWidget {
+class _MentorshipRequestCard extends StatefulWidget {
   const _MentorshipRequestCard({
     required this.request,
-    required this.role,
+    required this.profile,
+    required this.onRefresh,
   });
 
   final MentorshipRequestItem request;
-  final String role;
+  final UserProfile profile;
+  final VoidCallback onRefresh;
+
+  @override
+  State<_MentorshipRequestCard> createState() => _MentorshipRequestCardState();
+}
+
+class _MentorshipRequestCardState extends State<_MentorshipRequestCard> {
+  bool _updating = false;
+
+  Future<void> _updateStatus(String status) async {
+    setState(() => _updating = true);
+    try {
+      await context.read<ProfileRepository>().updateMentorshipStatus(
+            widget.request.id,
+            status,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Request $status successfully.')),
+        );
+        widget.onRefresh();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().contains('403')
+                ? 'Failed to update: unauthorized'
+                : 'Failed to update request status.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _updating = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final counterpart = request.counterpartFor(role);
+    final isMentorCard = widget.request.mentor?.id == widget.profile.id;
+    final counterpart = isMentorCard ? widget.request.student : widget.request.mentor;
+    final showActions = isMentorCard && widget.request.status == 'pending';
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
@@ -668,7 +739,9 @@ class _MentorshipRequestCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      counterpart?.name ?? 'Member',
+                      isMentorCard
+                          ? (counterpart?.name ?? 'Student')
+                          : 'To Mentor: ${counterpart?.name ?? 'Mentor'}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 4),
@@ -685,20 +758,60 @@ class _MentorshipRequestCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _StatusBadge(status: request.status),
+              _StatusBadge(status: widget.request.status),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            request.message,
+            widget.request.message,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
-          if (request.createdAt != null) ...[
+          if (widget.request.createdAt != null) ...[
             const SizedBox(height: 10),
             Text(
-              _formatDate(request.createdAt!),
-              style: Theme.of(context).textTheme.bodySmall,
+              _formatDate(widget.request.createdAt!),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white38),
             ),
+          ],
+          if (showActions) ...[
+            const SizedBox(height: 12),
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 8),
+            _updating
+                ? const Center(
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _updateStatus('accepted'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text('Accept', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton(
+                        onPressed: () => _updateStatus('rejected'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(color: Colors.white.withAlpha(40)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text('Reject', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
           ],
         ],
       ),

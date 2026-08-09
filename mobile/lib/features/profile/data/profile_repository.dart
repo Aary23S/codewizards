@@ -92,4 +92,12 @@ class ProfileRepository {
         .map((item) => MentorshipRequestItem.fromJson(Map<String, dynamic>.from(item)))
         .toList();
   }
+
+  Future<MentorshipRequestItem> updateMentorshipStatus(String requestId, String status) async {
+    final data = await _apiClient.patchData(
+      '/mentorship/$requestId/status',
+      data: {'status': status},
+    );
+    return MentorshipRequestItem.fromJson(Map<String, dynamic>.from(data as Map));
+  }
 }
