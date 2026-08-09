@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  getUserById,
+  // getUserById,
   updateUser,
   connectCodingProfile,
   syncCodeforces,
@@ -207,7 +207,7 @@ const ProfileEdit = () => {
         leetcodeUsername: form.leetcodeUsername || "",
         codeforcesHandle: form.codeforcesHandle || "",
         githubUsername: form.githubUsername || "",
-      }).catch(() => {});
+      }).catch(() => { });
 
       if (res?.data?.data?.imageUrl) {
         setImagePreview(res.data.data.imageUrl);
@@ -331,11 +331,10 @@ const ProfileEdit = () => {
                   key={domain}
                   type="button"
                   onClick={() => toggleDomain(domain)}
-                  className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.25em] transition ${
-                    form.domain.includes(domain)
+                  className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.25em] transition ${form.domain.includes(domain)
                       ? "border-white bg-white text-black"
                       : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {domain}
                 </button>
@@ -429,9 +428,8 @@ const ProfileEdit = () => {
 
                   {syncStatus[item.syncKey] && (
                     <p
-                      className={`text-xs ${
-                        syncStatus[item.syncKey].startsWith("✓") ? "text-emerald-200" : "text-rose-200"
-                      }`}
+                      className={`text-xs ${syncStatus[item.syncKey].startsWith("✓") ? "text-emerald-200" : "text-rose-200"
+                        }`}
                     >
                       {syncStatus[item.syncKey]}
                     </p>
