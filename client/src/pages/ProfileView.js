@@ -31,7 +31,6 @@ const ProfileView = () => {
   const [reqError, setReqError] = useState("");
 
   const [requests, setRequests] = useState([]);
-  const [loadingRequests, setLoadingRequests] = useState(false);
 
   const handleRequest = async () => {
     if (!message.trim()) return setReqError("Please write a message");
@@ -56,11 +55,9 @@ const ProfileView = () => {
       .finally(() => setLoading(false));
 
     if (isOwnProfile) {
-      setLoadingRequests(true);
       getMyMentorshipRequests()
         .then((res) => setRequests(res.data.data || []))
-        .catch(console.error)
-        .finally(() => setLoadingRequests(false));
+        .catch(console.error);
     }
   }, [id, navigate, isOwnProfile]);
 
