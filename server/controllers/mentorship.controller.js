@@ -90,9 +90,6 @@ const updateStatus = async (req, res) => {
 // GET /api/v1/mentorship/my-mentors
 const getMyMentors = async (req, res) => {
   try {
-    if (req.user.role !== "student") {
-      return res.status(403).json({ success: false, message: "Only students can access this" });
-    }
     const connections = await Mentorship.find({ studentId: req.user._id, status: "active" })
       .populate("mentorId", "name imageUrl bio domain linkedin github portfolio")
       .sort({ createdAt: -1 });
