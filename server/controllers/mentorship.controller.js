@@ -24,11 +24,12 @@ const createRequest = async (req, res) => {
 // GET /api/v1/mentorship/my-requests
 const getMyRequests = async (req, res) => {
   try {
-    const filter = req.user.role === "student"
-      ? { studentId: req.user._id }
-      : { mentorId: req.user._id };
-
-    const requests = await MentorshipRequest.find(filter)
+    const requests = await MentorshipRequest.find({
+      $or: [
+        { studentId: req.user._id },
+        { mentorId: req.user._id }
+      ]
+    })
       .populate("studentId", "name email batch domain")
       .populate("mentorId", "name email domain")
       .sort({ createdAt: -1 });

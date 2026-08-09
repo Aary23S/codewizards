@@ -332,84 +332,130 @@ const ProfileView = () => {
               </div>
             )}
 
-            {isOwnProfile && requests.length > 0 && (
+            {isOwnProfile && (
               <div className={`${shellCard} p-6 md:p-7`}>
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Mentorship</p>
                     <h3 className="mt-2 text-2xl font-semibold text-white">Mentorship Requests</h3>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
-                      {currentUser?.role === "student"
-                        ? "Track the status of mentorship requests you have sent to mentors."
-                        : "Manage incoming mentorship requests from students looking for guidance."}
-                    </p>
                   </div>
                   <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/60">
                     {requests.length} total
                   </span>
                 </div>
 
-                <div className="space-y-4">
-                  {requests.map((request) => {
-                    const isUserMentor = currentUser?.role === "senior" || currentUser?.role === "alumni" || currentUser?.role === "admin" || currentUser?.isMentor;
-                    const showActions = isUserMentor && request.status === "pending";
-                    return (
-                      <div
-                        key={request._id}
-                        className="rounded-2xl border border-white/10 bg-black/20 p-5 transition hover:border-white/20"
-                      >
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-sm font-semibold text-white">
-                                {isUserMentor
-                                  ? (request.studentId?.name || "Student")
-                                  : (request.mentorId?.name || "Mentor")}
-                              </p>
-                              {isUserMentor && request.studentId?.batch && (
-                                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-white/55">
-                                  Batch {request.studentId.batch}
-                                </span>
-                              )}
-                            </div>
-                            <p className="mt-2 text-sm leading-6 text-white/65">{request.message}</p>
-                          </div>
+                {requests.length === 0 ? (
+                  <p className="text-sm leading-7 text-white/55">
+                    No mentorship requests yet. Send a request to a mentor in the directory to get started.
+                  </p>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Incoming requests (where this user is the mentor) */}
+                    {requests.filter((r) => r.mentorId?._id === currentUser?._id).length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-xs uppercase tracking-[0.25em] text-cyan-200/70 border-b border-white/5 pb-2">
+                          Incoming Requests (As Mentor)
+                        </h4>
+                        {requests
+                          .filter((r) => r.mentorId?._id === currentUser?._id)
+                          .map((request) => {
+                            const showActions = request.status === "pending";
+                            return (
+                              <div
+                                key={request._id}
+                                className="rounded-2xl border border-white/10 bg-black/20 p-5 transition hover:border-white/20"
+                              >
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                  <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="text-sm font-semibold text-white">
+                                        {request.studentId?.name || "Student"}
+                                      </p>
+                                      {request.studentId?.batch && (
+                                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-white/55">
+                                          Batch {request.studentId.batch}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="mt-2 text-sm leading-6 text-white/65">{request.message}</p>
+                                  </div>
 
-                          <div className="flex flex-col items-end gap-2">
-                            <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold ${
-                              request.status === "accepted"
-                                ? "bg-emerald-400/10 border border-emerald-400/20 text-emerald-200"
-                                : request.status === "rejected"
-                                  ? "bg-rose-400/10 border border-rose-400/20 text-rose-200"
-                                  : "bg-amber-400/10 border border-amber-400/20 text-amber-200"
-                            }`}>
-                              {request.status}
-                            </span>
-                          </div>
-                        </div>
+                                  <div className="flex flex-col items-end gap-2">
+                                    <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold ${
+                                      request.status === "accepted"
+                                        ? "bg-emerald-400/10 border border-emerald-400/20 text-emerald-200"
+                                        : request.status === "rejected"
+                                          ? "bg-rose-400/10 border border-rose-400/20 text-rose-200"
+                                          : "bg-amber-400/10 border border-amber-400/20 text-amber-200"
+                                    }`}>
+                                      {request.status}
+                                    </span>
+                                  </div>
+                                </div>
 
-                        {showActions && (
-                          <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-white/5">
-                            <button
-                              type="button"
-                              onClick={() => handleStatus(request._id, "accepted")}
-                              className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition hover:bg-cyan-100"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleStatus(request._id, "rejected")}
-                              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/75 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
+                                {showActions && (
+                                  <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-white/5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStatus(request._id, "accepted")}
+                                      className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition hover:bg-cyan-100"
+                                    >
+                                      Accept
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStatus(request._id, "rejected")}
+                                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/75 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                       </div>
-                    );
-                  })}
-                </div>
+                    )}
+
+                    {/* Outgoing requests (where this user is the student) */}
+                    {requests.filter((r) => r.studentId?._id === currentUser?._id).length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-xs uppercase tracking-[0.25em] text-cyan-200/70 border-b border-white/5 pb-2">
+                          Sent Requests (As Student)
+                        </h4>
+                        {requests
+                          .filter((r) => r.studentId?._id === currentUser?._id)
+                          .map((request) => (
+                            <div
+                              key={request._id}
+                              className="rounded-2xl border border-white/10 bg-black/20 p-5 transition hover:border-white/20"
+                            >
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                  <p className="text-sm font-semibold text-white">
+                                    To Mentor: {request.mentorId?.name || "Mentor"}
+                                  </p>
+                                  <p className="mt-2 text-sm leading-6 text-white/65">{request.message}</p>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-2">
+                                  <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold ${
+                                    request.status === "accepted"
+                                      ? "bg-emerald-400/10 border border-emerald-400/20 text-emerald-200"
+                                      : request.status === "rejected"
+                                        ? "bg-rose-400/10 border border-rose-400/20 text-rose-200"
+                                        : "bg-amber-400/10 border border-amber-400/20 text-amber-200"
+                                  }`}>
+                                    {request.status}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
