@@ -100,4 +100,21 @@ class ProfileRepository {
     );
     return MentorshipRequestItem.fromJson(Map<String, dynamic>.from(data as Map));
   }
+
+  Future<List<Map<String, dynamic>>> fetchMyMentors() async {
+    final data = await _apiClient.getData('/mentorship/my-mentors');
+    final list = data is List ? data : const [];
+    return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchMyMentees() async {
+    final data = await _apiClient.getData('/mentorship/my-mentees');
+    final list = data is List ? data : const [];
+    return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+  }
+
+  Future<Map<String, dynamic>> fetchMentorshipContact(String connectionId) async {
+    final data = await _apiClient.getData('/mentorship/$connectionId/contact');
+    return data is Map ? Map<String, dynamic>.from(data) : const {};
+  }
 }
