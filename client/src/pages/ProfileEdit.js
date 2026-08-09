@@ -8,6 +8,7 @@ import {
   syncCodeforces,
   syncLeetcode,
   syncGithub,
+  getMe,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import FormInput from "../components/FormInput";
@@ -47,6 +48,15 @@ const ProfileEdit = () => {
     codeforcesHandle: "",
     leetcodeUsername: "",
     githubUsername: "",
+    phone: "",
+    whatsapp: "",
+    discord: "",
+    contactPreferences: {
+      email: true,
+      phone: false,
+      whatsapp: false,
+      discord: false,
+    },
   });
   const [imagePreview, setImagePreview] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -73,7 +83,7 @@ const ProfileEdit = () => {
       return;
     }
 
-    getUserById(id)
+    getMe()
       .then((res) => {
         const u = res.data.data;
 
@@ -91,6 +101,15 @@ const ProfileEdit = () => {
           codeforcesHandle: u.codeforcesHandle || u.externalStats?.codeforces?.handle || "",
           leetcodeUsername: u.leetcodeUsername || u.externalStats?.leetcode?.username || "",
           githubUsername: u.githubUsername || u.externalStats?.github?.username || "",
+          phone: u.phone || "",
+          whatsapp: u.whatsapp || "",
+          discord: u.discord || "",
+          contactPreferences: u.contactPreferences || {
+            email: true,
+            phone: false,
+            whatsapp: false,
+            discord: false,
+          },
         });
         setImagePreview(u.imageUrl || "");
         setImageFile(null);
@@ -166,6 +185,10 @@ const ProfileEdit = () => {
       Object.entries(form).forEach(([key, value]) => {
         if (key === "domain") {
           formData.append(key, Array.isArray(value) ? value.join(", ") : "");
+          return;
+        }
+        if (key === "contactPreferences") {
+          formData.append(key, JSON.stringify(value));
           return;
         }
         if (value === null || value === undefined) return;
@@ -415,6 +438,51 @@ const ProfileEdit = () => {
                   )}
                 </div>
               ))}
+            </div>
+          </section>
+
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Contact & Privacy Details</p>
+              <p className="mt-2 text-sm text-white/60">
+                These contact details are kept fully private. They will only be visible to mentors or mentees with whom you have an <strong>active accepted mentorship connection</strong>.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-4">
+              <FormInput label="Phone Number" type="tel" name="phone" value={form.phone || ""} onChange={handleChange} placeholder="+1234567890" />
+              <FormInput label="WhatsApp" type="text" name="whatsapp" value={form.whatsapp || ""} onChange={handleChange} placeholder="WhatsApp details" />
+              <FormInput label="Discord Username" type="text" name="discord" value={form.discord || ""} onChange={handleChange} placeholder="username#1234" />
+            </div>
+
+            <div className="mt-6 border-t border-white/10 pt-5">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/45 mb-4">Choose which contacts are visible to active connections:</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { key: "email", label: "Share Email Address" },
+                  { key: "phone", label: "Share Phone Number" },
+                  { key: "whatsapp", label: "Share WhatsApp" },
+                  { key: "discord", label: "Share Discord" },
+                ].map((item) => (
+                  <label key={item.key} className="flex items-center gap-3 text-sm text-white/75 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.contactPreferences?.[item.key] ?? false}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          contactPreferences: {
+                            ...prev.contactPreferences,
+                            [item.key]: e.target.checked,
+                          },
+                        }))
+                      }
+                      className="h-4 w-4 accent-cyan-300"
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </div>
             </div>
           </section>
 

@@ -29,6 +29,14 @@ const uploadImage = (fileBuffer, originalName) =>
 const normalizePayload = async (req) => {
   const payload = { ...(req.body || {}) };
 
+  if (typeof payload.contactPreferences === "string") {
+    try {
+      payload.contactPreferences = JSON.parse(payload.contactPreferences);
+    } catch (e) {
+      delete payload.contactPreferences;
+    }
+  }
+
   if (payload.batch !== undefined && payload.batch !== "") {
     payload.batch = Number(payload.batch);
   } else {
@@ -64,7 +72,7 @@ const normalizePayload = async (req) => {
 // GET /api/v1/users/:id — public profile
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    const user = await User.findById(req.params.id).select("-password -email -phone -whatsapp -discord -contactPreferences");
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
     res.json({ success: true, data: user });
   } catch (error) {
@@ -80,7 +88,7 @@ const getUsers = async (req, res) => {
     if (req.query.domain) filter.domain = { $in: [req.query.domain] };
     if (req.query.isMentor) filter.isMentor = req.query.isMentor === "true";
 
-    const users = await User.find(filter).select("-password").sort({ createdAt: -1 });
+    const users = await User.find(filter).select("-password -email -phone -whatsapp -discord -contactPreferences").sort({ createdAt: -1 });
     res.json({ success: true, data: users });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

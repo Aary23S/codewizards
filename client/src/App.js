@@ -19,6 +19,7 @@ import Connect from "./pages/Connect";
 import Dashboard from "./pages/Dashboard";
 import ProfileView from "./pages/ProfileView";
 import ProfileEdit from "./pages/ProfileEdit";
+import MyConnections from "./pages/MyConnections";
 import Resources from "./pages/Resources";
 import Admin from "./pages/Admin";
 import Opportunities from "./pages/Opportunities";
@@ -216,6 +217,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <OwnProfileEditRoute />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/connections"
+            element={
+              <ProtectedRoute>
+                <MyConnections />
               </ProtectedRoute>
             }
           />
