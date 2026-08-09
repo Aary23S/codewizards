@@ -147,12 +147,6 @@ const Navbar = () => {
                 </Link>
               )}
               <Link
-                to="/dashboard"
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:text-white"
-              >
-                Dashboard
-              </Link>
-              <Link
                 to="/connections"
                 className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:text-white"
               >
@@ -288,17 +282,7 @@ const Navbar = () => {
                   >
                     Profile
                   </Link>
-                  <Link
-                    to="/dashboard"
-                    onClick={() => setMenuOpen(false)}
-                    className={`rounded-2xl border px-4 py-3 text-sm transition-colors ${
-                      pathname === "/dashboard"
-                        ? "border-white/20 bg-white/10 text-white"
-                        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
-                    }`}
-                  >
-                    Dashboard
-                  </Link>
+
                   <Link
                     to="/connections"
                     onClick={() => setMenuOpen(false)}
