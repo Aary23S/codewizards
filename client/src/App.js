@@ -205,6 +205,14 @@ function App() {
             }
           />
           <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/profile/:id"
             element={
               <ProtectedRoute>
