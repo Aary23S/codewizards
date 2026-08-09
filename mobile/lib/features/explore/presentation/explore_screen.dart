@@ -3038,57 +3038,140 @@ class _GalleryCard extends StatelessWidget {
 
   final GalleryItem item;
 
+  void _showImageDetails(BuildContext context) {
+    final urls = item.imageUrls.isNotEmpty ? item.imageUrls : [item.imageUrl].where((url) => url.isNotEmpty).toList();
+    if (urls.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: PageView.builder(
+                itemCount: urls.length,
+                itemBuilder: (context, idx) => InteractiveViewer(
+                  child: Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: SafeNetworkImage(
+                        imageUrl: urls[idx],
+                        fit: BoxFit.contain,
+                        placeholder: Container(color: Colors.white.withAlpha(8)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              item.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            if (urls.length > 1) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Swipe to see more (${urls.length} photos)',
+                style: const TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        color: Colors.black.withAlpha(46),
-        border: Border.all(color: Colors.white.withAlpha(20)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SafeNetworkImage(
-              imageUrl: item.imageUrl,
-              fit: BoxFit.cover,
-              placeholder: Container(color: Colors.white.withAlpha(8)),
+    final urls = item.imageUrls.isNotEmpty ? item.imageUrls : [item.imageUrl].where((url) => url.isNotEmpty).toList();
+
+    return GestureDetector(
+      onTap: () => _showImageDetails(context),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26),
+          color: Colors.black.withAlpha(46),
+          border: Border.all(color: Colors.white.withAlpha(20)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  SafeNetworkImage(
+                    imageUrl: item.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: Container(color: Colors.white.withAlpha(8)),
+                  ),
+                  if (urls.length > 1)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withAlpha(160),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Text(
+                          '${urls.length} photos',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _Badge(text: item.category.toUpperCase(), color: const Color(0xFF5CC8FF)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                if (item.eventRef != null && item.eventRef!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _Badge(text: item.category.toUpperCase(), color: const Color(0xFF5CC8FF)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                   Text(
-                    item.eventRef!,
+                    item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  if (item.eventRef != null && item.eventRef!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      item.eventRef!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
