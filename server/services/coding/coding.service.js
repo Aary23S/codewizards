@@ -303,9 +303,9 @@ async function syncCurrentUserCodingProfile(user) {
   }
 
   const results = [];
-  results.push(await syncPlatform(profile, user._id, "leetcode", profile.leetcodeUsername));
-  results.push(await syncPlatform(profile, user._id, "codeforces", profile.codeforcesHandle));
-  results.push(await syncPlatform(profile, user._id, "github", profile.githubUsername));
+  results.push(await syncPlatform(profile, user._id, "leetcode", profile.leetcodeUsername, true));
+  results.push(await syncPlatform(profile, user._id, "codeforces", profile.codeforcesHandle, true));
+  results.push(await syncPlatform(profile, user._id, "github", profile.githubUsername, true));
 
   profile.lastManualSyncAt = new Date();
   await profile.save();

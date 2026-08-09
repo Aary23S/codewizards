@@ -13,6 +13,7 @@ import api, {
   getAnnouncements,
   getResources,
   getTimeline,
+  updateTimeline,
   deleteTimeline,
   getGallery,
   deleteGalleryItem,
@@ -161,6 +162,7 @@ const Admin = () => {
   const [editingEventImageFile, setEditingEventImageFile] = useState(null);
   const [editingGallery, setEditingGallery] = useState(null);
   const [editingGalleryImageFiles, setEditingGalleryImageFiles] = useState([]);
+  const [editingTimeline, setEditingTimeline] = useState(null);
   const [suspendModal, setSuspendModal] = useState(null);
 
   useEffect(() => {
@@ -277,6 +279,19 @@ const Admin = () => {
   const handleDeleteTimeline = async (id) => {
     await deleteTimeline(id);
     setTimeline((prev) => prev.filter((t) => t._id !== id));
+  };
+
+  const saveTimelineUpdate = async () => {
+    const res = await updateTimeline(editingTimeline._id, {
+      ...editingTimeline,
+      year: Number(editingTimeline.year),
+    });
+    setTimeline((prev) =>
+      prev
+        .map((item) => (item._id === editingTimeline._id ? res.data.data : item))
+        .sort((a, b) => a.year - b.year)
+    );
+    setEditingTimeline(null);
   };
 
   const createGalleryItem = async () => {
@@ -721,17 +736,46 @@ const Admin = () => {
             </Section>
             <div className="space-y-4">
               {timeline.map((item) => (
-                <div key={item._id} className={`${shellCard} flex items-center justify-between gap-4 p-5`}>
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.35em] text-white/45">
-                      {item.month} {item.year}
-                    </p>
-                    <p className="mt-2 text-base font-semibold text-white">{item.title}</p>
-                    <p className="mt-1 text-sm text-white/55">{item.description}</p>
-                  </div>
-                  <button onClick={() => handleDeleteTimeline(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
-                    Delete
-                  </button>
+                <div key={item._id} className={`${shellCard} p-5`}>
+                  {editingTimeline?._id === item._id ? (
+                    <div className="grid gap-3 w-full">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <input className={fieldClass} type="number" placeholder="Year *" value={editingTimeline.year} onChange={(e) => setEditingTimeline({ ...editingTimeline, year: e.target.value })} />
+                        <input className={fieldClass} placeholder="Month" value={editingTimeline.month || ""} onChange={(e) => setEditingTimeline({ ...editingTimeline, month: e.target.value })} />
+                      </div>
+                      <input className={fieldClass} placeholder="Title *" value={editingTimeline.title} onChange={(e) => setEditingTimeline({ ...editingTimeline, title: e.target.value })} />
+                      <textarea className={fieldClass} placeholder="Description" rows={3} value={editingTimeline.description || ""} onChange={(e) => setEditingTimeline({ ...editingTimeline, description: e.target.value })} />
+                      <div className="flex gap-2">
+                        <button onClick={saveTimelineUpdate} className="rounded-full bg-white px-4 py-2 text-xs uppercase tracking-[0.3em] text-black transition hover:bg-cyan-100">
+                          Save
+                        </button>
+                        <button onClick={() => setEditingTimeline(null)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex w-full items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm uppercase tracking-[0.35em] text-white/45">
+                          {item.month} {item.year}
+                        </p>
+                        <p className="mt-2 text-base font-semibold text-white">{item.title}</p>
+                        <p className="mt-1 text-sm text-white/55">{item.description}</p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => setEditingTimeline({ ...item })}
+                          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                        >
+                          Edit
+                        </button>
+                        <button onClick={() => handleDeleteTimeline(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

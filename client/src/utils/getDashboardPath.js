@@ -3,7 +3,7 @@ const dashboardPathByRole = {
   student: "/student-dashboard",
   senior: "/senior-dashboard",
   alumni: "/alumni-dashboard",
-  admin: "/admin",
+  admin: "/admin-dashboard",
 };
 
 export const getDashboardPath = (role) => dashboardPathByRole[role] || "/dashboard";

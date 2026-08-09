@@ -31,8 +31,18 @@ const userSchema = new mongoose.Schema(
     leetcodeUsername: String,
     githubUsername: String,
 
+    phone: { type: String, default: "" },
+    whatsapp: { type: String, default: "" },
+    discord: { type: String, default: "" },
+    contactPreferences: {
+      email: { type: Boolean, default: true },
+      phone: { type: Boolean, default: false },
+      whatsapp: { type: Boolean, default: false },
+      discord: { type: Boolean, default: false },
+    },
+
     isSuspended: { type: Boolean, default: false },
-suspendedReason: { type: String, default: "" },
+    suspendedReason: { type: String, default: "" },
 
     externalStats: {
       codeforcesRating: { type: Number, default: null },

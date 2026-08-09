@@ -88,11 +88,12 @@ const updateGalleryItem = async (req, res) => {
         : [req.body.imageUrls];
     } else {
       // If imageUrls was not provided in request body at all, default to existing ones
-      // But if it was sent as empty or we want to overwrite it, we can handle it.
-      // Let's assume if it is explicitly omitted but payload exists, we might want to check.
-      // We will check if the client sent the field (it always sends it if they edit, even if empty).
       if (req.body.imageUrls === undefined) {
-        imageUrls = existing.imageUrls || [];
+        imageUrls = existing.imageUrls && existing.imageUrls.length > 0
+          ? existing.imageUrls
+          : existing.imageUrl
+            ? [existing.imageUrl]
+            : [];
       }
     }
 

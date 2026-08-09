@@ -47,7 +47,9 @@ const RequestList = ({ title, emptyText, requests, onAction, showActions }) => (
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-semibold text-white">
-                    {request.mentorId?.name || request.studentId?.name || "Member"}
+                    {showActions
+                      ? (request.studentId?.name || "Student")
+                      : (request.mentorId?.name || "Mentor")}
                   </p>
                   {request.studentId?.batch && (
                     <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-white/55">
@@ -102,7 +104,8 @@ const Dashboard = () => {
   };
 
   const firstName = user?.name ? user.name.split(" ")[0] : "there";
-  const mentorRequests = user?.role === "student" || user?.role === "senior" ? requests : [];
+  const isUserMentor = user?.role === "senior" || user?.role === "alumni" || user?.role === "admin" || user?.isMentor;
+  const mentorRequests = requests;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
@@ -223,10 +226,10 @@ const Dashboard = () => {
           </section>
         )}
 
-        {user.role === "senior" && (
+        {isUserMentor && (
           <section className="mb-14">
             <RequestList
-              title="Senior View"
+              title={`${user.role.charAt(0).toUpperCase() + user.role.slice(1)} View`}
               emptyText="No pending requests yet."
               requests={mentorRequests}
               showActions
@@ -260,9 +263,9 @@ const Dashboard = () => {
             </div>
 
             <div className={shellCard + " p-6 md:p-7"}>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Mentorship</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Mentorship Info</p>
               <p className="mt-3 text-sm leading-7 text-white/60">
-                Alumni requests will appear here once students reach out for guidance.
+                You can review, accept, or reject incoming student requests in the mentorship requests section.
               </p>
             </div>
           </section>
