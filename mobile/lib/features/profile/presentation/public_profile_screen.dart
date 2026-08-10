@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,10 +14,7 @@ import '../../events/data/event_repository.dart';
 import '../../home/data/event_item.dart';
 
 class PublicProfileScreen extends StatefulWidget {
-  const PublicProfileScreen({
-    super.key,
-    required this.userId,
-  });
+  const PublicProfileScreen({super.key, required this.userId});
 
   final String userId;
 
@@ -42,7 +41,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final results = await Future.wait([
       repo.fetchCodingProfilePublic(widget.userId).catchError((_) => null),
       profile.role.toLowerCase() == 'student'
-          ? context.read<EventRepository>().fetchEvents(studentId: widget.userId).catchError((_) => <EventItem>[])
+          ? context
+                .read<EventRepository>()
+                .fetchEvents(studentId: widget.userId)
+                .catchError((_) => <EventItem>[])
           : Future.value(<EventItem>[]),
     ]);
 
@@ -84,19 +86,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     setState(() => _submittingRequest = true);
     try {
       await context.read<ProfileRepository>().createMentorshipRequest(
-            mentorId: profile.id,
-            message: message,
-          );
+        mentorId: profile.id,
+        message: message,
+      );
       if (!mounted) return;
       _requestController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mentorship request sent.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Mentorship request sent.')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     } finally {
       if (mounted) setState(() => _submittingRequest = false);
     }
@@ -114,7 +116,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           child: FutureBuilder<_PublicProfileSnapshot>(
             future: _future,
             builder: (context, snapshot) {
-              final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+              final loading =
+                  snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData;
 
               if (snapshot.hasError || _errorMessage != null) {
                 return ListView(
@@ -142,7 +146,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   _SectionBlock(
                     eyebrow: 'Profile',
                     title: profile.name,
-                    description: 'A public profile view aligned with the mobile dashboard theme.',
+                    description:
+                        'A public profile view aligned with the mobile dashboard theme.',
                     child: loading
                         ? const _LoadingBlock()
                         : Column(
@@ -152,9 +157,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               const SizedBox(height: 16),
                               Row(
                                 children: [
-                                  Expanded(child: _MetricCard(label: 'Role', value: _displayRole(profile.role))),
+                                  Expanded(
+                                    child: _MetricCard(
+                                      label: 'Role',
+                                      value: _displayRole(profile.role),
+                                    ),
+                                  ),
                                   const SizedBox(width: 10),
-                                  Expanded(child: _MetricCard(label: 'Batch', value: profile.displayBatch ?? 'N/A')),
+                                  Expanded(
+                                    child: _MetricCard(
+                                      label: 'Batch',
+                                      value: profile.displayBatch ?? 'N/A',
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 12),
@@ -162,17 +177,27 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               const SizedBox(height: 12),
                               _InfoBlock(profile: profile),
                               const SizedBox(height: 12),
-                              if (profile.domain.isNotEmpty) _DomainsBlock(profile: profile),
-                              if (profile.domain.isNotEmpty) const SizedBox(height: 12),
-                              if (profile.socialLinks.links.isNotEmpty) _LinksBlock(profile: profile),
-                              if (profile.socialLinks.links.isNotEmpty) const SizedBox(height: 12),
-                              if (data.codingProfile?.hasAnyData ?? false) _CodingBlock(codingProfile: data.codingProfile!),
-                              if (data.codingProfile?.hasAnyData ?? false) const SizedBox(height: 12),
+                              if (profile.domain.isNotEmpty)
+                                _DomainsBlock(profile: profile),
+                              if (profile.domain.isNotEmpty)
+                                const SizedBox(height: 12),
+                              if (profile.socialLinks.links.isNotEmpty)
+                                _LinksBlock(profile: profile),
+                              if (profile.socialLinks.links.isNotEmpty)
+                                const SizedBox(height: 12),
+                              if (data.codingProfile?.hasAnyData ?? false)
+                                _CodingBlock(
+                                  codingProfile: data.codingProfile!,
+                                ),
+                              if (data.codingProfile?.hasAnyData ?? false)
+                                const SizedBox(height: 12),
                               if (profile.role.toLowerCase() == 'student') ...[
                                 _MyEventsBlock(events: data.registeredEvents),
                                 const SizedBox(height: 12),
                               ],
-                              if (profile.isMentor && currentUser != null && currentUser.id != profile.id)
+                              if (profile.isMentor &&
+                                  currentUser != null &&
+                                  currentUser.id != profile.id)
                                 _RequestBlock(
                                   controller: _requestController,
                                   submitting: _submittingRequest,
@@ -230,20 +255,32 @@ class _HeroCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(profile.name, style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  profile.name,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: 4),
                 Text(
                   _profileSubtitle(profile),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.4),
                 ),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    if (profile.isMentor) const _Badge(text: 'OPEN TO MENTOR', color: Color(0xFF34D399)),
+                    if (profile.isMentor)
+                      const _Badge(
+                        text: 'OPEN TO MENTOR',
+                        color: Color(0xFF34D399),
+                      ),
                     if (profile.domain.isNotEmpty)
-                      _Badge(text: profile.domain.first, color: const Color(0xFF5CC8FF)),
+                      _Badge(
+                        text: profile.domain.first,
+                        color: const Color(0xFF5CC8FF),
+                      ),
                   ],
                 ),
               ],
@@ -272,11 +309,19 @@ class _InfoBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('About', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 3, color: Colors.white54)),
+          Text(
+            'About',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
+          ),
           const SizedBox(height: 10),
           Text(
             profile.hasBio ? profile.bio! : 'No bio provided.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.55),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.55),
           ),
         ],
       ),
@@ -301,17 +346,21 @@ class _DomainsBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Domains', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 3, color: Colors.white54)),
+          Text(
+            'Domains',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: profile.domain
                 .map(
-                  (domain) => _Badge(
-                    text: domain,
-                    color: const Color(0xFFF5B14C),
-                  ),
+                  (domain) =>
+                      _Badge(text: domain, color: const Color(0xFFF5B14C)),
                 )
                 .toList(),
           ),
@@ -338,7 +387,13 @@ class _LinksBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Links', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 3, color: Colors.white54)),
+          Text(
+            'Links',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -379,24 +434,52 @@ class _CodingBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Coding contributions', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 3, color: Colors.white54)),
+          Text(
+            'Coding contributions',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _StatCard(label: 'LeetCode', value: _displayCount(leet.totalSolved), subvalue: _leetcodeSubtitle(leet))),
+              Expanded(
+                child: _StatCard(
+                  label: 'LeetCode',
+                  value: _displayCount(leet.totalSolved),
+                  subvalue: _leetcodeSubtitle(leet),
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _StatCard(label: 'Codeforces', value: _displayCount(cf.rating), subvalue: _codeforcesSubtitle(cf))),
+              Expanded(
+                child: _StatCard(
+                  label: 'Codeforces',
+                  value: _displayCount(cf.rating),
+                  subvalue: _codeforcesSubtitle(cf),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _StatCard(label: 'GitHub', value: _displayCount(gh.contributions), subvalue: _githubSubtitle(gh))),
+              Expanded(
+                child: _StatCard(
+                  label: 'GitHub',
+                  value: _displayCount(gh.contributions),
+                  subvalue: _githubSubtitle(gh),
+                ),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: _StatCard(
                   label: 'Sync',
-                  value: _formatSyncDate(codingProfile.github.lastSyncedAt ?? codingProfile.codeforces.lastSyncedAt ?? codingProfile.leetcode.lastSyncedAt),
+                  value: _formatSyncDate(
+                    codingProfile.github.lastSyncedAt ??
+                        codingProfile.codeforces.lastSyncedAt ??
+                        codingProfile.leetcode.lastSyncedAt,
+                  ),
                   subvalue: 'Last updated',
                 ),
               ),
@@ -404,32 +487,62 @@ class _CodingBlock extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           if (leet.recentSubmissions.isNotEmpty) ...[
-            Text('Recent submissions', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
-            const SizedBox(height: 8),
-            ...leet.recentSubmissions.take(3).map(
-              (item) => _ActivityRow(
-                title: item.problem.isNotEmpty ? item.problem : item.title,
-                subtitle: item.verdict.isNotEmpty ? item.verdict : item.language,
+            Text(
+              'Recent submissions',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                letterSpacing: 2,
+                color: Colors.white54,
               ),
             ),
+            const SizedBox(height: 8),
+            ...leet.recentSubmissions
+                .take(3)
+                .map(
+                  (item) => _ActivityRow(
+                    title: item.problem.isNotEmpty ? item.problem : item.title,
+                    subtitle: item.verdict.isNotEmpty
+                        ? item.verdict
+                        : item.language,
+                  ),
+                ),
           ] else if (cf.recentSubmissions.isNotEmpty) ...[
-            Text('Recent submissions', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
-            const SizedBox(height: 8),
-            ...cf.recentSubmissions.take(3).map(
-              (item) => _ActivityRow(
-                title: item.problem.isNotEmpty ? item.problem : item.title,
-                subtitle: item.verdict.isNotEmpty ? item.verdict : item.language,
+            Text(
+              'Recent submissions',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                letterSpacing: 2,
+                color: Colors.white54,
               ),
             ),
+            const SizedBox(height: 8),
+            ...cf.recentSubmissions
+                .take(3)
+                .map(
+                  (item) => _ActivityRow(
+                    title: item.problem.isNotEmpty ? item.problem : item.title,
+                    subtitle: item.verdict.isNotEmpty
+                        ? item.verdict
+                        : item.language,
+                  ),
+                ),
           ] else if (gh.recentActivity.isNotEmpty) ...[
-            Text('Recent activity', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
-            const SizedBox(height: 8),
-            ...gh.recentActivity.take(3).map(
-              (item) => _ActivityRow(
-                title: item.problem.isNotEmpty ? item.problem : item.title,
-                subtitle: item.verdict.isNotEmpty ? item.verdict : item.language,
+            Text(
+              'Recent activity',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                letterSpacing: 2,
+                color: Colors.white54,
               ),
             ),
+            const SizedBox(height: 8),
+            ...gh.recentActivity
+                .take(3)
+                .map(
+                  (item) => _ActivityRow(
+                    title: item.problem.isNotEmpty ? item.problem : item.title,
+                    subtitle: item.verdict.isNotEmpty
+                        ? item.verdict
+                        : item.language,
+                  ),
+                ),
           ],
         ],
       ),
@@ -460,20 +573,29 @@ class _RequestBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Request mentorship', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 3, color: Colors.white54)),
+          Text(
+            'Request mentorship',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: controller,
             maxLines: 4,
             minLines: 2,
             decoration: const InputDecoration(
-              hintText: 'Introduce yourself and what you would like guidance on...',
+              hintText:
+                  'Introduce yourself and what you would like guidance on...',
             ),
           ),
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: submitting ? null : onSend,
-            child: submitting ? const Text('Sending...') : const Text('Send request'),
+            child: submitting
+                ? const Text('Sending...')
+                : const Text('Send request'),
           ),
         ],
       ),
@@ -488,7 +610,9 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = profile.name.isNotEmpty ? profile.name.trim()[0].toUpperCase() : 'U';
+    final initial = profile.name.isNotEmpty
+        ? profile.name.trim()[0].toUpperCase()
+        : 'U';
 
     return Container(
       height: 64,
@@ -518,10 +642,7 @@ class _Avatar extends StatelessWidget {
 }
 
 class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.label,
-    required this.value,
-  });
+  const _MetricCard({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -538,7 +659,13 @@ class _MetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2.2, color: Colors.white54)),
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 2.2,
+              color: Colors.white54,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(value, style: Theme.of(context).textTheme.titleMedium),
         ],
@@ -570,11 +697,24 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2, color: Colors.white54)),
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 2,
+              color: Colors.white54,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(value, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
-          Text(subvalue, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54)),
+          Text(
+            subvalue,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.white54),
+          ),
         ],
       ),
     );
@@ -582,10 +722,7 @@ class _StatCard extends StatelessWidget {
 }
 
 class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({
-    required this.title,
-    required this.subtitle,
-  });
+  const _ActivityRow({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -603,9 +740,19 @@ class _ActivityRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 4),
-          Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54)),
+          Text(
+            subtitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.white54),
+          ),
         ],
       ),
     );
@@ -637,11 +784,22 @@ class _SectionBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(eyebrow.toUpperCase(), style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 3, color: Colors.white54)),
+          Text(
+            eyebrow.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 6),
-          Text(description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            description,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 14),
           child,
         ],
@@ -685,9 +843,17 @@ class _ErrorPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Unable to load profile', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Unable to load profile',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 10),
-          Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            message,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 14),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
@@ -713,17 +879,16 @@ class _Badge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, letterSpacing: 1),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: color, letterSpacing: 1),
       ),
     );
   }
 }
 
 class _LinkBadge extends StatelessWidget {
-  const _LinkBadge({
-    required this.label,
-    required this.url,
-  });
+  const _LinkBadge({required this.label, required this.url});
 
   final String label;
   final String? url;
@@ -738,7 +903,11 @@ class _LinkBadge extends StatelessWidget {
     } on MissingPluginException {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Link launching is initializing. Please fully restart the app once.')),
+        const SnackBar(
+          content: Text(
+            'Link launching is initializing. Please fully restart the app once.',
+          ),
+        ),
       );
     } catch (_) {
       if (!context.mounted) return;
@@ -758,8 +927,14 @@ class _LinkBadge extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          color: enabled ? const Color(0xFF5CC8FF).withAlpha(26) : Colors.white.withAlpha(8),
-          border: Border.all(color: enabled ? const Color(0xFF5CC8FF).withAlpha(60) : Colors.white.withAlpha(20)),
+          color: enabled
+              ? const Color(0xFF5CC8FF).withAlpha(26)
+              : Colors.white.withAlpha(8),
+          border: Border.all(
+            color: enabled
+                ? const Color(0xFF5CC8FF).withAlpha(60)
+                : Colors.white.withAlpha(20),
+          ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
@@ -768,13 +943,17 @@ class _LinkBadge extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: enabled ? const Color(0xFF5CC8FF) : Colors.white54,
-                    letterSpacing: 1,
-                  ),
+                color: enabled ? const Color(0xFF5CC8FF) : Colors.white54,
+                letterSpacing: 1,
+              ),
             ),
             if (enabled) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.open_in_new_rounded, size: 14, color: Color(0xFF5CC8FF)),
+              const Icon(
+                Icons.open_in_new_rounded,
+                size: 14,
+                color: Color(0xFF5CC8FF),
+              ),
             ],
           ],
         ),
@@ -804,13 +983,17 @@ String _displayRole(String role) {
     case 'admin':
       return 'Admin';
     default:
-      return role.isEmpty ? 'Member' : role[0].toUpperCase() + role.substring(1);
+      return role.isEmpty
+          ? 'Member'
+          : role[0].toUpperCase() + role.substring(1);
   }
 }
 
 String _friendlyError(Object? error) {
   final text = error.toString();
-  if (text.contains('401')) return 'Your session expired. Please sign in again.';
+  if (text.contains('401')) {
+    return 'Your session expired. Please sign in again.';
+  }
   if (text.contains('SocketException') || text.contains('DioException')) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }
@@ -891,17 +1074,25 @@ class _MyEventsBlock extends StatelessWidget {
               Text(
                 'MY EVENTS',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      letterSpacing: 2,
-                      color: Colors.white38,
-                    ),
+                  letterSpacing: 2,
+                  color: Colors.white38,
+                ),
               ),
-              const Icon(Icons.event_available_rounded, size: 16, color: Color(0xFF34D399)),
+              const Icon(
+                Icons.event_available_rounded,
+                size: 16,
+                color: Color(0xFF34D399),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           const Text(
             'UPCOMING EVENTS',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white70,
+            ),
           ),
           const SizedBox(height: 8),
           if (upcoming.isEmpty)
@@ -910,38 +1101,60 @@ class _MyEventsBlock extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: Colors.white38),
             )
           else
-            ...upcoming.map((event) => Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white.withAlpha(6),
-                    border: Border.all(color: Colors.white.withAlpha(12)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(event.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-                            const SizedBox(height: 4),
-                            Text(
-                              event.date != null ? '${event.date!.day}/${event.date!.month}/${event.date!.year}' : 'TBA',
-                              style: const TextStyle(fontSize: 11, color: Colors.white38),
+            ...upcoming.map(
+              (event) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white.withAlpha(6),
+                  border: Border.all(color: Colors.white.withAlpha(12)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            event.title,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            event.date != null
+                                ? '${event.date!.day}/${event.date!.month}/${event.date!.year}'
+                                : 'TBA',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.white38,
+                            ),
+                          ),
+                        ],
                       ),
-                      const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF34D399), size: 18),
-                    ],
-                  ),
-                )),
+                    ),
+                    const Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: Color(0xFF34D399),
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           const Text(
             'ATTENDED EVENTS',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white70,
+            ),
           ),
           const SizedBox(height: 8),
           if (attended.isEmpty)
@@ -950,26 +1163,42 @@ class _MyEventsBlock extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: Colors.white38),
             )
           else
-            ...attended.map((event) => Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.white.withAlpha(4),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(event.title, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+            ...attended.map(
+              (event) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withAlpha(4),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white60,
+                        ),
                       ),
-                      Text(
-                        event.date != null ? '${event.date!.day}/${event.date!.month}/${event.date!.year}' : '',
-                        style: const TextStyle(fontSize: 10, color: Colors.white30),
+                    ),
+                    Text(
+                      event.date != null
+                          ? '${event.date!.day}/${event.date!.month}/${event.date!.year}'
+                          : '',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white30,
                       ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

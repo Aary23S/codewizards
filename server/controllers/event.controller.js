@@ -45,7 +45,7 @@ const getEvents = async (req, res) => {
     const eventIds = events.map((e) => e._id);
     const registrations = await EventRegistration.find({
       eventId: { $in: eventIds },
-      status: "registered",
+      status: { $in: ["registered", "attended"] },
     });
 
     // Map to dynamically populate status based on current date
@@ -55,10 +55,13 @@ const getEvents = async (req, res) => {
 
       const eventRegs = registrations.filter((r) => r.eventId.toString() === event._id.toString());
       const targetStudentId = req.query.studentId || (req.user ? req.user._id.toString() : null);
-      const isRegistered = targetStudentId ? eventRegs.some((r) => r.studentId.toString() === targetStudentId.toString()) : false;
+      const userReg = targetStudentId ? eventRegs.find((r) => r.studentId.toString() === targetStudentId.toString()) : null;
 
       obj.registration = {
-        isRegistered,
+        isRegistered: !!userReg,
+        status: userReg ? userReg.status : null,
+        certificateHash: userReg ? userReg.certificateHash : null,
+        attendedAt: userReg ? userReg.attendedAt : null,
         registeredCount: eventRegs.length,
       };
       return obj;
@@ -78,16 +81,19 @@ const getEvent = async (req, res) => {
 
     const registrations = await EventRegistration.find({
       eventId: event._id,
-      status: "registered",
+      status: { $in: ["registered", "attended"] },
     });
 
     const obj = event.toObject();
     obj.status = new Date(event.date) < new Date() ? "completed" : "upcoming";
 
     const targetStudentId = req.query.studentId || (req.user ? req.user._id.toString() : null);
-    const isRegistered = targetStudentId ? registrations.some((r) => r.studentId.toString() === targetStudentId.toString()) : false;
+    const userReg = targetStudentId ? registrations.find((r) => r.studentId.toString() === targetStudentId.toString()) : null;
     obj.registration = {
-      isRegistered,
+      isRegistered: !!userReg,
+      status: userReg ? userReg.status : null,
+      certificateHash: userReg ? userReg.certificateHash : null,
+      attendedAt: userReg ? userReg.attendedAt : null,
       registeredCount: registrations.length,
     };
 

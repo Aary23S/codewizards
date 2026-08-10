@@ -34,6 +34,16 @@ class EventRepository {
     await _apiClient.deleteData('/events/$eventId/register');
   }
 
+  Future<Map<String, dynamic>> verifyOtp(String eventId, String code) async {
+    final res = await _apiClient.postData('/events/$eventId/verify', data: {'code': code});
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  Future<Map<String, dynamic>> generateOtp(String eventId) async {
+    final res = await _apiClient.postData('/events/$eventId/otp');
+    return Map<String, dynamic>.from(res as Map);
+  }
+
   List<T> _mapList<T>(dynamic data, T Function(Map<String, dynamic>) builder) {
     final list = (data as List? ?? const []);
     return list

@@ -27,7 +27,7 @@ class _EventsScreenState extends State<EventsScreen> {
     final repo = context.read<EventRepository>();
     final auth = context.read<AuthController>();
     final events = await repo.fetchEvents();
-    final registrations = auth.user?.role == 'student'
+    final registrations = auth.user != null && auth.user!.role != 'admin'
         ? await repo.fetchMyRegistrations()
         : <String>{};
     return _EventsSnapshot(events: events, registrations: registrations);
@@ -137,6 +137,154 @@ class _EventsScreenState extends State<EventsScreen> {
     }
   }
 
+  Future<void> _verifyOtp(String eventId, String code) async {
+    final repo = context.read<EventRepository>();
+    try {
+      final res = await repo.verifyOtp(eventId, code);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            res['message']?.toString() ?? 'Attendance verified successfully',
+          ),
+        ),
+      );
+      _refresh();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
+    }
+  }
+
+  Future<void> _generateOtp(String eventId) async {
+    final repo = context.read<EventRepository>();
+    try {
+      final res = await repo.generateOtp(eventId);
+      if (!mounted) return;
+      final otp = res['data']?['otpCode']?.toString() ?? '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('OTP Generated successfully: $otp')),
+      );
+      _refresh();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
+    }
+  }
+
+  void _showCertificate(EventItem event, dynamic user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF151515),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+          side: const BorderSide(color: Color(0xFFFBBF24), width: 1.5),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 64,
+              width: 64,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+                ),
+              ),
+              child: const Icon(
+                Icons.school_rounded,
+                color: Colors.black,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'CERTIFICATE OF ATTENDANCE',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFFBBF24),
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Presented to',
+              style: TextStyle(
+                color: Colors.white.withAlpha(120),
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              user?.name ?? 'Member',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'for successfully participating in\n"${event.title}"\nheld on ${event.date != null ? '${event.date!.day}/${event.date!.month}/${event.date!.year}' : 'TBA'}.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withAlpha(200),
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withAlpha(6),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'VERIFICATION HASH',
+                    style: TextStyle(
+                      color: Colors.white30,
+                      fontSize: 9,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  SelectableText(
+                    event.certificateHash ?? 'CW-VERIFIED-ATTENDANCE',
+                    style: const TextStyle(
+                      color: Color(0xFFFBBF24),
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: Colors.white70)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthController>().user;
@@ -197,6 +345,9 @@ class _EventsScreenState extends State<EventsScreen> {
                         registered: registrations.contains(event.id),
                         onRegister: () => _register(event.id),
                         onCancel: () => _cancelRegistration(event.id),
+                        onVerifyOtp: (code) => _verifyOtp(event.id, code),
+                        onGenerateOtp: () => _generateOtp(event.id),
+                        onViewCertificate: () => _showCertificate(event, user),
                       ),
                     ),
                   ),
@@ -340,6 +491,9 @@ class _EventCard extends StatefulWidget {
     required this.registered,
     required this.onRegister,
     required this.onCancel,
+    required this.onVerifyOtp,
+    required this.onGenerateOtp,
+    required this.onViewCertificate,
   });
 
   final EventItem event;
@@ -348,6 +502,9 @@ class _EventCard extends StatefulWidget {
   final bool registered;
   final VoidCallback onRegister;
   final VoidCallback onCancel;
+  final ValueChanged<String> onVerifyOtp;
+  final VoidCallback onGenerateOtp;
+  final VoidCallback onViewCertificate;
 
   @override
   State<_EventCard> createState() => _EventCardState();
@@ -355,17 +512,28 @@ class _EventCard extends StatefulWidget {
 
 class _EventCardState extends State<_EventCard> {
   bool _expanded = false;
+  final _otpController = TextEditingController();
+
+  @override
+  void dispose() {
+    _otpController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final canRegister =
         widget.event.status == 'upcoming' &&
-        widget.currentUser?.role == 'student';
+        widget.currentUser?.role != 'admin';
     final dateText = widget.event.date == null
         ? 'Date TBA'
         : _formatDate(widget.event.date!);
     final eventType = widget.event.type?.toUpperCase() ?? 'OTHER';
     final hasLongDescription = widget.event.description.length > 120;
+    final isAttended = widget.event.registrationStatus == 'attended';
+    final isRegistered =
+        widget.event.registrationStatus == 'registered' || widget.registered;
+    final isAdmin = widget.currentUser?.role == 'admin';
 
     return Container(
       decoration: BoxDecoration(
@@ -432,6 +600,11 @@ class _EventCardState extends State<_EventCard> {
                           label: '${widget.event.registeredCount} REGISTERED',
                           accent: const Color(0xFF34D399),
                         ),
+                        if (isAttended)
+                          const _StatusPill(
+                            label: '✓ ATTENDED',
+                            accent: Color(0xFFFBBF24),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -474,45 +647,132 @@ class _EventCardState extends State<_EventCard> {
                       const _MiniChip(text: 'Featured'),
                     ],
                     const SizedBox(height: 12),
-                    if (canRegister)
-                      widget.registered
-                          ? Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              crossAxisAlignment: WrapCrossAlignment.center,
+
+                    // Admin flow
+                    if (isAdmin && widget.event.status == 'upcoming') ...[
+                      Row(
+                        children: [
+                          OutlinedButton(
+                            onPressed: widget.onGenerateOtp,
+                            child: const Text('Generate OTP'),
+                          ),
+                          if (widget.event.otpCode != null) ...[
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFFBBF24).withAlpha(30),
+                                border: Border.all(
+                                  color: const Color(0xFFFBBF24).withAlpha(60),
+                                ),
+                              ),
+                              child: Text(
+                                'OTP: ${widget.event.otpCode}',
+                                style: const TextStyle(
+                                  color: Color(0xFFFBBF24),
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+
+                    // Student/Non-Admin flow
+                    if (!isAdmin && widget.currentUser != null) ...[
+                      if (isAttended)
+                        ElevatedButton.icon(
+                          onPressed: widget.onViewCertificate,
+                          icon: const Icon(Icons.school, size: 16),
+                          label: const Text('View Certificate'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFBBF24),
+                            foregroundColor: Colors.black,
+                          ),
+                        )
+                      else if (isRegistered &&
+                          widget.event.status == 'upcoming')
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
                                 const _MiniChip(text: '✓ Registered'),
+                                const SizedBox(width: 8),
                                 OutlinedButton(
                                   onPressed: widget.onCancel,
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    side: const BorderSide(
-                                      color: Colors.white24,
+                                      horizontal: 12,
+                                      vertical: 6,
                                     ),
                                   ),
                                   child: const Text(
-                                    'Cancel Registration',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white70,
-                                    ),
+                                    'Cancel',
+                                    style: TextStyle(fontSize: 11),
                                   ),
                                 ),
                               ],
-                            )
-                          : OutlinedButton(
-                              onPressed: widget.onRegister,
-                              child: const Text('Register'),
-                            )
-                    else if (widget.currentUser != null &&
-                        widget.currentUser.role != 'student' &&
-                        widget.event.status == 'upcoming')
-                      Text(
-                        'Only students can register for events',
-                        style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 120,
+                                  height: 36,
+                                  child: TextField(
+                                    controller: _otpController,
+                                    maxLength: 6,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Enter OTP',
+                                      counterText: '',
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 0,
+                                      ),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final val = _otpController.text.trim();
+                                    if (val.length == 6) {
+                                      widget.onVerifyOtp(val);
+                                    }
+                                  },
+                                  child: const Text(
+                                    'Verify Attendance',
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      else if (canRegister)
+                        OutlinedButton(
+                          onPressed: widget.onRegister,
+                          child: const Text('Register'),
+                        ),
+                    ],
+
+                    if (isAdmin && widget.event.status == 'completed')
+                      const Text(
+                        'Event completed',
+                        style: TextStyle(color: Colors.white38, fontSize: 12),
                       ),
                   ],
                 ),
@@ -648,8 +908,9 @@ class _ErrorPanel extends StatelessWidget {
 
 String _friendlyError(Object? error) {
   final text = error.toString();
-  if (text.contains('401'))
+  if (text.contains('401')) {
     return 'Your session expired. Please sign in again.';
+  }
   if (text.contains('SocketException') || text.contains('DioException')) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }

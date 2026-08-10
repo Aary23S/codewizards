@@ -10,6 +10,8 @@ const eventRegistrationSchema = new mongoose.Schema(
       enum: ["registered", "cancelled", "attended"],
       default: "registered",
     },
+    certificateHash: { type: String, default: null },
+    attendedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

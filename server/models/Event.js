@@ -20,6 +20,8 @@ const eventSchema = new mongoose.Schema(
       default: "upcoming",
     },
     featured: { type: Boolean, default: false },
+    otpCode: { type: String, default: null },
+    otpExpiresAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

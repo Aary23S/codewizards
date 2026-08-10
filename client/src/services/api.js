@@ -2,7 +2,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: "http://localhost:5000/api/v1",
 });
 
 // Automatically attach JWT token to every request if it exists
@@ -36,6 +36,8 @@ export const updateEvent = (id, data) => api.patch(`/events/${id}`, data);
 export const deleteEvent = (id) => api.delete(`/events/${id}`);
 export const registerForEvent = (eventId) => api.post(`/events/${eventId}/register`);
 export const cancelEventRegistration = (eventId) => api.delete(`/events/${eventId}/register`);
+export const generateEventOTP = (eventId) => api.post(`/events/${eventId}/otp`);
+export const verifyEventOTP = (eventId, code) => api.post(`/events/${eventId}/verify`, { code });
 
 // --- Timeline ---
 export const getTimeline = () => api.get("/timeline");

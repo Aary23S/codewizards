@@ -14,6 +14,9 @@ class EventItem {
     this.imageUrl,
     this.isRegistered = false,
     this.registeredCount = 0,
+    this.registrationStatus,
+    this.certificateHash,
+    this.otpCode,
   });
 
   final String id;
@@ -28,6 +31,9 @@ class EventItem {
   final String? imageUrl;
   final bool isRegistered;
   final int registeredCount;
+  final String? registrationStatus;
+  final String? certificateHash;
+  final String? otpCode;
 
   factory EventItem.fromJson(Map<String, dynamic> json) {
     final reg = json['registration'] as Map?;
@@ -44,6 +50,9 @@ class EventItem {
       imageUrl: readHttpUrl(json['imageUrl']),
       isRegistered: reg != null ? readBool(reg['isRegistered']) : false,
       registeredCount: reg != null ? (readInt(reg['registeredCount']) ?? 0) : 0,
+      registrationStatus: reg != null ? reg['status']?.toString() : null,
+      certificateHash: reg != null ? reg['certificateHash']?.toString() : null,
+      otpCode: json['otpCode']?.toString(),
     );
   }
 }
