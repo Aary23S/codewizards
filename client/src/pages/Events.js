@@ -8,6 +8,7 @@ import {
   verifyEventOTP,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import logo from "../assets/logo.jpeg";
 
 const CertificateModal = ({ event, user, onClose }) => {
   const handlePrint = () => {
@@ -28,8 +29,8 @@ const CertificateModal = ({ event, user, onClose }) => {
         {/* Certificate Content */}
         <div className="relative">
           {/* Logo / Emblem */}
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/20">
-            <span className="text-3xl font-serif font-bold text-black">CW</span>
+          <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-amber-500/20 bg-black shadow-lg shadow-amber-500/10">
+            <img src={logo} alt="CodeWizards Logo" className="h-full w-full object-cover" />
           </div>
 
           <p className="mt-8 font-serif text-xs uppercase tracking-[0.45em] text-amber-400">
@@ -54,20 +55,17 @@ const CertificateModal = ({ event, user, onClose }) => {
 
           <div className="mt-10 grid grid-cols-2 gap-8 border-t border-white/10 pt-8 print:border-black/10">
             <div>
-              <p className="font-serif text-sm font-semibold text-white/80 print:text-black/85">Aary Satardekar</p>
-              <p className="text-[10px] uppercase tracking-widest text-white/40 print:text-black/40">Co-founder</p>
+              <p className="font-serif text-sm font-semibold text-white/80 print:text-black/85">Mr. Somanath Salunkhe</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/40 print:text-black/40">Faculty Co-ordinator</p>
             </div>
             <div>
-              <p className="font-serif text-sm font-semibold text-white/80 print:text-black/85">Aary Dalal</p>
-              <p className="text-[10px] uppercase tracking-widest text-white/40 print:text-black/40">Co-founder</p>
+              <p className="font-serif text-sm font-semibold text-white/80 print:text-black/85">Dr. Sangram Patil</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/40 print:text-black/40">Director of Academics</p>
             </div>
           </div>
 
           <div className="mt-8 border-t border-amber-500/20 pt-6">
-            <p className="text-[10px] font-mono tracking-wider text-amber-500/60 print:text-black/60">
-              VERIFICATION HASH: {event.registration?.certificateHash || "CW-VERIFIED-ATTENDANCE"}
-            </p>
-            <p className="mt-1 text-[9px] text-white/35 print:text-black/35">
+            <p className="text-[9px] text-white/35 print:text-black/35">
               Verified on {attendedDateStr}
             </p>
           </div>

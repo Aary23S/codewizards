@@ -191,17 +191,18 @@ class _EventsScreenState extends State<EventsScreen> {
             Container(
               height: 64,
               width: 64,
-              alignment: Alignment.center,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
-                ),
-              ),
-              child: const Icon(
-                Icons.school_rounded,
                 color: Colors.black,
-                size: 32,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32),
+                child: Image.asset(
+                  'assets/logo.jpeg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.school_rounded, color: Color(0xFFFBBF24), size: 32),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -211,17 +212,14 @@ class _EventsScreenState extends State<EventsScreen> {
               style: TextStyle(
                 color: Color(0xFFFBBF24),
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 13,
                 letterSpacing: 2,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               'Presented to',
-              style: TextStyle(
-                color: Colors.white.withAlpha(120),
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white.withAlpha(120), fontSize: 11),
             ),
             const SizedBox(height: 6),
             Text(
@@ -244,34 +242,51 @@ class _EventsScreenState extends State<EventsScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white.withAlpha(6),
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'VERIFICATION HASH',
-                    style: TextStyle(
-                      color: Colors.white30,
-                      fontSize: 9,
-                      letterSpacing: 1,
-                    ),
+            const Divider(color: Colors.white12),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Mr. Somanath Salunkhe',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Faculty Co-ordinator',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white.withAlpha(80), fontSize: 8),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    event.certificateHash ?? 'CW-VERIFIED-ATTENDANCE',
-                    style: const TextStyle(
-                      color: Color(0xFFFBBF24),
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Dr. Sangram Patil',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Director of Academics',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white.withAlpha(80), fontSize: 8),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Verified on ${event.date != null ? '${event.date!.day}/${event.date!.month}/${event.date!.year}' : 'TBA'}',
+              style: TextStyle(color: Colors.white.withAlpha(60), fontSize: 9),
             ),
           ],
         ),
