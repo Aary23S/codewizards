@@ -10,6 +10,7 @@ import 'data/coding_profile_item.dart';
 import 'data/mentorship_request_item.dart';
 import 'data/profile_repository.dart';
 import 'presentation/profile_edit_screen.dart';
+import 'presentation/connections_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -80,6 +81,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
 
+    if (!mounted) return;
+    await _refresh();
+  }
+
+  Future<void> _openConnections() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const ConnectionsScreen(),
+      ),
+    );
     if (!mounted) return;
     await _refresh();
   }
@@ -160,6 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onHomeTap: () => _jumpToTab(0),
                   onTeamTap: () => _jumpToTab(2),
                   onEditTap: () => _openEditProfile(data.profile),
+                  onConnectionsTap: _openConnections,
                 ),
                 const SizedBox(height: 16),
                 if (data.profile.socialLinks.links.isNotEmpty)
@@ -398,11 +410,13 @@ class _QuickLinksBlock extends StatelessWidget {
     required this.onHomeTap,
     required this.onTeamTap,
     required this.onEditTap,
+    required this.onConnectionsTap,
   });
 
   final VoidCallback onHomeTap;
   final VoidCallback onTeamTap;
   final VoidCallback onEditTap;
+  final VoidCallback onConnectionsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -431,6 +445,7 @@ class _QuickLinksBlock extends StatelessWidget {
               _ActionPill(label: 'Home', onTap: onHomeTap),
               _ActionPill(label: 'Team', onTap: onTeamTap),
               _ActionPill(label: 'Edit', onTap: onEditTap),
+              _ActionPill(label: 'Connections', onTap: onConnectionsTap),
             ],
           ),
         ],

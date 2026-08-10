@@ -131,4 +131,10 @@ export const deleteTeamMember = (id) => api.delete(`/team/${id}`);
 export const getContact = () => api.get("/contact");
 export const updateContact = (data) => api.put("/contact", data);
 
+// Mentorship Goals & Action Items
+export const getMentorshipGoals = (mentorshipId) => api.get(`/mentorship/${mentorshipId}/goals`);
+export const createMentorshipGoal = (mentorshipId, data) => api.post(`/mentorship/${mentorshipId}/goals`, data);
+export const updateMentorshipGoal = (goalId, data) => api.patch(`/mentorship/goals/${goalId}`, data);
+export const deleteMentorshipGoal = (goalId) => api.delete(`/mentorship/goals/${goalId}`);
+
 export default api;

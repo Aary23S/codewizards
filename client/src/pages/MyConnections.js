@@ -1,11 +1,229 @@
 // codewizards/client/src/pages/MyConnections.js
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getMyMentors, getMyMentees, getMentorshipContact } from "../services/api";
+import {
+  getMyMentors,
+  getMyMentees,
+  getMentorshipContact,
+  getMentorshipGoals,
+  createMentorshipGoal,
+  updateMentorshipGoal,
+  deleteMentorshipGoal
+} from "../services/api";
 import { Link } from "react-router-dom";
 
 const shellCard =
   "group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:border-white/20";
+
+const MentorshipGoalsWidget = ({ connId, isMentor, goalsList, onUpdateGoals }) => {
+  const [creating, setCreating] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [tasks, setTasks] = useState([""]);
+
+  const handleAddTaskField = () => setTasks([...tasks, ""]);
+  const handleRemoveTaskField = (idx) => setTasks(tasks.filter((_, i) => i !== idx));
+  const handleTaskChange = (idx, val) => {
+    const updated = [...tasks];
+    updated[idx] = val;
+    setTasks(updated);
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    const tasksList = tasks.filter(t => t.trim()).map(t => ({ title: t.trim() }));
+    try {
+      const res = await createMentorshipGoal(connId, { title, description, tasks: tasksList });
+      onUpdateGoals([...goalsList, res.data.data]);
+      setTitle("");
+      setDescription("");
+      setTasks([""]);
+      setCreating(false);
+    } catch (err) {
+      console.error("Failed to create goal:", err);
+    }
+  };
+
+  const handleToggleTask = async (goalId, taskId) => {
+    const goal = goalsList.find(g => g._id === goalId);
+    if (!goal) return;
+
+    const updatedTasks = goal.tasks.map(t => 
+      t._id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
+    );
+
+    try {
+      // Optimistic update
+      const oldGoals = [...goalsList];
+      const newGoals = goalsList.map(g => g._id === goalId ? { ...g, tasks: updatedTasks } : g);
+      onUpdateGoals(newGoals);
+
+      await updateMentorshipGoal(goalId, { tasks: updatedTasks });
+    } catch (err) {
+      console.error("Failed to toggle task:", err);
+      // Revert on error
+      onUpdateGoals(goalsList);
+    }
+  };
+
+  const handleDeleteGoal = async (goalId) => {
+    if (!window.confirm("Are you sure you want to delete this goal?")) return;
+    try {
+      await deleteMentorshipGoal(goalId);
+      onUpdateGoals(goalsList.filter(g => g._id !== goalId));
+    } catch (err) {
+      console.error("Failed to delete goal:", err);
+    }
+  };
+
+  return (
+    <div className="mt-6 border-t border-white/10 pt-6">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-xs uppercase tracking-[0.25em] text-cyan-200/70">Mentorship Goals & Progress</h4>
+        {isMentor && !creating && (
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+          >
+            + Create Goal
+          </button>
+        )}
+      </div>
+
+      {creating && (
+        <form onSubmit={handleCreate} className="mb-6 rounded-2xl border border-white/10 bg-black/40 p-4 space-y-4">
+          <div>
+            <label className="block text-xs uppercase tracking-[0.1em] text-white/50 mb-1">Goal Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              placeholder="e.g. Prepare for Frontend Interview"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-[0.1em] text-white/50 mb-1">Description (Optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Provide context or instructions..."
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400 h-20 resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-[0.1em] text-white/50 mb-2">Action Items (Tasks)</label>
+            <div className="space-y-2">
+              {tasks.map((task, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={task}
+                    onChange={(e) => handleTaskChange(idx, e.target.value)}
+                    placeholder={`Task ${idx + 1}`}
+                    className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  />
+                  {tasks.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTaskField(idx)}
+                      className="text-xs text-rose-300 hover:text-rose-100"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleAddTaskField}
+              className="mt-2 text-xs text-cyan-300 hover:text-cyan-100 font-semibold"
+            >
+              + Add Task
+            </button>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => setCreating(false)}
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/75"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="rounded-full bg-white px-4 py-2 text-xs text-black font-semibold hover:bg-cyan-100"
+            >
+              Save Goal
+            </button>
+          </div>
+        </form>
+      )}
+
+      {goalsList.length === 0 ? (
+        <p className="text-sm text-white/40">No goals or milestones set for this connection yet.</p>
+      ) : (
+        <div className="space-y-4">
+          {goalsList.map((goal) => {
+            const completedCount = goal.tasks.filter((t) => t.isCompleted).length;
+            const totalCount = goal.tasks.length;
+            const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+            return (
+              <div key={goal._id} className="rounded-2xl border border-white/10 bg-black/20 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h5 className="text-sm font-semibold text-white">{goal.title}</h5>
+                    {goal.description && <p className="text-xs text-white/50 mt-1">{goal.description}</p>}
+                  </div>
+                  {isMentor && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteGoal(goal._id)}
+                      className="text-xs text-rose-400 hover:text-rose-200"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-white/60">
+                  <span>Progress: {progressPct}%</span>
+                  <span>{completedCount} / {totalCount} tasks completed</span>
+                </div>
+                <div className="w-full bg-white/5 rounded-full h-1.5 animate-pulse">
+                  <div className="bg-cyan-400 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progressPct}%` }}></div>
+                </div>
+
+                {goal.tasks.length > 0 && (
+                  <div className="mt-3 space-y-2 border-t border-white/5 pt-3">
+                    {goal.tasks.map((task) => (
+                      <label key={task._id} className="flex items-center gap-3 text-sm text-white/70 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={task.isCompleted}
+                          onChange={() => handleToggleTask(goal._id, task._id)}
+                          className="rounded border-white/20 bg-white/5 text-cyan-400 focus:ring-0 focus:ring-offset-0 h-4 w-4"
+                        />
+                        <span className={task.isCompleted ? "line-through text-white/40" : ""}>
+                          {task.title}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const MyConnections = () => {
   const { user } = useAuth();
@@ -18,6 +236,10 @@ const MyConnections = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [contacts, setContacts] = useState({});
   const [loadingContacts, setLoadingContacts] = useState({});
+
+  // Mentorship goals tracking
+  const [goals, setGoals] = useState({});
+  const [loadingGoals, setLoadingGoals] = useState({});
 
   useEffect(() => {
     const fetchConnections = async () => {
@@ -63,6 +285,19 @@ const MyConnections = () => {
         setLoadingContacts((prev) => ({ ...prev, [connId]: false }));
       }
     }
+
+    // Fetch goals if not already loaded
+    if (!goals[connId]) {
+      setLoadingGoals((prev) => ({ ...prev, [connId]: true }));
+      try {
+        const res = await getMentorshipGoals(connId);
+        setGoals((prev) => ({ ...prev, [connId]: res.data.data || [] }));
+      } catch (err) {
+        console.error("Failed to load goals:", err);
+      } finally {
+        setLoadingGoals((prev) => ({ ...prev, [connId]: false }));
+      }
+    }
   };
 
   const renderConnectionCard = (conn, isMentorCard) => {
@@ -73,6 +308,9 @@ const MyConnections = () => {
     const hasBio = !!targetUser.bio;
     const connContacts = contacts[conn._id] || {};
     const isLoadingC = loadingContacts[conn._id];
+
+    const connGoals = goals[conn._id] || [];
+    const isLoadingG = loadingGoals[conn._id];
 
     return (
       <div key={conn._id} className={`${shellCard} overflow-hidden`}>
@@ -214,6 +452,20 @@ const MyConnections = () => {
                   </div>
                 )}
               </div>
+
+              {/* Goals widget section */}
+              {isLoadingG ? (
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <p className="text-sm text-white/40">Loading mentorship goals...</p>
+                </div>
+              ) : (
+                <MentorshipGoalsWidget
+                  connId={conn._id}
+                  isMentor={!isMentorCard}
+                  goalsList={connGoals}
+                  onUpdateGoals={(newGoals) => setGoals((prev) => ({ ...prev, [conn._id]: newGoals }))}
+                />
+              )}
             </div>
           )}
         </div>

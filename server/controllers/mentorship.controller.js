@@ -2,6 +2,7 @@
 const MentorshipRequest = require("../models/MentorshipRequest");
 const Mentorship = require("../models/Mentorship");
 const User = require("../models/User");
+const MentorshipGoal = require("../models/MentorshipGoal");
 
 // POST /api/v1/mentorship/request
 const createRequest = async (req, res) => {
@@ -150,6 +151,123 @@ const getMentorshipContact = async (req, res) => {
   }
 };
 
+// POST /api/v1/mentorship/:mentorshipId/goals
+const createGoal = async (req, res) => {
+  try {
+    const { mentorshipId } = req.params;
+    const { title, description, tasks } = req.body;
+
+    const connection = await Mentorship.findById(mentorshipId);
+    if (!connection) return res.status(404).json({ success: false, message: "Mentorship connection not found" });
+
+    if (connection.mentorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Only mentors can create goals" });
+    }
+
+    const goal = await MentorshipGoal.create({
+      mentorshipId,
+      title,
+      description,
+      tasks: tasks || []
+    });
+
+    res.status(201).json({ success: true, data: goal });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// GET /api/v1/mentorship/:mentorshipId/goals
+const getGoals = async (req, res) => {
+  try {
+    const { mentorshipId } = req.params;
+
+    const connection = await Mentorship.findById(mentorshipId);
+    if (!connection) return res.status(404).json({ success: false, message: "Mentorship connection not found" });
+
+    const isStudent = connection.studentId.toString() === req.user._id.toString();
+    const isMentor = connection.mentorId.toString() === req.user._id.toString();
+    if (!isStudent && !isMentor) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const goals = await MentorshipGoal.find({ mentorshipId }).sort({ createdAt: 1 });
+    res.json({ success: true, data: goals });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// PATCH /api/v1/mentorship/goals/:goalId
+const updateGoal = async (req, res) => {
+  try {
+    const { goalId } = req.params;
+    const { title, description, tasks } = req.body;
+
+    const goal = await MentorshipGoal.findById(goalId);
+    if (!goal) return res.status(404).json({ success: false, message: "Goal not found" });
+
+    const connection = await Mentorship.findById(goal.mentorshipId);
+    if (!connection) return res.status(404).json({ success: false, message: "Mentorship connection not found" });
+
+    const isStudent = connection.studentId.toString() === req.user._id.toString();
+    const isMentor = connection.mentorId.toString() === req.user._id.toString();
+    if (!isStudent && !isMentor) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    if (isStudent && !isMentor) {
+      if (tasks) {
+        goal.tasks.forEach((t) => {
+          const inputTask = tasks.find(it => it._id && it._id.toString() === t._id.toString());
+          if (inputTask) {
+            t.isCompleted = !!inputTask.isCompleted;
+            t.completedAt = t.isCompleted ? (t.completedAt || new Date()) : null;
+          }
+        });
+      }
+    } else {
+      if (title !== undefined) goal.title = title;
+      if (description !== undefined) goal.description = description;
+      if (tasks !== undefined) {
+        goal.tasks = tasks.map(t => ({
+          title: t.title,
+          isCompleted: !!t.isCompleted,
+          completedAt: t.isCompleted ? (t.completedAt || new Date()) : null,
+          _id: t._id
+        }));
+      }
+    }
+
+    await goal.save();
+    res.json({ success: true, data: goal });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// DELETE /api/v1/mentorship/goals/:goalId
+const deleteGoal = async (req, res) => {
+  try {
+    const { goalId } = req.params;
+
+    const goal = await MentorshipGoal.findById(goalId);
+    if (!goal) return res.status(404).json({ success: false, message: "Goal not found" });
+
+    const connection = await Mentorship.findById(goal.mentorshipId);
+    if (!connection) return res.status(404).json({ success: false, message: "Mentorship connection not found" });
+
+    if (connection.mentorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Only mentors can delete goals" });
+    }
+
+    await MentorshipGoal.findByIdAndDelete(goalId);
+    res.json({ success: true, message: "Goal deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createRequest,
   getMyRequests,
@@ -157,4 +275,8 @@ module.exports = {
   getMyMentors,
   getMyMentees,
   getMentorshipContact,
+  createGoal,
+  getGoals,
+  updateGoal,
+  deleteGoal,
 };
