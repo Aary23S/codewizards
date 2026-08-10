@@ -7,6 +7,8 @@ class ProjectItem {
     required this.description,
     required this.featured,
     this.techStack = const [],
+    this.contributors = const [],
+    this.createdAt,
   });
 
   final String id;
@@ -14,6 +16,8 @@ class ProjectItem {
   final String description;
   final bool featured;
   final List<String> techStack;
+  final List<String> contributors;
+  final DateTime? createdAt;
 
   factory ProjectItem.fromJson(Map<String, dynamic> json) {
     return ProjectItem(
@@ -22,6 +26,8 @@ class ProjectItem {
       description: readString(json['description']),
       featured: readBool(json['featured']),
       techStack: readStringList(json['techStack']),
+      contributors: readStringList(json['contributors']),
+      createdAt: readDateTime(json['createdAt']),
     );
   }
 }

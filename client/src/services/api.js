@@ -35,6 +35,7 @@ export const createEvent = (data) => api.post("/events", data);
 export const updateEvent = (id, data) => api.patch(`/events/${id}`, data);
 export const deleteEvent = (id) => api.delete(`/events/${id}`);
 export const registerForEvent = (eventId) => api.post(`/events/${eventId}/register`);
+export const cancelEventRegistration = (eventId) => api.delete(`/events/${eventId}/register`);
 
 // --- Timeline ---
 export const getTimeline = () => api.get("/timeline");
@@ -130,5 +131,11 @@ export const deleteTeamMember = (id) => api.delete(`/team/${id}`);
 // Contact
 export const getContact = () => api.get("/contact");
 export const updateContact = (data) => api.put("/contact", data);
+
+// Mentorship Goals & Action Items
+export const getMentorshipGoals = (mentorshipId) => api.get(`/mentorship/${mentorshipId}/goals`);
+export const createMentorshipGoal = (mentorshipId, data) => api.post(`/mentorship/${mentorshipId}/goals`, data);
+export const updateMentorshipGoal = (goalId, data) => api.patch(`/mentorship/goals/${goalId}`, data);
+export const deleteMentorshipGoal = (goalId) => api.delete(`/mentorship/goals/${goalId}`);
 
 export default api;

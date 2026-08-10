@@ -17,18 +17,24 @@ const registerForEvent = async (req, res) => {
     });
 
     if (existing) {
-      return res.status(400).json({ success: false, message: "Already registered for this event" });
+      if (existing.status === "registered") {
+        return res.status(400).json({ success: false, message: "Already registered for this event" });
+      }
+      // If was cancelled previously, reactivate it
+      existing.status = "registered";
+      await existing.save();
+      return res.status(200).json({ success: true, data: existing, message: "Registration reactivated" });
     }
 
     const reg = await EventRegistration.create({
       eventId: req.params.id,
       studentId: req.user._id,
+      status: "registered",
     });
 
     // Points awarded on registration for now — registering = attended (simplified).
     // TODO (future): swap this for real attendance marking by admin post-event.
     const month = new Date().toISOString().slice(0, 7);
-    // const ruleKey = event.type === "hackathon" ? "hackathon_participation" : "seminar_attended";
     const EVENT_TYPE_TO_RULE = {
       hackathon: "hackathon_participation",
       contest: "contest_participation",
@@ -55,6 +61,27 @@ const registerForEvent = async (req, res) => {
   }
 };
 
+// DELETE /api/v1/events/:id/register
+const cancelEventRegistration = async (req, res) => {
+  try {
+    const existing = await EventRegistration.findOne({
+      eventId: req.params.id,
+      studentId: req.user._id,
+    });
+
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "No registration found to cancel" });
+    }
+
+    existing.status = "cancelled";
+    await existing.save();
+
+    res.json({ success: true, message: "Registration cancelled successfully", data: existing });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // GET /api/v1/events/:id/registrations (admin only)
 const getRegistrations = async (req, res) => {
   try {
@@ -69,7 +96,7 @@ const getRegistrations = async (req, res) => {
 // GET /api/v1/events/my-registrations
 const getMyRegistrations = async (req, res) => {
   try {
-    const regs = await EventRegistration.find({ studentId: req.user._id });
+    const regs = await EventRegistration.find({ studentId: req.user._id, status: "registered" });
     const eventIds = regs.map((r) => r.eventId.toString());
     res.json({ success: true, data: eventIds });
   } catch (error) {
@@ -77,4 +104,4 @@ const getMyRegistrations = async (req, res) => {
   }
 };
 
-module.exports = { registerForEvent, getRegistrations, getMyRegistrations };
+module.exports = { registerForEvent, cancelEventRegistration, getRegistrations, getMyRegistrations };

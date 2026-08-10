@@ -117,4 +117,24 @@ class ProfileRepository {
     final data = await _apiClient.getData('/mentorship/$connectionId/contact');
     return data is Map ? Map<String, dynamic>.from(data) : const {};
   }
+
+  Future<List<Map<String, dynamic>>> fetchGoals(String mentorshipId) async {
+    final data = await _apiClient.getData('/mentorship/$mentorshipId/goals');
+    final list = data is List ? data : const [];
+    return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+  }
+
+  Future<Map<String, dynamic>> createGoal(String mentorshipId, Map<String, dynamic> body) async {
+    final data = await _apiClient.postData('/mentorship/$mentorshipId/goals', data: body);
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  Future<Map<String, dynamic>> updateGoal(String goalId, Map<String, dynamic> body) async {
+    final data = await _apiClient.patchData('/mentorship/goals/$goalId', data: body);
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  Future<void> deleteGoal(String goalId) async {
+    await _apiClient.deleteData('/mentorship/goals/$goalId');
+  }
 }

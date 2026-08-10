@@ -1,6 +1,6 @@
-//event.controller.js
 const Event = require("../models/Event");
 const cloudinary = require("../config/cloudinary");
+const EventRegistration = require("../models/EventRegistration");
 
 const uploadImage = (fileBuffer, originalName) =>
   new Promise((resolve, reject) => {
@@ -42,11 +42,25 @@ const getEvents = async (req, res) => {
     if (req.query.featured === "true") filter.featured = true;
 
     const events = await Event.find(filter).sort({ date: -1 });
+    const eventIds = events.map((e) => e._id);
+    const registrations = await EventRegistration.find({
+      eventId: { $in: eventIds },
+      status: "registered",
+    });
 
     // Map to dynamically populate status based on current date
     const mapped = events.map((event) => {
       const obj = event.toObject();
       obj.status = new Date(event.date) < now ? "completed" : "upcoming";
+
+      const eventRegs = registrations.filter((r) => r.eventId.toString() === event._id.toString());
+      const targetStudentId = req.query.studentId || (req.user ? req.user._id.toString() : null);
+      const isRegistered = targetStudentId ? eventRegs.some((r) => r.studentId.toString() === targetStudentId.toString()) : false;
+
+      obj.registration = {
+        isRegistered,
+        registeredCount: eventRegs.length,
+      };
       return obj;
     });
 
@@ -62,8 +76,20 @@ const getEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ success: false, message: "Not found" });
 
+    const registrations = await EventRegistration.find({
+      eventId: event._id,
+      status: "registered",
+    });
+
     const obj = event.toObject();
     obj.status = new Date(event.date) < new Date() ? "completed" : "upcoming";
+
+    const targetStudentId = req.query.studentId || (req.user ? req.user._id.toString() : null);
+    const isRegistered = targetStudentId ? registrations.some((r) => r.studentId.toString() === targetStudentId.toString()) : false;
+    obj.registration = {
+      isRegistered,
+      registeredCount: registrations.length,
+    };
 
     res.json({ success: true, data: obj });
   } catch (error) {
