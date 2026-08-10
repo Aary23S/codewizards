@@ -12,6 +12,7 @@ const primaryLinks = [
 
 const exploreLinks = [
   { name: "Projects", path: "/projects" },
+  { name: "Collaborations", path: "/collaborations" },
   { name: "Gallery", path: "/gallery" },
   { name: "Legacy", path: "/legacy" },
   { name: "Opportunities", path: "/opportunities" },
