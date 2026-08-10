@@ -435,7 +435,7 @@ class _QuickLinksBlock extends StatelessWidget {
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   letterSpacing: 3,
                   color: Colors.white54,
-                ),
+                 ),
           ),
           const SizedBox(height: 14),
           Wrap(
