@@ -53,11 +53,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     8 => const ConnectExplorePage(),
                     9 => const ContributionsExplorePage(),
                     10 => const ResourcesExplorePage(),
+                    11 => const CollaborationsExplorePage(),
                     _ => const ProjectsExplorePage(),
-                },
-              ),
-            );
-          },
+                  },
+                ),
+              );
+            },
           ),
           const SizedBox(height: 20),
           const _SectionBlock(
@@ -2700,6 +2701,7 @@ class _ExploreTileGrid extends StatelessWidget {
       ('Connect', 8),
       ('Contributions', 9),
       ('Resources', 10),
+      ('Collaborations', 11),
     ];
 
     return GridView.count(
@@ -5218,4 +5220,300 @@ String _monthName(int month) {
   ];
   if (month < 1 || month > months.length) return 'Unknown';
   return months[month - 1];
+}
+
+class CollaborationsExplorePage extends StatelessWidget {
+  const CollaborationsExplorePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final partners = const [
+      _Partner(
+        name: 'GeeksforGeeks',
+        type: 'CAMPUS PARTNER',
+        description: 'GeeksforGeeks provides resources for computer science students to master data structures, algorithms, and technical interview preparation.',
+        website: 'https://geeksforgeeks.org',
+        logoText: 'GFG',
+        representatives: [
+          _Representative(name: 'Omkar Patil', role: 'GFG Campus Lead', initials: 'OP', color: Color(0xFF10B981)),
+        ],
+      ),
+      _Partner(
+        name: 'Algozenith',
+        type: 'CLUB PARTNER',
+        description: 'Master competitive programming and DSA. Building problem-solving foundations through structured coding camps and contests.',
+        website: 'https://algozenith.com',
+        logoText: 'AZ',
+        representatives: [
+          _Representative(name: 'Shivam Giri', role: 'Campus Lead', initials: 'SG', color: Color(0xFF3B82F6)),
+          _Representative(name: 'Shivendra Ghatage', role: 'Tech Lead', initials: 'SG', color: Color(0xFF8B5CF6)),
+          _Representative(name: 'Yash Sagpal', role: 'Content & Design Lead', initials: 'YS', color: Color(0xFFF97316)),
+          _Representative(name: 'Nandan Gaikwad', role: 'Media & Outreach Lead', initials: 'NG', color: Color(0xFF0EA5E9)),
+        ],
+      ),
+      _Partner(
+        name: 'LetsUpgrade',
+        type: 'EDUCATION PARTNER',
+        description: 'An interactive learning community and upskilling platform providing industry-aligned tech courses and projects for students.',
+        website: 'https://letsupgrade.in',
+        logoText: 'LU',
+        representatives: [
+          _Representative(name: 'Omkar Patil', role: 'LetsUpgrade Lead', initials: 'OP', color: Color(0xFFF59E0B)),
+        ],
+      ),
+      _Partner(
+        name: 'Gemini',
+        type: 'AI PARTNER',
+        description: 'Supercharging development with advanced generative AI, assisting students in coding, brainstorming, and software building.',
+        website: 'https://deepmind.google/technologies/gemini/',
+        logoText: 'G',
+        representatives: [
+          _Representative(name: 'Anish', role: 'Google Ambassador', initials: 'A', color: Color(0xFFEC4899)),
+        ],
+      ),
+    ];
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: const Text('Collaborations'),
+      ),
+      body: SafeArea(
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          children: [
+            const _SectionBlock(
+              eyebrow: 'Explore',
+              title: 'Our Partners',
+              description: 'Collaborating with industry leaders to bring the best opportunities to our community.',
+              child: SizedBox.shrink(),
+            ),
+            const SizedBox(height: 12),
+            ...partners.map((partner) => _PartnerCard(partner: partner)),
+            const SizedBox(height: 16),
+            const _PartnerWithUsBlock(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Partner {
+  const _Partner({
+    required this.name,
+    required this.type,
+    required this.description,
+    required this.website,
+    required this.logoText,
+    required this.representatives,
+  });
+
+  final String name;
+  final String type;
+  final String description;
+  final String website;
+  final String logoText;
+  final List<_Representative> representatives;
+}
+
+class _Representative {
+  const _Representative({
+    required this.name,
+    required this.role,
+    required this.initials,
+    required this.color,
+  });
+
+  final String name;
+  final String role;
+  final String initials;
+  final Color color;
+}
+
+class _PartnerCard extends StatelessWidget {
+  const _PartnerCard({required this.partner});
+
+  final _Partner partner;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.black.withAlpha(46),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withAlpha(12),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  partner.logoText,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      partner.name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      partner.type,
+                      style: const TextStyle(
+                        color: Color(0xFF5CC8FF),
+                        fontSize: 9,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              OutlinedButton(
+                onPressed: () async {
+                  final url = Uri.parse(partner.website);
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Text('Website ↗', style: TextStyle(fontSize: 10)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            partner.description,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  height: 1.45,
+                  color: Colors.white.withAlpha(180),
+                ),
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: Colors.white12),
+          const SizedBox(height: 10),
+          const Text(
+            'STUDENT REPRESENTATIVES',
+            style: TextStyle(
+              color: Colors.white38,
+              fontSize: 9,
+              letterSpacing: 1.5,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...partner.representatives.map((rep) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: rep.color,
+                      child: Text(
+                        rep.initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          rep.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          rep.role,
+                          style: TextStyle(
+                            color: Colors.white.withAlpha(120),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+class _PartnerWithUsBlock extends StatelessWidget {
+  const _PartnerWithUsBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        color: const Color(0xFF1E3A8A).withAlpha(30),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const Text(
+            'Partner With Us',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Connect with our vibrant community of developers. Reach out to discuss sponsorship and collaboration opportunities.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF5CC8FF),
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Contact Us'),
+          ),
+        ],
+      ),
+    );
+  }
 }
