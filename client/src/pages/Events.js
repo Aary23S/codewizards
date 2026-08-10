@@ -345,6 +345,7 @@ const Events = () => {
 
   const handleVerifyOtp = async (eventId, code) => {
     const res = await verifyEventOTP(eventId, code);
+    alert("✓ Attendance Verified! Your certificate is now available and points have been awarded.");
     setEvents((prev) =>
       prev.map((e) =>
         e._id === eventId
