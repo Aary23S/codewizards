@@ -2,7 +2,11 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:5000/api/v1",
+  baseURL:
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+      ? "http://localhost:5000/api/v1"
+      : "https://codewizards-mu2a.onrender.com/api/v1",
 });
 
 // Automatically attach JWT token to every request if it exists
