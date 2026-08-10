@@ -11,6 +11,7 @@ import 'data/mentorship_request_item.dart';
 import 'data/profile_repository.dart';
 import 'presentation/profile_edit_screen.dart';
 import 'presentation/connections_screen.dart';
+import 'presentation/growth_insights_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -22,6 +23,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Future<_ProfileDashboardSnapshot>? _future;
   String? _errorMessage;
+  bool _isInsightsTab = false;
 
   @override
   void didChangeDependencies() {
@@ -174,17 +176,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onConnectionsTap: _openConnections,
                 ),
                 const SizedBox(height: 16),
-                if (data.profile.socialLinks.links.isNotEmpty)
-                  _SocialLinksBlock(profile: data.profile),
-                if (data.profile.socialLinks.links.isNotEmpty) const SizedBox(height: 16),
-                if (data.codingProfile != null && data.codingProfile!.hasAnyData)
-                  _CodingSnapshotBlock(codingProfile: data.codingProfile!),
-                if (data.codingProfile != null && data.codingProfile!.hasAnyData) const SizedBox(height: 16),
-                _MentorshipBlock(
-                  profile: data.profile,
-                  requests: data.requests,
-                  onRefresh: _refresh,
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _isInsightsTab = false),
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: !_isInsightsTab ? const Color(0xFF5CC8FF) : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'Profile Overview',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: !_isInsightsTab ? Colors.white : Colors.white54,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _isInsightsTab = true),
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: _isInsightsTab ? const Color(0xFF5CC8FF) : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'Growth Insights',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: _isInsightsTab ? Colors.white : Colors.white54,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 20),
+                if (!_isInsightsTab) ...[
+                  if (data.profile.socialLinks.links.isNotEmpty)
+                    _SocialLinksBlock(profile: data.profile),
+                  if (data.profile.socialLinks.links.isNotEmpty) const SizedBox(height: 16),
+                  if (data.codingProfile != null && data.codingProfile!.hasAnyData)
+                    _CodingSnapshotBlock(codingProfile: data.codingProfile!),
+                  if (data.codingProfile != null && data.codingProfile!.hasAnyData) const SizedBox(height: 16),
+                  _MentorshipBlock(
+                    profile: data.profile,
+                    requests: data.requests,
+                    onRefresh: _refresh,
+                  ),
+                ] else ...[
+                  GrowthInsightsWidget(
+                    profile: data.profile,
+                    requests: data.requests,
+                    codingProfile: data.codingProfile,
+                  ),
+                ],
               ],
             );
           },

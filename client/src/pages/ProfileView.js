@@ -8,8 +8,13 @@ import {
   syncCodingProfile,
   getMyMentorshipRequests,
   updateMentorshipStatus,
+  getProjects,
+  getMyMentors,
+  getMyMentees,
+  getMentorshipGoals,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import ProfileGrowthInsights from "../components/ProfileGrowthInsights";
 
 const shellCard =
   "group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.22)]";
@@ -31,6 +36,11 @@ const ProfileView = () => {
   const [reqError, setReqError] = useState("");
 
   const [requests, setRequests] = useState([]);
+  const [activeTab, setActiveTab] = useState("profile"); // profile | insights
+  const [userProjects, setUserProjects] = useState([]);
+  const [connections, setConnections] = useState([]);
+  const [insightsGoals, setInsightsGoals] = useState([]);
+  const [loadingInsights, setLoadingInsights] = useState(false);
 
   const handleRequest = async () => {
     if (!message.trim()) return setReqError("Please write a message");
@@ -59,6 +69,36 @@ const ProfileView = () => {
         .then((res) => setRequests(res.data.data || []))
         .catch(console.error);
     }
+
+    // Fetch projects, connections, and goals for Growth Insights
+    const fetchInsightsData = async () => {
+      try {
+        setLoadingInsights(true);
+        const projectsRes = await getProjects().catch(() => ({ data: { data: [] } }));
+        setUserProjects(projectsRes.data.data || []);
+
+        let connList = [];
+        if (isOwnProfile) {
+          const [mentorsRes, menteesRes] = await Promise.all([
+            getMyMentors().catch(() => ({ data: { data: [] } })),
+            getMyMentees().catch(() => ({ data: { data: [] } }))
+          ]);
+          connList = [...(mentorsRes.data.data || []), ...(menteesRes.data.data || [])];
+          setConnections(connList);
+
+          if (connList.length > 0) {
+            const firstConn = connList[0];
+            const goalsRes = await getMentorshipGoals(firstConn._id).catch(() => ({ data: { data: [] } }));
+            setInsightsGoals(goalsRes.data.data || []);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load insights data:", err);
+      } finally {
+        setLoadingInsights(false);
+      }
+    };
+    fetchInsightsData();
   }, [id, navigate, isOwnProfile]);
 
   const handleStatus = async (requestId, status) => {
@@ -197,314 +237,224 @@ const ProfileView = () => {
           </div>
         </section>
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-6">
-            {profile.domain?.length > 0 && (
-              <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Domains</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {profile.domain.map((domain) => (
-                    <span
-                      key={domain}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/75"
-                    >
-                      {domain}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* Tab Switcher */}
+        {isOwnProfile && (
+          <div className="mt-8 flex border-b border-white/10 gap-8 mb-6">
+            <button
+              onClick={() => setActiveTab("profile")}
+              className={`pb-4 text-sm font-semibold tracking-wide border-b-2 transition-all duration-300 ${
+                activeTab === "profile"
+                  ? "border-cyan-400 text-white"
+                  : "border-transparent text-white/45 hover:text-white/70"
+              }`}
+            >
+              Profile Overview
+            </button>
+            <button
+              onClick={() => setActiveTab("insights")}
+              className={`pb-4 text-sm font-semibold tracking-wide border-b-2 transition-all duration-300 ${
+                activeTab === "insights"
+                  ? "border-cyan-400 text-white"
+                  : "border-transparent text-white/45 hover:text-white/70"
+              }`}
+            >
+              Growth Insights
+            </button>
+          </div>
+        )}
 
-            {platformLinks.length > 0 && (
-              <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Links</p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {platformLinks.map((item) => (
-                    <a
-                      key={item.label}
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group rounded-2xl border border-white/10 bg-black/20 px-4 py-4 transition duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/8"
-                    >
-                      <p className="text-sm font-semibold text-white">{item.label}</p>
-                      <p className="mt-2 text-xs uppercase tracking-[0.3em] text-cyan-200/70">
-                        Open profile
-                      </p>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {hasCodingData && (
-              <div className={`${shellCard} p-6 md:p-7`}>
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Coding tracker</p>
-                    <h3 className="mt-2 text-2xl font-semibold text-white">One analytics card, switchable by platform.</h3>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
-                      The web view now mirrors mobile: no noisy activity feed, just compact platform analytics with a cleaner desktop hierarchy.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {CODING_PLATFORMS.map((platform) => {
-                      const active = selectedPlatform === platform.key;
-                      return (
-                        <button
-                          key={platform.key}
-                          type="button"
-                          onClick={() => setSelectedPlatform(platform.key)}
-                          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                            active
-                              ? "border-white bg-white text-black"
-                              : "border-white/10 bg-black/20 text-white/75 hover:border-white/20 hover:bg-white/8"
-                          }`}
-                        >
-                          {platform.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <StatPill label="Total" value={formatCount(codingInsight.total)} />
-                  <StatPill label={codingInsight.primaryLabel} value={formatCount(codingInsight.primaryValue)} />
-                  <StatPill label="Last sync" value={syncAgeLabel(codingInsight.lastSync)} />
-                </div>
-
-                {isOwnProfile && (
-                  <div className="mt-5 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={refreshCodingProfile}
-                      disabled={syncing}
-                      className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100 disabled:opacity-50"
-                    >
-                      {syncing ? "Syncing..." : "Sync now"}
-                    </button>
-                    <p className="text-sm text-white/55">
-                      Refresh your LeetCode, Codeforces, and GitHub stats from the backend.
-                    </p>
-                  </div>
-                )}
-
-                {syncError && (
-                  <p className="mt-3 text-sm text-rose-200">
-                    {syncError}
-                  </p>
-                )}
-
-                <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5 md:p-6">
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">{codingInsight.eyebrow}</p>
-                  <h4 className="mt-3 text-xl font-semibold text-white">{codingInsight.title}</h4>
-                  <p className="mt-2 text-sm leading-6 text-white/60">{codingInsight.description}</p>
-
-                  <div className="mt-6 space-y-4">
-                    {codingInsight.metrics
-                      .filter((metric) => metric.value != null)
-                      .map((metric) => (
-                        <BarMetric
-                          key={metric.label}
-                          metric={metric}
-                          accent={codingInsight.accent}
-                          maxValue={codingInsight.maxValue}
-                        />
-                      ))}
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {codingInsight.handles.map((handle) => (
+        {activeTab === "profile" ? (
+          <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="space-y-6">
+              {profile.domain?.length > 0 && (
+                <div className={`${shellCard} p-6 md:p-7`}>
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Domains</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {profile.domain.map((domain) => (
                       <span
-                        key={handle}
-                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70"
+                        key={domain}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/75"
                       >
-                        {handle}
+                        {domain}
                       </span>
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {isOwnProfile && (
-              <div className={`${shellCard} p-6 md:p-7`}>
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Mentorship</p>
-                    <h3 className="mt-2 text-2xl font-semibold text-white">Mentorship Requests</h3>
+              {platformLinks.length > 0 && (
+                <div className={`${shellCard} p-6 md:p-7`}>
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Links</p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {platformLinks.map((item) => (
+                      <a
+                        key={item.label}
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group rounded-2xl border border-white/10 bg-black/20 px-4 py-4 transition duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/8"
+                      >
+                        <p className="text-sm font-semibold text-white">{item.label}</p>
+                        <p className="mt-2 text-xs uppercase tracking-[0.3em] text-cyan-200/70">
+                          Open profile
+                        </p>
+                      </a>
+                    ))}
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/60">
-                    {requests.length} total
-                  </span>
                 </div>
+              )}
 
-                {requests.length === 0 ? (
-                  <p className="text-sm leading-7 text-white/55">
-                    No mentorship requests yet. Send a request to a mentor in the directory to get started.
-                  </p>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Incoming requests (where this user is the mentor) */}
-                    {requests.filter((r) => r.mentorId?._id === currentUser?._id).length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="text-xs uppercase tracking-[0.25em] text-cyan-200/70 border-b border-white/5 pb-2">
-                          Incoming Requests (As Mentor)
-                        </h4>
-                        {requests
-                          .filter((r) => r.mentorId?._id === currentUser?._id)
-                          .map((request) => {
-                            const showActions = request.status === "pending";
-                            return (
-                              <div
-                                key={request._id}
-                                className="rounded-2xl border border-white/10 bg-black/20 p-5 transition hover:border-white/20"
-                              >
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                  <div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="text-sm font-semibold text-white">
-                                        {request.studentId?.name || "Student"}
-                                      </p>
-                                      {request.studentId?.batch && (
-                                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-white/55">
-                                          Batch {request.studentId.batch}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="mt-2 text-sm leading-6 text-white/65">{request.message}</p>
-                                  </div>
+              {hasCodingData && (
+                <div className={`${shellCard} p-6 md:p-7`}>
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Coding tracker</p>
+                      <h3 className="mt-2 text-2xl font-semibold text-white">One analytics card, switchable by platform.</h3>
+                      <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
+                        The web view now mirrors mobile: no noisy activity feed, just compact platform analytics with a cleaner desktop hierarchy.
+                      </p>
+                    </div>
 
-                                  <div className="flex flex-col items-end gap-2">
-                                    <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold ${
-                                      request.status === "accepted"
-                                        ? "bg-emerald-400/10 border border-emerald-400/20 text-emerald-200"
-                                        : request.status === "rejected"
-                                          ? "bg-rose-400/10 border border-rose-400/20 text-rose-200"
-                                          : "bg-amber-400/10 border border-amber-400/20 text-amber-200"
-                                    }`}>
-                                      {request.status}
-                                    </span>
-                                  </div>
-                                </div>
+                    <div className="flex flex-wrap gap-2">
+                      {CODING_PLATFORMS.map((platform) => {
+                        const active = selectedPlatform === platform.key;
+                        return (
+                          <button
+                            key={platform.key}
+                            type="button"
+                            onClick={() => setSelectedPlatform(platform.key)}
+                            className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                              active
+                                ? "bg-white text-black"
+                                : "border-white/10 bg-black/20 text-white/75 hover:border-white/20 hover:bg-white/8"
+                            }`}
+                          >
+                            {platform.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                                {showActions && (
-                                  <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-white/5">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStatus(request._id, "accepted")}
-                                      className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition hover:bg-cyan-100"
-                                    >
-                                      Accept
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStatus(request._id, "rejected")}
-                                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/75 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-                                    >
-                                      Reject
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                      </div>
-                    )}
+                  {codingInsight && (
+                    <div className="mt-8 border-t border-white/10 pt-8">
+                      <div className="grid gap-8 xl:grid-cols-2">
+                        <div>
+                          <span
+                            className="rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-semibold tracking-wide"
+                            style={{ color: codingInsight.accent }}
+                          >
+                            {codingInsight.eyebrow}
+                          </span>
+                          <h4 className="mt-5 text-xl font-bold text-white">{codingInsight.title}</h4>
+                          <p className="mt-2 text-sm leading-6 text-white/65">{codingInsight.description}</p>
 
-                    {/* Outgoing requests (where this user is the student) */}
-                    {requests.filter((r) => r.studentId?._id === currentUser?._id).length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="text-xs uppercase tracking-[0.25em] text-cyan-200/70 border-b border-white/5 pb-2">
-                          Sent Requests (As Student)
-                        </h4>
-                        {requests
-                          .filter((r) => r.studentId?._id === currentUser?._id)
-                          .map((request) => (
-                            <div
-                              key={request._id}
-                              className="rounded-2xl border border-white/10 bg-black/20 p-5 transition hover:border-white/20"
+                          <div className="mt-6 flex flex-wrap gap-4 text-xs text-white/50">
+                            {codingInsight.handles.map((h) => (
+                              <span key={h} className="rounded-full border border-white/5 bg-white/4 px-3 py-1">
+                                {h}
+                              </span>
+                            ))}
+                            <span className="rounded-full border border-white/5 bg-white/4 px-3 py-1">
+                              Synced: {syncAgeLabel(codingInsight.lastSync)}
+                            </span>
+                          </div>
+
+                          {isOwnProfile && (
+                            <button
+                              onClick={refreshCodingProfile}
+                              disabled={syncing}
+                              className="mt-6 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 hover:text-white disabled:opacity-50"
                             >
-                              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                <div>
-                                  <p className="text-sm font-semibold text-white">
-                                    To Mentor: {request.mentorId?.name || "Mentor"}
-                                  </p>
-                                  <p className="mt-2 text-sm leading-6 text-white/65">{request.message}</p>
-                                </div>
+                              {syncing ? "Syncing..." : "Sync Stats"}
+                            </button>
+                          )}
+                          {syncError && <p className="mt-2 text-xs text-rose-300">{syncError}</p>}
+                        </div>
 
-                                <div className="flex flex-col items-end gap-2">
-                                  <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold ${
-                                    request.status === "accepted"
-                                      ? "bg-emerald-400/10 border border-emerald-400/20 text-emerald-200"
-                                      : request.status === "rejected"
-                                        ? "bg-rose-400/10 border border-rose-400/20 text-rose-200"
-                                        : "bg-amber-400/10 border border-amber-400/20 text-amber-200"
-                                  }`}>
-                                    {request.status}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                        <div>
+                          <div className="mb-6 grid gap-4 sm:grid-cols-2">
+                            <StatPill label={codingInsight.primaryLabel} value={formatCount(codingInsight.primaryValue)} />
+                            <StatPill label="Platforms Synced" value={hasCodingData ? "Active" : "None"} />
+                          </div>
+
+                          <div className="space-y-4">
+                            {codingInsight.metrics
+                              .filter((m) => m.label !== codingInsight.primaryLabel)
+                              .map((metric) => (
+                                <BarMetric
+                                  key={metric.label}
+                                  metric={metric}
+                                  accent={codingInsight.accent}
+                                  maxValue={codingInsight.maxValue}
+                                />
+                              ))}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <aside className="space-y-6">
-            <div className={`${shellCard} p-6 md:p-7`}>
-              <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Quick facts</p>
-              <div className="mt-4 space-y-3 text-sm text-white/70">
-                <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <span>Role</span>
-                  <span className="capitalize text-white">{profile.role}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <span>Batch</span>
-                  <span className="text-white">{profile.batch || "N/A"}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <span>Status</span>
-                  <span className="text-white">{profile.isMentor ? "Mentor" : "Member"}</span>
-                </div>
-              </div>
+              )}
             </div>
 
-            {!isOwnProfile && profile.isMentor && currentUser && (
+            <aside className="space-y-6">
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Request mentorship</p>
-                {sent ? (
-                  <p className="mt-4 text-sm leading-6 text-white/70">
-                    Request sent. {profile.name.split(" ")[0]} will respond soon.
-                  </p>
-                ) : (
-                  <>
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      rows={4}
-                      placeholder="Introduce yourself and what you'd like guidance on..."
-                      className="mt-4 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
-                    />
-                    {reqError && <p className="mt-2 text-sm text-rose-200">{reqError}</p>}
-                    <button
-                      onClick={handleRequest}
-                      className="mt-4 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100"
-                    >
-                      Send request
-                    </button>
-                  </>
-                )}
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Quick facts</p>
+                <div className="mt-4 space-y-3 text-sm text-white/70">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <span>Role</span>
+                    <span className="capitalize text-white">{profile.role}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <span>Batch</span>
+                    <span className="text-white">{profile.batch || "N/A"}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <span>Status</span>
+                    <span className="text-white">{profile.isMentor ? "Mentor" : "Member"}</span>
+                  </div>
+                </div>
               </div>
-            )}
-          </aside>
-        </section>
+
+              {!isOwnProfile && profile.isMentor && currentUser && (
+                <div className={`${shellCard} p-6 md:p-7`}>
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Request mentorship</p>
+                  {sent ? (
+                    <p className="mt-4 text-sm leading-6 text-white/70">
+                      Request sent. {profile.name.split(" ")[0]} will respond soon.
+                    </p>
+                  ) : (
+                    <>
+                      <textarea
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        rows={4}
+                        placeholder="Introduce yourself and what you'd like guidance on..."
+                        className="mt-4 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                      />
+                      {reqError && <p className="mt-2 text-sm text-rose-200">{reqError}</p>}
+                      <button
+                        onClick={handleRequest}
+                        className="mt-4 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100"
+                      >
+                        Send request
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </aside>
+          </section>
+        ) : (
+          <ProfileGrowthInsights
+            profile={profile}
+            codingProfile={codingProfile}
+            connections={connections}
+            goals={insightsGoals}
+            projects={userProjects}
+          />
+        )}
       </div>
     </div>
   );
