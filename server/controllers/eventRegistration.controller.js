@@ -20,6 +20,9 @@ const registerForEvent = async (req, res) => {
       if (existing.status === "registered") {
         return res.status(400).json({ success: false, message: "Already registered for this event" });
       }
+      if (existing.status === "attended") {
+        return res.status(400).json({ success: false, message: "Already attended this event" });
+      }
       // If was cancelled previously, reactivate it
       existing.status = "registered";
       await existing.save();
@@ -31,29 +34,6 @@ const registerForEvent = async (req, res) => {
       studentId: req.user._id,
       status: "registered",
     });
-
-    // Points awarded on registration for now — registering = attended (simplified).
-    // TODO (future): swap this for real attendance marking by admin post-event.
-    const month = new Date().toISOString().slice(0, 7);
-    const EVENT_TYPE_TO_RULE = {
-      hackathon: "hackathon_participation",
-      contest: "contest_participation",
-      workshop: "seminar_attended",
-      seminar: "seminar_attended",
-      other: "seminar_attended",
-    };
-    const ruleKey = EVENT_TYPE_TO_RULE[event.type] || "seminar_attended"; 
-    try {
-      await PointLedger.create({
-        student: req.user._id,
-        ruleKey,
-        sourceType: "in_house",
-        sourceId: event._id,
-        month,
-      });
-    } catch (e) {
-      // Duplicate (unique index on student+ruleKey+sourceId) — already awarded, ignore
-    }
 
     res.status(201).json({ success: true, data: reg });
   } catch (error) {
@@ -104,4 +84,110 @@ const getMyRegistrations = async (req, res) => {
   }
 };
 
-module.exports = { registerForEvent, cancelEventRegistration, getRegistrations, getMyRegistrations };
+// POST /api/v1/events/:id/otp (admin only)
+const generateEventOTP = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({ success: false, message: "Event not found" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit numeric code
+    event.otpCode = otp;
+    event.otpExpiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes lifetime
+    await event.save();
+
+    res.json({ success: true, data: { otpCode: otp, expiresAt: event.otpExpiresAt } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/v1/events/:id/verify
+const verifyEventOTP = async (req, res) => {
+  const crypto = require("crypto");
+  try {
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ success: false, message: "OTP code is required" });
+    }
+
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({ success: false, message: "Event not found" });
+    }
+
+    if (!event.otpCode || event.otpCode !== code.trim()) {
+      return res.status(400).json({ success: false, message: "Invalid verification code" });
+    }
+
+    if (new Date() > new Date(event.otpExpiresAt)) {
+      return res.status(400).json({ success: false, message: "Verification code has expired" });
+    }
+
+    const reg = await EventRegistration.findOne({
+      eventId: event._id,
+      studentId: req.user._id,
+    });
+
+    if (!reg) {
+      return res.status(400).json({ success: false, message: "You are not registered for this event" });
+    }
+
+    if (reg.status === "cancelled") {
+      return res.status(400).json({ success: false, message: "Your registration for this event was cancelled" });
+    }
+
+    if (reg.status === "attended") {
+      return res.json({ success: true, message: "Already checked in", data: reg });
+    }
+
+    // Mark as attended
+    reg.status = "attended";
+    reg.attendedAt = new Date();
+    // Cryptographic unique certificate hash
+    reg.certificateHash = crypto
+      .createHash("sha256")
+      .update(`${reg.studentId}-${reg.eventId}-${reg.attendedAt.getTime()}`)
+      .digest("hex")
+      .slice(0, 16)
+      .toUpperCase();
+
+    await reg.save();
+
+    // Award Points Ledger entry on attendance verification
+    const month = new Date().toISOString().slice(0, 7);
+    const EVENT_TYPE_TO_RULE = {
+      hackathon: "hackathon_participation",
+      contest: "contest_participation",
+      workshop: "seminar_attended",
+      seminar: "seminar_attended",
+      other: "seminar_attended",
+    };
+    const ruleKey = EVENT_TYPE_TO_RULE[event.type] || "seminar_attended";
+    try {
+      await PointLedger.create({
+        student: req.user._id,
+        ruleKey,
+        sourceType: "in_house",
+        sourceId: event._id,
+        month,
+      });
+    } catch (e) {
+      // Duplicate (points already awarded), ignore
+    }
+
+    res.json({ success: true, message: "Attendance verified successfully", data: reg });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  registerForEvent,
+  cancelEventRegistration,
+  getRegistrations,
+  getMyRegistrations,
+  generateEventOTP,
+  verifyEventOTP,
+};
