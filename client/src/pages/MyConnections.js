@@ -55,7 +55,6 @@ const MentorshipGoalsWidget = ({ connId, isMentor, goalsList, onUpdateGoals }) =
 
     try {
       // Optimistic update
-      const oldGoals = [...goalsList];
       const newGoals = goalsList.map(g => g._id === goalId ? { ...g, tasks: updatedTasks } : g);
       onUpdateGoals(newGoals);
 

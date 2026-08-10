@@ -8,6 +8,8 @@ import '../../auth/data/user_profile.dart';
 import '../../../core/widgets/safe_network_image.dart';
 import '../data/coding_profile_item.dart';
 import '../data/profile_repository.dart';
+import '../../events/data/event_repository.dart';
+import '../../home/data/event_item.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   const PublicProfileScreen({
@@ -35,14 +37,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Future<_PublicProfileSnapshot> _load() async {
     final repo = context.read<ProfileRepository>();
+    final profile = await repo.fetchProfile(widget.userId);
+
     final results = await Future.wait([
-      repo.fetchProfile(widget.userId),
       repo.fetchCodingProfilePublic(widget.userId).catchError((_) => null),
+      profile.role.toLowerCase() == 'student'
+          ? context.read<EventRepository>().fetchEvents(studentId: widget.userId).catchError((_) => <EventItem>[])
+          : Future.value(<EventItem>[]),
     ]);
 
+    final codingProfile = results[0] as CodingProfileItem?;
+    final allEvents = results[1] as List<EventItem>;
+    final registered = allEvents.where((e) => e.isRegistered).toList();
+
     return _PublicProfileSnapshot(
-      profile: results[0] as UserProfile,
-      codingProfile: results[1] as CodingProfileItem?,
+      profile: profile,
+      codingProfile: codingProfile,
+      registeredEvents: registered,
     );
   }
 
@@ -157,6 +168,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               if (profile.socialLinks.links.isNotEmpty) const SizedBox(height: 12),
                               if (data.codingProfile?.hasAnyData ?? false) _CodingBlock(codingProfile: data.codingProfile!),
                               if (data.codingProfile?.hasAnyData ?? false) const SizedBox(height: 12),
+                              if (profile.role.toLowerCase() == 'student') ...[
+                                _MyEventsBlock(events: data.registeredEvents),
+                                const SizedBox(height: 12),
+                              ],
                               if (profile.isMentor && currentUser != null && currentUser.id != profile.id)
                                 _RequestBlock(
                                   controller: _requestController,
@@ -180,10 +195,12 @@ class _PublicProfileSnapshot {
   const _PublicProfileSnapshot({
     required this.profile,
     required this.codingProfile,
+    required this.registeredEvents,
   });
 
   final UserProfile profile;
   final CodingProfileItem? codingProfile;
+  final List<EventItem> registeredEvents;
 }
 
 class _HeroCard extends StatelessWidget {
@@ -846,4 +863,115 @@ String _monthName(int month) {
   ];
   if (month < 1 || month > 12) return '';
   return months[month - 1];
+}
+
+class _MyEventsBlock extends StatelessWidget {
+  const _MyEventsBlock({required this.events});
+
+  final List<EventItem> events;
+
+  @override
+  Widget build(BuildContext context) {
+    final upcoming = events.where((e) => e.status == 'upcoming').toList();
+    final attended = events.where((e) => e.status == 'completed').toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.white.withAlpha(10),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'MY EVENTS',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 2,
+                      color: Colors.white38,
+                    ),
+              ),
+              const Icon(Icons.event_available_rounded, size: 16, color: Color(0xFF34D399)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'UPCOMING EVENTS',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          if (upcoming.isEmpty)
+            const Text(
+              'No upcoming events registered.',
+              style: TextStyle(fontSize: 12, color: Colors.white38),
+            )
+          else
+            ...upcoming.map((event) => Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white.withAlpha(6),
+                    border: Border.all(color: Colors.white.withAlpha(12)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(event.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                            const SizedBox(height: 4),
+                            Text(
+                              event.date != null ? '${event.date!.day}/${event.date!.month}/${event.date!.year}' : 'TBA',
+                              style: const TextStyle(fontSize: 11, color: Colors.white38),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF34D399), size: 18),
+                    ],
+                  ),
+                )),
+          const SizedBox(height: 16),
+          const Text(
+            'ATTENDED EVENTS',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          if (attended.isEmpty)
+            const Text(
+              'No past events attended yet.',
+              style: TextStyle(fontSize: 12, color: Colors.white38),
+            )
+          else
+            ...attended.map((event) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withAlpha(4),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(event.title, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                      ),
+                      Text(
+                        event.date != null ? '${event.date!.day}/${event.date!.month}/${event.date!.year}' : '',
+                        style: const TextStyle(fontSize: 10, color: Colors.white30),
+                      ),
+                    ],
+                  ),
+                )),
+        ],
+      ),
+    );
+  }
 }

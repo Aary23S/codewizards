@@ -55,14 +55,85 @@ class _EventsScreenState extends State<EventsScreen> {
       setState(() {
         final data = _future;
         if (data != null) {
-          _future = data.then((snapshot) => snapshot.copyWith(registrations: {...snapshot.registrations, id}));
+          _future = data.then((snapshot) {
+            final updatedEvents = snapshot.events.map((e) {
+              if (e.id == id) {
+                return EventItem(
+                  id: e.id,
+                  title: e.title,
+                  description: e.description,
+                  status: e.status,
+                  type: e.type,
+                  date: e.date,
+                  venue: e.venue,
+                  featured: e.featured,
+                  registrationLink: e.registrationLink,
+                  imageUrl: e.imageUrl,
+                  isRegistered: true,
+                  registeredCount: e.registeredCount + 1,
+                );
+              }
+              return e;
+            }).toList();
+            return snapshot.copyWith(
+              events: updatedEvents,
+              registrations: {...snapshot.registrations, id},
+            );
+          });
         }
       });
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
+    }
+  }
+
+  Future<void> _cancelRegistration(String id) async {
+    final repo = context.read<EventRepository>();
+    try {
+      await repo.cancelRegistration(id);
+      if (!mounted) return;
+      setState(() {
+        final data = _future;
+        if (data != null) {
+          _future = data.then((snapshot) {
+            final updatedEvents = snapshot.events.map((e) {
+              if (e.id == id) {
+                return EventItem(
+                  id: e.id,
+                  title: e.title,
+                  description: e.description,
+                  status: e.status,
+                  type: e.type,
+                  date: e.date,
+                  venue: e.venue,
+                  featured: e.featured,
+                  registrationLink: e.registrationLink,
+                  imageUrl: e.imageUrl,
+                  isRegistered: false,
+                  registeredCount: e.registeredCount > 0
+                      ? e.registeredCount - 1
+                      : 0,
+                );
+              }
+              return e;
+            }).toList();
+            return snapshot.copyWith(
+              events: updatedEvents,
+              registrations: snapshot.registrations
+                  .where((x) => x != id)
+                  .toSet(),
+            );
+          });
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -76,14 +147,19 @@ class _EventsScreenState extends State<EventsScreen> {
         child: FutureBuilder<_EventsSnapshot>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -91,7 +167,9 @@ class _EventsScreenState extends State<EventsScreen> {
             final data = snapshot.data;
             final events = data?.events ?? const <EventItem>[];
             final registrations = data?.registrations ?? <String>{};
-            final filtered = _filter == 'all' ? events : events.where((event) => event.status == _filter).toList();
+            final filtered = _filter == 'all'
+                ? events
+                : events.where((event) => event.status == _filter).toList();
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -118,6 +196,7 @@ class _EventsScreenState extends State<EventsScreen> {
                         currentUser: user,
                         registered: registrations.contains(event.id),
                         onRegister: () => _register(event.id),
+                        onCancel: () => _cancelRegistration(event.id),
                       ),
                     ),
                   ),
@@ -131,10 +210,7 @@ class _EventsScreenState extends State<EventsScreen> {
 }
 
 class _EventsSnapshot {
-  _EventsSnapshot({
-    required this.events,
-    required this.registrations,
-  });
+  _EventsSnapshot({required this.events, required this.registrations});
 
   final List<EventItem> events;
   final Set<String> registrations;
@@ -172,19 +248,23 @@ class _HeroSection extends StatelessWidget {
           Text(
             "WHAT'S HAPPENING",
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 3.2,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 3.2,
+              color: Colors.white54,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             'Events with a cleaner, editorial layout.',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 36),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontSize: 36),
           ),
           const SizedBox(height: 12),
           Text(
             'Everything still behaves the same. The presentation just feels less flat and more deliberate.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.6),
           ),
         ],
       ),
@@ -193,10 +273,7 @@ class _HeroSection extends StatelessWidget {
 }
 
 class _FilterBar extends StatelessWidget {
-  const _FilterBar({
-    required this.filter,
-    required this.onChanged,
-  });
+  const _FilterBar({required this.filter, required this.onChanged});
 
   final String filter;
   final ValueChanged<String> onChanged;
@@ -237,16 +314,18 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: selected ? Colors.white : Colors.white.withAlpha(20)),
+          border: Border.all(
+            color: selected ? Colors.white : Colors.white.withAlpha(20),
+          ),
           color: selected ? Colors.white : Colors.white.withAlpha(10),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: selected ? Colors.black : Colors.white70,
-                letterSpacing: 1.6,
-              ),
+            color: selected ? Colors.black : Colors.white70,
+            letterSpacing: 1.6,
+          ),
         ),
       ),
     );
@@ -260,6 +339,7 @@ class _EventCard extends StatefulWidget {
     required this.currentUser,
     required this.registered,
     required this.onRegister,
+    required this.onCancel,
   });
 
   final EventItem event;
@@ -267,6 +347,7 @@ class _EventCard extends StatefulWidget {
   final dynamic currentUser;
   final bool registered;
   final VoidCallback onRegister;
+  final VoidCallback onCancel;
 
   @override
   State<_EventCard> createState() => _EventCardState();
@@ -277,8 +358,12 @@ class _EventCardState extends State<_EventCard> {
 
   @override
   Widget build(BuildContext context) {
-    final canRegister = widget.event.status == 'upcoming' && widget.currentUser?.role == 'student';
-    final dateText = widget.event.date == null ? 'Date TBA' : _formatDate(widget.event.date!);
+    final canRegister =
+        widget.event.status == 'upcoming' &&
+        widget.currentUser?.role == 'student';
+    final dateText = widget.event.date == null
+        ? 'Date TBA'
+        : _formatDate(widget.event.date!);
     final eventType = widget.event.type?.toUpperCase() ?? 'OTHER';
     final hasLongDescription = widget.event.description.length > 120;
 
@@ -292,7 +377,8 @@ class _EventCardState extends State<_EventCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.event.imageUrl != null && widget.event.imageUrl!.isNotEmpty) ...[
+          if (widget.event.imageUrl != null &&
+              widget.event.imageUrl!.isNotEmpty) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.network(
@@ -300,7 +386,8 @@ class _EventCardState extends State<_EventCard> {
                 height: 160,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                errorBuilder: (context, error, stackTrace) =>
+                    const SizedBox.shrink(),
               ),
             ),
             const SizedBox(height: 12),
@@ -317,7 +404,10 @@ class _EventCardState extends State<_EventCard> {
                   border: Border.all(color: Colors.white.withAlpha(20)),
                   color: Colors.black.withAlpha(32),
                 ),
-                child: Text('${widget.index + 1}'.padLeft(2, '0'), style: Theme.of(context).textTheme.labelSmall),
+                child: Text(
+                  '${widget.index + 1}'.padLeft(2, '0'),
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -328,21 +418,37 @@ class _EventCardState extends State<_EventCard> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _StatusPill(label: eventType, accent: const Color(0xFF5CC8FF)),
+                        _StatusPill(
+                          label: eventType,
+                          accent: const Color(0xFF5CC8FF),
+                        ),
                         _StatusPill(
                           label: widget.event.status.toUpperCase(),
-                          accent: widget.event.status == 'upcoming' ? Colors.white : const Color(0xFF5CC8FF),
+                          accent: widget.event.status == 'upcoming'
+                              ? Colors.white
+                              : const Color(0xFF5CC8FF),
+                        ),
+                        _StatusPill(
+                          label: '${widget.event.registeredCount} REGISTERED',
+                          accent: const Color(0xFF34D399),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Text(widget.event.title, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      widget.event.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 6),
                     Text(
                       widget.event.description,
                       maxLines: _expanded ? null : 3,
-                      overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+                      overflow: _expanded
+                          ? TextOverflow.visible
+                          : TextOverflow.ellipsis,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(height: 1.5),
                     ),
                     if (hasLongDescription) ...[
                       const SizedBox(height: 4),
@@ -350,7 +456,11 @@ class _EventCardState extends State<_EventCard> {
                         onTap: () => setState(() => _expanded = !_expanded),
                         child: Text(
                           _expanded ? 'Show Less' : 'Show More',
-                          style: const TextStyle(color: Color(0xFF5CC8FF), fontWeight: FontWeight.bold, fontSize: 13),
+                          style: const TextStyle(
+                            color: Color(0xFF5CC8FF),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
@@ -366,9 +476,40 @@ class _EventCardState extends State<_EventCard> {
                     const SizedBox(height: 12),
                     if (canRegister)
                       widget.registered
-                          ? const _MiniChip(text: 'Already registered')
-                          : OutlinedButton(onPressed: widget.onRegister, child: const Text('Register'))
-                    else if (widget.currentUser != null && widget.currentUser.role != 'student' && widget.event.status == 'upcoming')
+                          ? Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                const _MiniChip(text: '✓ Registered'),
+                                OutlinedButton(
+                                  onPressed: widget.onCancel,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    side: const BorderSide(
+                                      color: Colors.white24,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Cancel Registration',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : OutlinedButton(
+                              onPressed: widget.onRegister,
+                              child: const Text('Register'),
+                            )
+                    else if (widget.currentUser != null &&
+                        widget.currentUser.role != 'student' &&
+                        widget.event.status == 'upcoming')
                       Text(
                         'Only students can register for events',
                         style: Theme.of(context).textTheme.bodySmall,
@@ -402,9 +543,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              letterSpacing: 0.8,
-              color: Colors.white,
-            ),
+          letterSpacing: 0.8,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -460,7 +601,10 @@ class _EmptyBlock extends StatelessWidget {
         color: Colors.white.withAlpha(10),
       ),
       padding: const EdgeInsets.all(18),
-      child: Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+      ),
     );
   }
 }
@@ -483,9 +627,17 @@ class _ErrorPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Unable to load events', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Unable to load events',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
-          Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            message,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 14),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
@@ -496,7 +648,8 @@ class _ErrorPanel extends StatelessWidget {
 
 String _friendlyError(Object? error) {
   final text = error.toString();
-  if (text.contains('401')) return 'Your session expired. Please sign in again.';
+  if (text.contains('401'))
+    return 'Your session expired. Please sign in again.';
   if (text.contains('SocketException') || text.contains('DioException')) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }

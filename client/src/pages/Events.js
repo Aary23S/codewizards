@@ -1,9 +1,9 @@
 // codewizards/client/src/pages/Events.js
 import { useEffect, useState } from "react";
-import { getEvents, registerForEvent, getMyRegistrations } from "../services/api";
+import { getEvents, registerForEvent, cancelEventRegistration, getMyRegistrations } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
-const EventCard = ({ event, user, registered, regError, onRegister, index }) => (
+const EventCard = ({ event, user, registered, regError, onRegister, onCancel, index }) => (
   <div
     className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
     style={{ transitionDelay: `${index * 60}ms` }}
@@ -18,10 +18,12 @@ const EventCard = ({ event, user, registered, regError, onRegister, index }) => 
       <div className="min-w-0 flex-1">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-white/40">{event.type}</span>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-            event.status === "upcoming" ? "bg-white text-black" : "bg-white/8 text-white/55"
-          }`}>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${event.status === "upcoming" ? "bg-white text-black" : "bg-white/8 text-white/55"
+            }`}>
             {event.status}
+          </span>
+          <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+            {event.registration?.registeredCount || 0} Registered
           </span>
         </div>
         <h3 className="text-xl font-semibold text-white line-clamp-2">{event.title}</h3>
@@ -33,9 +35,17 @@ const EventCard = ({ event, user, registered, regError, onRegister, index }) => 
           <div className="mt-5">
             {user?.role === "student" ? (
               registered[event._id] ? (
-                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black">
-                  ✓ Already Registered
-                </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black">
+                    ✓ Registered
+                  </span>
+                  <button
+                    onClick={() => onCancel(event._id)}
+                    className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/70 transition-colors hover:border-white/20 hover:text-white"
+                  >
+                    Cancel Registration
+                  </button>
+                </div>
               ) : (
                 <>
                   <button
@@ -97,10 +107,49 @@ const Events = () => {
     try {
       await registerForEvent(eventId);
       setRegistered((prev) => ({ ...prev, [eventId]: true }));
+      setEvents((prev) =>
+        prev.map((e) =>
+          e._id === eventId
+            ? {
+              ...e,
+              registration: {
+                ...e.registration,
+                registeredCount: (e.registration?.registeredCount ?? 0) + 1,
+              },
+            }
+            : e
+        )
+      );
     } catch (err) {
       setRegError((prev) => ({
         ...prev,
         [eventId]: err.response?.data?.message || "Registration failed",
+      }));
+    }
+  };
+
+  const handleCancel = async (eventId) => {
+    setRegError((prev) => ({ ...prev, [eventId]: "" }));
+    try {
+      await cancelEventRegistration(eventId);
+      setRegistered((prev) => ({ ...prev, [eventId]: false }));
+      setEvents((prev) =>
+        prev.map((e) =>
+          e._id === eventId
+            ? {
+              ...e,
+              registration: {
+                ...e.registration,
+                registeredCount: Math.max(0, (e.registration?.registeredCount ?? 0) - 1),
+              },
+            }
+            : e
+        )
+      );
+    } catch (err) {
+      setRegError((prev) => ({
+        ...prev,
+        [eventId]: err.response?.data?.message || "Cancellation failed",
       }));
     }
   };
@@ -127,11 +176,10 @@ const Events = () => {
           <button
             key={value}
             onClick={() => setFilter(value)}
-            className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em] transition-colors ${
-              filter === value
+            className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em] transition-colors ${filter === value
                 ? "border-white bg-white text-black"
                 : "border-white/10 bg-white/5 text-white/55 hover:border-white/20 hover:text-white"
-            }`}
+              }`}
           >
             {value}
           </button>
@@ -150,14 +198,13 @@ const Events = () => {
               registered={registered}
               regError={regError}
               onRegister={handleRegister}
+              onCancel={handleCancel}
               index={index}
             />
           ))}
         </div>
       ) : (
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-white/55">
-          No {filter} events found.
-        </div>
+        <p className="text-sm text-white/45">No events found.</p>
       )}
     </div>
   );

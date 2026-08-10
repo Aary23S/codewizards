@@ -12,6 +12,8 @@ class EventItem {
     this.featured = false,
     this.registrationLink,
     this.imageUrl,
+    this.isRegistered = false,
+    this.registeredCount = 0,
   });
 
   final String id;
@@ -24,8 +26,11 @@ class EventItem {
   final bool featured;
   final String? registrationLink;
   final String? imageUrl;
+  final bool isRegistered;
+  final int registeredCount;
 
   factory EventItem.fromJson(Map<String, dynamic> json) {
+    final reg = json['registration'] as Map?;
     return EventItem(
       id: readString(json['_id'] ?? json['id']),
       title: readString(json['title']),
@@ -37,6 +42,8 @@ class EventItem {
       featured: readBool(json['featured']),
       registrationLink: readHttpUrl(json['registrationLink']),
       imageUrl: readHttpUrl(json['imageUrl']),
+      isRegistered: reg != null ? readBool(reg['isRegistered']) : false,
+      registeredCount: reg != null ? (readInt(reg['registeredCount']) ?? 0) : 0,
     );
   }
 }

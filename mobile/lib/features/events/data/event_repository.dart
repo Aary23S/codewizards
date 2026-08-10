@@ -6,10 +6,14 @@ class EventRepository {
 
   final ApiClient _apiClient;
 
-  Future<List<EventItem>> fetchEvents({String? status}) async {
+  Future<List<EventItem>> fetchEvents({String? status, String? studentId}) async {
+    final params = <String, dynamic>{};
+    if (status != null) params['status'] = status;
+    if (studentId != null) params['studentId'] = studentId;
+
     final data = await _apiClient.getData(
       '/events',
-      queryParameters: status == null ? null : {'status': status},
+      queryParameters: params.isEmpty ? null : params,
     );
     final events = _mapList(data, EventItem.fromJson);
     events.sort((a, b) => (b.date ?? DateTime(1900)).compareTo(a.date ?? DateTime(1900)));
@@ -24,6 +28,10 @@ class EventRepository {
 
   Future<void> register(String eventId) async {
     await _apiClient.postData('/events/$eventId/register');
+  }
+
+  Future<void> cancelRegistration(String eventId) async {
+    await _apiClient.deleteData('/events/$eventId/register');
   }
 
   List<T> _mapList<T>(dynamic data, T Function(Map<String, dynamic>) builder) {

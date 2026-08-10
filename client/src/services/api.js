@@ -35,6 +35,7 @@ export const createEvent = (data) => api.post("/events", data);
 export const updateEvent = (id, data) => api.patch(`/events/${id}`, data);
 export const deleteEvent = (id) => api.delete(`/events/${id}`);
 export const registerForEvent = (eventId) => api.post(`/events/${eventId}/register`);
+export const cancelEventRegistration = (eventId) => api.delete(`/events/${eventId}/register`);
 
 // --- Timeline ---
 export const getTimeline = () => api.get("/timeline");

@@ -6,8 +6,7 @@ import {
   createMentorshipRequest,
   getPublicCodingProfile,
   syncCodingProfile,
-  getMyMentorshipRequests,
-  updateMentorshipStatus,
+  getEvents,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -29,8 +28,7 @@ const ProfileView = () => {
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
   const [reqError, setReqError] = useState("");
-
-  const [requests, setRequests] = useState([]);
+  const [registeredEvents, setRegisteredEvents] = useState([]);
 
   const handleRequest = async () => {
     if (!message.trim()) return setReqError("Please write a message");
@@ -48,29 +46,23 @@ const ProfileView = () => {
       getPublicCodingProfile(id).catch(() => ({ data: { data: null } })),
     ])
       .then(([userRes, codingRes]) => {
-        setProfile(userRes.data.data);
+        const u = userRes.data.data;
+        setProfile(u);
         setCodingProfile(codingRes.data.data || null);
+
+        if (u && u.role?.toLowerCase() === "student") {
+          getEvents({ studentId: id })
+            .then((res) => {
+              const allEvents = res.data.data || [];
+              const registered = allEvents.filter((e) => e.registration?.isRegistered === true);
+              setRegisteredEvents(registered);
+            })
+            .catch(console.error);
+        }
       })
       .catch(() => navigate("/"))
       .finally(() => setLoading(false));
-
-    if (isOwnProfile) {
-      getMyMentorshipRequests()
-        .then((res) => setRequests(res.data.data || []))
-        .catch(console.error);
-    }
-  }, [id, navigate, isOwnProfile]);
-
-  const handleStatus = async (requestId, status) => {
-    try {
-      await updateMentorshipStatus(requestId, status);
-      setRequests((prev) =>
-        prev.map((item) => (item._id === requestId ? { ...item, status } : item))
-      );
-    } catch (e) {
-      console.error("Failed to update request status:", e);
-    }
-  };
+  }, [id, navigate]);
 
   if (loading) {
     return (
@@ -129,6 +121,9 @@ const ProfileView = () => {
       setSyncing(false);
     }
   };
+
+  const upcomingEvents = registeredEvents.filter((e) => e.status === "upcoming");
+  const attendedEvents = registeredEvents.filter((e) => e.status === "completed");
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black px-4 py-12 text-white md:px-6 lg:px-8">
@@ -197,7 +192,7 @@ const ProfileView = () => {
           </div>
         </section>
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-6">
             {profile.domain?.length > 0 && (
               <div className={`${shellCard} p-6 md:p-7`}>
@@ -258,7 +253,7 @@ const ProfileView = () => {
                           onClick={() => setSelectedPlatform(platform.key)}
                           className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                             active
-                              ? "border-white bg-white text-black"
+                              ? "bg-white text-black"
                               : "border-white/10 bg-black/20 text-white/75 hover:border-white/20 hover:bg-white/8"
                           }`}
                         >
@@ -269,190 +264,114 @@ const ProfileView = () => {
                   </div>
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <StatPill label="Total" value={formatCount(codingInsight.total)} />
-                  <StatPill label={codingInsight.primaryLabel} value={formatCount(codingInsight.primaryValue)} />
-                  <StatPill label="Last sync" value={syncAgeLabel(codingInsight.lastSync)} />
-                </div>
+                {codingInsight && (
+                  <div className="mt-8 border-t border-white/10 pt-8">
+                    <div className="grid gap-8 xl:grid-cols-2">
+                      <div>
+                        <span
+                          className="rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-semibold tracking-wide"
+                          style={{ color: codingInsight.accent }}
+                        >
+                          {codingInsight.eyebrow}
+                        </span>
+                        <h4 className="mt-5 text-xl font-bold text-white">{codingInsight.title}</h4>
+                        <p className="mt-2 text-sm leading-6 text-white/65">{codingInsight.description}</p>
 
-                {isOwnProfile && (
-                  <div className="mt-5 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={refreshCodingProfile}
-                      disabled={syncing}
-                      className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100 disabled:opacity-50"
-                    >
-                      {syncing ? "Syncing..." : "Sync now"}
-                    </button>
-                    <p className="text-sm text-white/55">
-                      Refresh your LeetCode, Codeforces, and GitHub stats from the backend.
-                    </p>
+                        <div className="mt-6 flex flex-wrap gap-4 text-xs text-white/50">
+                          {codingInsight.handles.map((h) => (
+                            <span key={h} className="rounded-full border border-white/5 bg-white/4 px-3 py-1">
+                              {h}
+                            </span>
+                          ))}
+                          <span className="rounded-full border border-white/5 bg-white/4 px-3 py-1">
+                            Synced: {syncAgeLabel(codingInsight.lastSync)}
+                          </span>
+                        </div>
+
+                        {isOwnProfile && (
+                          <button
+                            onClick={refreshCodingProfile}
+                            disabled={syncing}
+                            className="mt-6 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 hover:text-white disabled:opacity-50"
+                          >
+                            {syncing ? "Syncing..." : "Sync Stats"}
+                          </button>
+                        )}
+                        {syncError && <p className="mt-2 text-xs text-rose-300">{syncError}</p>}
+                      </div>
+
+                      <div>
+                        <div className="mb-6 grid gap-4 sm:grid-cols-2">
+                          <StatPill label={codingInsight.primaryLabel} value={formatCount(codingInsight.primaryValue)} />
+                          <StatPill label="Platforms Synced" value={hasCodingData ? "Active" : "None"} />
+                        </div>
+
+                        <div className="space-y-4">
+                          {codingInsight.metrics
+                            .filter((m) => m.label !== codingInsight.primaryLabel)
+                            .map((metric) => (
+                              <BarMetric
+                                key={metric.label}
+                                metric={metric}
+                                accent={codingInsight.accent}
+                                maxValue={codingInsight.maxValue}
+                              />
+                            ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
-
-                {syncError && (
-                  <p className="mt-3 text-sm text-rose-200">
-                    {syncError}
-                  </p>
-                )}
-
-                <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5 md:p-6">
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">{codingInsight.eyebrow}</p>
-                  <h4 className="mt-3 text-xl font-semibold text-white">{codingInsight.title}</h4>
-                  <p className="mt-2 text-sm leading-6 text-white/60">{codingInsight.description}</p>
-
-                  <div className="mt-6 space-y-4">
-                    {codingInsight.metrics
-                      .filter((metric) => metric.value != null)
-                      .map((metric) => (
-                        <BarMetric
-                          key={metric.label}
-                          metric={metric}
-                          accent={codingInsight.accent}
-                          maxValue={codingInsight.maxValue}
-                        />
-                      ))}
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {codingInsight.handles.map((handle) => (
-                      <span
-                        key={handle}
-                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70"
-                      >
-                        {handle}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
 
-            {isOwnProfile && (
+            {/* My Events Widget (only for student profiles) */}
+            {profile?.role?.toLowerCase() === "student" && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Mentorship</p>
-                    <h3 className="mt-2 text-2xl font-semibold text-white">Mentorship Requests</h3>
-                  </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/60">
-                    {requests.length} total
-                  </span>
+                <div className="flex items-center justify-between gap-4 mb-6">
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">My Events</p>
+                  <Link to="/events" className="text-xs text-cyan-300 hover:underline">Explore Events</Link>
                 </div>
 
-                {requests.length === 0 ? (
-                  <p className="text-sm leading-7 text-white/55">
-                    No mentorship requests yet. Send a request to a mentor in the directory to get started.
-                  </p>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Incoming requests (where this user is the mentor) */}
-                    {requests.filter((r) => r.mentorId?._id === currentUser?._id).length > 0 && (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Upcoming Events */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-white mb-3">Upcoming ({upcomingEvents.length})</h4>
+                    {upcomingEvents.length === 0 ? (
+                      <p className="text-xs text-white/40 bg-white/5 rounded-2xl p-4">No upcoming events registered.</p>
+                    ) : (
                       <div className="space-y-3">
-                        <h4 className="text-xs uppercase tracking-[0.25em] text-cyan-200/70 border-b border-white/5 pb-2">
-                          Incoming Requests (As Mentor)
-                        </h4>
-                        {requests
-                          .filter((r) => r.mentorId?._id === currentUser?._id)
-                          .map((request) => {
-                            const showActions = request.status === "pending";
-                            return (
-                              <div
-                                key={request._id}
-                                className="rounded-2xl border border-white/10 bg-black/20 p-5 transition hover:border-white/20"
-                              >
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                  <div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="text-sm font-semibold text-white">
-                                        {request.studentId?.name || "Student"}
-                                      </p>
-                                      {request.studentId?.batch && (
-                                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-white/55">
-                                          Batch {request.studentId.batch}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="mt-2 text-sm leading-6 text-white/65">{request.message}</p>
-                                  </div>
-
-                                  <div className="flex flex-col items-end gap-2">
-                                    <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold ${
-                                      request.status === "accepted"
-                                        ? "bg-emerald-400/10 border border-emerald-400/20 text-emerald-200"
-                                        : request.status === "rejected"
-                                          ? "bg-rose-400/10 border border-rose-400/20 text-rose-200"
-                                          : "bg-amber-400/10 border border-amber-400/20 text-amber-200"
-                                    }`}>
-                                      {request.status}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {showActions && (
-                                  <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-white/5">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStatus(request._id, "accepted")}
-                                      className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition hover:bg-cyan-100"
-                                    >
-                                      Accept
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStatus(request._id, "rejected")}
-                                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/75 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-                                    >
-                                      Reject
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                      </div>
-                    )}
-
-                    {/* Outgoing requests (where this user is the student) */}
-                    {requests.filter((r) => r.studentId?._id === currentUser?._id).length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="text-xs uppercase tracking-[0.25em] text-cyan-200/70 border-b border-white/5 pb-2">
-                          Sent Requests (As Student)
-                        </h4>
-                        {requests
-                          .filter((r) => r.studentId?._id === currentUser?._id)
-                          .map((request) => (
-                            <div
-                              key={request._id}
-                              className="rounded-2xl border border-white/10 bg-black/20 p-5 transition hover:border-white/20"
-                            >
-                              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                <div>
-                                  <p className="text-sm font-semibold text-white">
-                                    To Mentor: {request.mentorId?.name || "Mentor"}
-                                  </p>
-                                  <p className="mt-2 text-sm leading-6 text-white/65">{request.message}</p>
-                                </div>
-
-                                <div className="flex flex-col items-end gap-2">
-                                  <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold ${
-                                    request.status === "accepted"
-                                      ? "bg-emerald-400/10 border border-emerald-400/20 text-emerald-200"
-                                      : request.status === "rejected"
-                                        ? "bg-rose-400/10 border border-rose-400/20 text-rose-200"
-                                        : "bg-amber-400/10 border border-amber-400/20 text-amber-200"
-                                  }`}>
-                                    {request.status}
-                                  </span>
-                                </div>
-                              </div>
+                        {upcomingEvents.map((event) => (
+                          <div key={event._id} className="rounded-2xl border border-white/10 bg-black/25 p-4 flex flex-col gap-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">Going</span>
+                              <span className="text-[10px] text-white/40 uppercase">{event.type}</span>
                             </div>
-                          ))}
+                            <h5 className="text-sm font-bold text-white line-clamp-1">{event.title}</h5>
+                            <p className="text-xs text-white/50">{new Date(event.date).toLocaleDateString()} at {event.venue || "Online"}</p>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
-                )}
+
+                  {/* Attended Events */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-white mb-3">Attended ({attendedEvents.length})</h4>
+                    {attendedEvents.length === 0 ? (
+                      <p className="text-xs text-white/40 bg-white/5 rounded-2xl p-4">No completed events attended yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {attendedEvents.map((event) => (
+                          <div key={event._id} className="rounded-2xl border border-white/10 bg-black/10 p-4 flex flex-col gap-1 opacity-70">
+                            <h5 className="text-sm font-bold text-white line-clamp-1">{event.title}</h5>
+                            <p className="text-xs text-white/45">{new Date(event.date).toLocaleDateString()}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
