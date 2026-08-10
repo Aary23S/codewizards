@@ -7,6 +7,8 @@ import {
   getPublicCodingProfile,
   syncCodingProfile,
   getEvents,
+  getMyMentorshipRequests,
+  updateMentorshipStatus,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -29,6 +31,7 @@ const ProfileView = () => {
   const [sent, setSent] = useState(false);
   const [reqError, setReqError] = useState("");
   const [registeredEvents, setRegisteredEvents] = useState([]);
+  const [requests, setRequests] = useState([]);
 
   const handleRequest = async () => {
     if (!message.trim()) return setReqError("Please write a message");
@@ -37,6 +40,17 @@ const ProfileView = () => {
       setSent(true);
     } catch (err) {
       setReqError(err.response?.data?.message || "Failed to send request");
+    }
+  };
+
+  const handleStatus = async (requestId, status) => {
+    try {
+      await updateMentorshipStatus(requestId, status);
+      setRequests((prev) =>
+        prev.map((item) => (item._id === requestId ? { ...item, status } : item))
+      );
+    } catch (e) {
+      console.error("Failed to update request status:", e);
     }
   };
 
@@ -62,7 +76,13 @@ const ProfileView = () => {
       })
       .catch(() => navigate("/"))
       .finally(() => setLoading(false));
-  }, [id, navigate]);
+
+    if (isOwnProfile) {
+      getMyMentorshipRequests()
+        .then((res) => setRequests(res.data.data || []))
+        .catch(console.error);
+    }
+  }, [id, navigate, isOwnProfile]);
 
   if (loading) {
     return (
@@ -322,6 +342,69 @@ const ProfileView = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Mentorship Requests Card (only for own profile if they have requests) */}
+            {isOwnProfile && requests.length > 0 && (
+              <div className={`${shellCard} p-6 md:p-7`}>
+                <div className="mb-6 flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-white/45">Mentorship</p>
+                    <h2 className="mt-2 text-2xl font-semibold text-white">Mentorship requests</h2>
+                  </div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/35">{requests.length} items</p>
+                </div>
+
+                <div className="space-y-3">
+                  {requests.map((request) => (
+                    <div
+                      key={request._id}
+                      className="rounded-2xl border border-white/10 bg-black/35 p-4 transition-all duration-300 hover:border-white/20"
+                    >
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-white">
+                              {request.studentId?.name || "Student"}
+                            </p>
+                            {request.studentId?.batch && (
+                              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-white/55">
+                                Batch {request.studentId.batch}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">{request.message}</p>
+                        </div>
+
+                        <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.25em] font-semibold ${
+                          request.status === "accepted" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                          request.status === "rejected" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
+                          "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        }`}>
+                          {request.status}
+                        </span>
+                      </div>
+
+                      {request.status === "pending" && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleStatus(request._id, "accepted")}
+                            className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition hover:bg-cyan-100"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleStatus(request._id, "rejected")}
+                            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/75 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
