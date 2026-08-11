@@ -201,8 +201,11 @@ class _EventsScreenState extends State<EventsScreen> {
                 child: Image.asset(
                   'assets/logo.jpeg',
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.school_rounded, color: Color(0xFFFBBF24), size: 32),
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.school_rounded,
+                    color: Color(0xFFFBBF24),
+                    size: 32,
+                  ),
                 ),
               ),
             ),
@@ -220,7 +223,10 @@ class _EventsScreenState extends State<EventsScreen> {
             const SizedBox(height: 12),
             Text(
               'Presented to',
-              style: TextStyle(color: Colors.white.withAlpha(120), fontSize: 11),
+              style: TextStyle(
+                color: Colors.white.withAlpha(120),
+                fontSize: 11,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -254,13 +260,20 @@ class _EventsScreenState extends State<EventsScreen> {
                       const Text(
                         'Mr. Somanath Salunkhe',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Faculty Co-ordinator',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white.withAlpha(80), fontSize: 8),
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(80),
+                          fontSize: 8,
+                        ),
                       ),
                     ],
                   ),
@@ -271,13 +284,20 @@ class _EventsScreenState extends State<EventsScreen> {
                       const Text(
                         'Dr. Sangram Patil',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Director of Academics',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white.withAlpha(80), fontSize: 8),
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(80),
+                          fontSize: 8,
+                        ),
                       ),
                     ],
                   ),
@@ -557,259 +577,345 @@ class _EventCardState extends State<_EventCard> {
         border: Border.all(color: Colors.white.withAlpha(20)),
         color: Colors.white.withAlpha(10),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Image Block
           if (widget.event.imageUrl != null &&
               widget.event.imageUrl!.isNotEmpty) ...[
             ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               child: Image.network(
                 widget.event.imageUrl!,
-                height: 160,
+                height: 180,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
                     const SizedBox.shrink(),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
           ],
+
+          // Tags row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                height: 40,
-                width: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withAlpha(20)),
-                  color: Colors.black.withAlpha(32),
-                ),
-                child: Text(
-                  '${widget.index + 1}'.padLeft(2, '0'),
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _StatusPill(
-                          label: eventType,
-                          accent: const Color(0xFF5CC8FF),
-                        ),
-                        _StatusPill(
-                          label: widget.event.status.toUpperCase(),
-                          accent: widget.event.status == 'upcoming'
-                              ? Colors.white
-                              : const Color(0xFF5CC8FF),
-                        ),
-                        _StatusPill(
-                          label: '${widget.event.registeredCount} REGISTERED',
-                          accent: const Color(0xFF34D399),
-                        ),
-                        if (isAttended)
-                          const _StatusPill(
-                            label: '✓ ATTENDED',
-                            accent: Color(0xFFFBBF24),
-                          ),
-                      ],
+              Row(
+                children: [
+                  Container(
+                    height: 28,
+                    width: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white.withAlpha(20)),
+                      color: Colors.black.withAlpha(32),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      widget.event.title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.event.description,
-                      maxLines: _expanded ? null : 3,
-                      overflow: _expanded
-                          ? TextOverflow.visible
-                          : TextOverflow.ellipsis,
+                    child: Text(
+                      '${widget.index + 1}'.padLeft(2, '0'),
                       style: Theme.of(
                         context,
-                      ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                      ).textTheme.labelSmall?.copyWith(fontSize: 10),
                     ),
-                    if (hasLongDescription) ...[
-                      const SizedBox(height: 4),
-                      GestureDetector(
-                        onTap: () => setState(() => _expanded = !_expanded),
-                        child: Text(
-                          _expanded ? 'Show Less' : 'Show More',
-                          style: const TextStyle(
-                            color: Color(0xFF5CC8FF),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 10),
-                    Text(
-                      '$dateText${widget.event.venue != null ? ' · ${widget.event.venue}' : ''}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    if (widget.event.featured) ...[
-                      const SizedBox(height: 10),
-                      const _MiniChip(text: 'Featured'),
-                    ],
-                    const SizedBox(height: 12),
+                  ),
+                  const SizedBox(width: 8),
+                  _StatusPill(
+                    label: eventType,
+                    accent: const Color(0xFF5CC8FF),
+                  ),
+                ],
+              ),
+              _StatusPill(
+                label: widget.event.status.toUpperCase(),
+                accent: widget.event.status == 'upcoming'
+                    ? Colors.white
+                    : const Color(0xFF5CC8FF),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
 
-                    // Admin flow
-                    if (isAdmin) ...[
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (widget.event.status == 'upcoming') ...[
-                            OutlinedButton(
-                              onPressed: widget.onGenerateOtp,
-                              child: const Text('Generate OTP'),
-                            ),
-                            if (widget.event.otpCode != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  color: const Color(0xFFFBBF24).withAlpha(30),
-                                  border: Border.all(
-                                    color: const Color(0xFFFBBF24).withAlpha(60),
-                                  ),
-                                ),
-                                child: Text(
-                                  'OTP: ${widget.event.otpCode}',
-                                  style: const TextStyle(
-                                    color: Color(0xFFFBBF24),
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                          ],
-                          OutlinedButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => EventRegistrationsScreen(
-                                    eventId: widget.event.id,
-                                    eventTitle: widget.event.title,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: const Text('View Registrations'),
-                          ),
-                        ],
-                      ),
-                    ],
+          // Title
+          Text(
+            widget.event.title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontSize: 20),
+          ),
+          const SizedBox(height: 8),
 
-                    // Student/Non-Admin flow
-                    if (!isAdmin && widget.currentUser != null) ...[
-                      if (isAttended)
-                        ElevatedButton.icon(
-                          onPressed: widget.onViewCertificate,
-                          icon: const Icon(Icons.school, size: 16),
-                          label: const Text('View Certificate'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFBBF24),
-                            foregroundColor: Colors.black,
-                          ),
-                        )
-                      else if (isRegistered &&
-                          widget.event.status == 'upcoming')
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const _MiniChip(text: '✓ Registered'),
-                                const SizedBox(width: 8),
-                                OutlinedButton(
-                                  onPressed: widget.onCancel,
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Cancel',
-                                    style: TextStyle(fontSize: 11),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 120,
-                                  height: 36,
-                                  child: TextField(
-                                    controller: _otpController,
-                                    maxLength: 6,
-                                    keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                      hintText: 'Enter OTP',
-                                      counterText: '',
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 0,
-                                      ),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontFamily: 'monospace',
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    final val = _otpController.text.trim();
-                                    if (val.length == 6) {
-                                      widget.onVerifyOtp(val);
-                                    }
-                                  },
-                                  child: const Text(
-                                    'Verify Attendance',
-                                    style: TextStyle(fontSize: 11),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        )
-                      else if (canRegister)
-                        OutlinedButton(
-                          onPressed: widget.onRegister,
-                          child: const Text('Register'),
-                        ),
-                    ],
+          // Auxiliary indicators (Registered stats, Attended badge, Featured tag)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusPill(
+                label: '${widget.event.registeredCount} REGISTERED',
+                accent: const Color(0xFF34D399),
+              ),
+              if (isAttended)
+                const _StatusPill(
+                  label: '✓ ATTENDED',
+                  accent: Color(0xFFFBBF24),
+                ),
+              if (widget.event.featured) const _MiniChip(text: 'Featured'),
+            ],
+          ),
+          const SizedBox(height: 12),
 
-                    if (isAdmin && widget.event.status == 'completed')
-                      const Text(
-                        'Event completed',
-                        style: TextStyle(color: Colors.white38, fontSize: 12),
-                      ),
-                  ],
+          // Description
+          Text(
+            widget.event.description,
+            maxLines: _expanded ? null : 3,
+            overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              height: 1.55,
+              color: Colors.white70,
+            ),
+          ),
+          if (hasLongDescription) ...[
+            const SizedBox(height: 4),
+            GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Text(
+                _expanded ? 'Show Less' : 'Show More',
+                style: const TextStyle(
+                  color: Color(0xFF5CC8FF),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+
+          // Date and location info with beautiful inline icon row
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 14,
+                color: Colors.white54,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '$dateText${widget.event.venue != null ? ' · ${widget.event.venue}' : ''}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white54),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 16),
+
+          // Admin Controls
+          if (isAdmin) ...[
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (widget.event.status == 'upcoming') ...[
+                  ElevatedButton(
+                    onPressed: widget.onGenerateOtp,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                    child: const Text(
+                      'Generate OTP',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (widget.event.otpCode != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFFFBBF24).withAlpha(30),
+                        border: Border.all(
+                          color: const Color(0xFFFBBF24).withAlpha(60),
+                        ),
+                      ),
+                      child: Text(
+                        'OTP: ${widget.event.otpCode}',
+                        style: const TextStyle(
+                          color: Color(0xFFFBBF24),
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                ],
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => EventRegistrationsScreen(
+                          eventId: widget.event.id,
+                          eventTitle: widget.event.title,
+                        ),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: const Text(
+                    'View Registrations',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          // Student/Non-Admin Controls
+          if (!isAdmin && widget.currentUser != null) ...[
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 10),
+            if (isAttended)
+              ElevatedButton.icon(
+                onPressed: widget.onViewCertificate,
+                icon: const Icon(Icons.school, size: 16),
+                label: const Text('View Certificate'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFBBF24),
+                  foregroundColor: Colors.black,
+                  minimumSize: const Size(double.infinity, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              )
+            else if (isRegistered && widget.event.status == 'upcoming')
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const _MiniChip(text: '✓ Registered'),
+                      OutlinedButton(
+                        onPressed: widget.onCancel,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: TextField(
+                            controller: _otpController,
+                            maxLength: 6,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              hintText: 'Enter OTP',
+                              counterText: '',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white.withAlpha(5),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.white.withAlpha(20),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF5CC8FF),
+                                ),
+                              ),
+                            ),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: () {
+                          final val = _otpController.text.trim();
+                          if (val.length == 6) {
+                            widget.onVerifyOtp(val);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5CC8FF),
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(0, 44),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Verify Attendance',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            else if (canRegister)
+              ElevatedButton(
+                onPressed: widget.onRegister,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5CC8FF),
+                  foregroundColor: Colors.black,
+                  minimumSize: const Size(double.infinity, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Register',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
         ],
       ),
     );

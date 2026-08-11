@@ -170,22 +170,46 @@ class _GalleryExplorePageState extends State<GalleryExplorePage> {
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: categories
-                                  .map(
-                                    (category) => ChoiceChip(
-                                      label: Text(category.$2.toUpperCase()),
-                                      selected: _selectedCategory == category.$1,
-                                      onSelected: (_) {
-                                        setState(() => _selectedCategory = category.$1);
-                                      },
+                            SizedBox(
+                              height: 44,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: EdgeInsets.zero,
+                                itemCount: categories.length,
+                                itemBuilder: (context, idx) {
+                                  final category = categories[idx];
+                                  final isSelected = _selectedCategory == category.$1;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() => _selectedCategory = category.$1);
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        color: isSelected ? Colors.white : Colors.white.withAlpha(12),
+                                        border: Border.all(
+                                          color: isSelected ? Colors.white : Colors.white.withAlpha(20),
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          category.$2.toUpperCase(),
+                                          style: TextStyle(
+                                            color: isSelected ? Colors.black : Colors.white70,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  )
-                                  .toList(),
+                                  );
+                                },
+                              ),
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 20),
                             if (filtered.isEmpty)
                               const _EmptyBlock(message: 'No gallery items found for this category.')
                             else
@@ -1760,29 +1784,44 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
                             ),
                       ),
                       const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: categories
-                            .map(
-                              (category) => ChoiceChip(
-                                selected: _selectedCategory == category.toLowerCase(),
-                                label: Text(category == 'all' ? 'All' : category),
-                                onSelected: (_) {
-                                  setState(() => _selectedCategory = category.toLowerCase());
-                                },
-                                labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      color: _selectedCategory == category.toLowerCase() ? Colors.black : Colors.white,
-                                      fontWeight: FontWeight.w700,
+                      SizedBox(
+                        height: 38,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: EdgeInsets.zero,
+                          itemCount: categories.length,
+                          itemBuilder: (context, idx) {
+                            final category = categories[idx];
+                            final isSelected = _selectedCategory == category.toLowerCase();
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedCategory = category.toLowerCase());
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: isSelected ? Colors.white : Colors.white.withAlpha(12),
+                                  border: Border.all(
+                                    color: isSelected ? Colors.white : Colors.white.withAlpha(20),
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    category == 'all' ? 'ALL' : category.toUpperCase(),
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.black : Colors.white70,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.0,
                                     ),
-                                selectedColor: Colors.white,
-                                backgroundColor: const Color(0xFF1A1A1A),
-                                side: BorderSide(color: Colors.white.withAlpha(28)),
-                                showCheckmark: false,
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  ),
+                                ),
                               ),
-                            )
-                            .toList(),
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -1793,29 +1832,44 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
                             ),
                       ),
                       const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: domains
-                            .map(
-                              (domain) => ChoiceChip(
-                                selected: _selectedDomain == domain.toLowerCase(),
-                                label: Text(domain == 'all' ? 'All' : domain),
-                                onSelected: (_) {
-                                  setState(() => _selectedDomain = domain.toLowerCase());
-                                },
-                                labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      color: _selectedDomain == domain.toLowerCase() ? Colors.black : Colors.white,
-                                      fontWeight: FontWeight.w700,
+                      SizedBox(
+                        height: 38,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: EdgeInsets.zero,
+                          itemCount: domains.length,
+                          itemBuilder: (context, idx) {
+                            final domain = domains[idx];
+                            final isSelected = _selectedDomain == domain.toLowerCase();
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedDomain = domain.toLowerCase());
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: isSelected ? const Color(0xFFFFC857) : Colors.white.withAlpha(12),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFFFFC857) : Colors.white.withAlpha(20),
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    domain == 'all' ? 'ALL' : domain.toUpperCase(),
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.black : Colors.white70,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.0,
                                     ),
-                                selectedColor: const Color(0xFFFFC857),
-                                backgroundColor: const Color(0xFF1A1A1A),
-                                side: BorderSide(color: Colors.white.withAlpha(28)),
-                                showCheckmark: false,
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  ),
+                                ),
                               ),
-                            )
-                            .toList(),
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(height: 16),
                       if (loading)
@@ -2851,10 +2905,10 @@ class _ResourceCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          color: Colors.black.withAlpha(46),
-          border: Border.all(color: Colors.white.withAlpha(20)),
+          color: Colors.white.withAlpha(8),
+          border: Border.all(color: Colors.white.withAlpha(16)),
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2865,40 +2919,24 @@ class _ResourceCard extends StatelessWidget {
                 if ((resource.domain ?? '').trim().isNotEmpty)
                   _Badge(text: resource.domain!.toUpperCase(), color: const Color(0xFFFFC857)),
                 const Spacer(),
-                Icon(Icons.open_in_new_rounded, color: Colors.white.withAlpha(140), size: 18),
+                const Icon(Icons.arrow_outward_rounded, color: Colors.white60, size: 18),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               resource.title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 18),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             if (host != null && host.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text(
+               Text(
                 host,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.white54,
+                      color: Colors.white38,
                       letterSpacing: 0.8,
                     ),
               ),
             ],
-            if (badges.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: badges.take(3).map((badge) => _Badge(text: badge, color: const Color(0xFF8B5CF6))).toList(),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _Badge(text: 'Open', color: const Color(0xFF34D399)),
-              ],
-            ),
             const SizedBox(height: 12),
             Text(
               resource.description?.trim().isNotEmpty == true
@@ -2906,21 +2944,14 @@ class _ResourceCard extends StatelessWidget {
                   : 'Open this resource for more details.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5, color: Colors.white70),
             ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onTap,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withAlpha(30)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                icon: const Icon(Icons.arrow_outward_rounded, size: 18),
-                label: const Text('Open resource'),
+            if (badges.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: badges.take(3).map((badge) => _Badge(text: badge, color: const Color(0xFF8B5CF6).withAlpha(180))).toList(),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -3109,67 +3140,92 @@ class _GalleryCard extends StatelessWidget {
           border: Border.all(color: Colors.white.withAlpha(20)),
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  SafeNetworkImage(
-                    imageUrl: item.imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: Container(color: Colors.white.withAlpha(8)),
-                  ),
-                  if (urls.length > 1)
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withAlpha(160),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Text(
-                          '${urls.length} photos',
-                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+            SafeNetworkImage(
+              imageUrl: item.imageUrl,
+              fit: BoxFit.cover,
+              placeholder: Container(color: Colors.white.withAlpha(8)),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _Badge(text: item.category.toUpperCase(), color: const Color(0xFF5CC8FF)),
+            if (urls.length > 1)
+              Positioned(
+                top: 14,
+                right: 14,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withAlpha(180),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Text(
+                    '${urls.length} photos',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withOpacity(0.9),
+                      Colors.black.withOpacity(0.4),
+                      Colors.transparent,
                     ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  if (item.eventRef != null && item.eventRef!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF5CC8FF).withAlpha(40),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFF5CC8FF).withAlpha(80)),
+                          ),
+                          child: Text(
+                            item.category.toUpperCase(),
+                            style: const TextStyle(
+                              color: Color(0xFF5CC8FF),
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                        if (item.eventRef != null && item.eventRef!.isNotEmpty)
+                          Text(
+                            item.eventRef!,
+                            style: const TextStyle(color: Colors.white54, fontSize: 10),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     Text(
-                      item.eventRef!,
-                      maxLines: 1,
+                      item.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
-                ],
+                ),
               ),
             ),
           ],
@@ -4806,6 +4862,29 @@ class _ContactMessageBlock extends StatelessWidget {
   final VoidCallback onSend;
   final String? contactEmail;
 
+  InputDecoration _buildInput(String hintText, IconData icon) {
+    return InputDecoration(
+      hintText: hintText,
+      prefixIcon: Icon(icon, color: Colors.white38, size: 18),
+      filled: true,
+      fillColor: Colors.white.withAlpha(5),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.white.withAlpha(16)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.white.withAlpha(16)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF5CC8FF), width: 1.5),
+      ),
+      hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -4819,36 +4898,45 @@ class _ContactMessageBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Send a Message',
+            'Send a Message'.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   letterSpacing: 3,
                   color: Colors.white54,
                 ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           TextFormField(
             controller: nameController,
-            decoration: const InputDecoration(hintText: 'Your Name'),
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+            decoration: _buildInput('Your Name', Icons.person_outline_rounded),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: emailController,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(hintText: 'Your Email'),
+            decoration: _buildInput('Your Email', Icons.mail_outline_rounded),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: messageController,
-            minLines: 6,
-            maxLines: 10,
-            decoration: const InputDecoration(hintText: 'Your message...'),
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+            minLines: 5,
+            maxLines: 8,
+            decoration: _buildInput('Your message...', Icons.edit_note_rounded),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Row(
             children: [
               ElevatedButton(
                 onPressed: sending || (contactEmail == null || contactEmail!.isEmpty) ? null : onSend,
-                child: Text(sending ? 'Sending...' : 'Send Message'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5CC8FF),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Text(sending ? 'Sending...' : 'Send Message', style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -4856,7 +4944,7 @@ class _ContactMessageBlock extends StatelessWidget {
                   contactEmail == null || contactEmail!.isEmpty
                       ? 'No contact email is configured.'
                       : 'This opens your email app with the message prefilled.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white38),
                 ),
               ),
             ],
