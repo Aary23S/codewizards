@@ -26,6 +26,21 @@ const DOMAIN_OPTIONS = [
   "App Dev",
 ];
 
+const HELP_TOPICS = [
+  "DSA & Competitive Programming",
+  "Web Development",
+  "App Development",
+  "AI/ML",
+  "Backend Development",
+  "Project Guidance",
+  "Resume Review",
+  "Interview Preparation",
+  "Internship Preparation",
+  "Career Guidance",
+  "Higher Studies",
+  "Entrepreneurship"
+];
+
 const shellCard =
   "group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.22)]";
 
@@ -41,6 +56,17 @@ const ProfileEdit = () => {
     currentCompany: "",
     designation: "",
     professionalExperience: "",
+    location: "",
+    headline: "",
+    isVerified: false,
+    employmentType: "",
+    workMode: "",
+    startDateText: "",
+    canHelpWith: [],
+    mentorshipAvailability: "open",
+    maxActiveStudents: 3,
+    typicalResponseTime: "1-3 days",
+    preferredContactMethod: "linkedin",
     github: "",
     linkedin: "",
     leetcode: "",
@@ -48,6 +74,9 @@ const ProfileEdit = () => {
     portfolio: "",
     domain: [],
     isMentor: false,
+    experiences: [],
+    education: [],
+    certifications: [],
     codeforcesHandle: "",
     leetcodeUsername: "",
     githubUsername: "",
@@ -97,6 +126,17 @@ const ProfileEdit = () => {
           currentCompany: u.currentCompany || "",
           designation: u.designation || "",
           professionalExperience: u.professionalExperience || "",
+          location: u.location || "",
+          headline: u.headline || "",
+          isVerified: !!u.isVerified,
+          employmentType: u.employmentType || "",
+          workMode: u.workMode || "",
+          startDateText: u.startDateText || "",
+          canHelpWith: Array.isArray(u.canHelpWith) ? u.canHelpWith : [],
+          mentorshipAvailability: u.mentorshipAvailability || "open",
+          maxActiveStudents: u.maxActiveStudents ?? 3,
+          typicalResponseTime: u.typicalResponseTime || "1-3 days",
+          preferredContactMethod: u.preferredContactMethod || "linkedin",
           github: u.github || "",
           linkedin: u.linkedin || "",
           leetcode: u.leetcode || "",
@@ -104,6 +144,9 @@ const ProfileEdit = () => {
           portfolio: u.portfolio || "",
           domain: Array.isArray(u.domain) ? u.domain : [],
           isMentor: !!u.isMentor,
+          experiences: Array.isArray(u.experiences) ? u.experiences : [],
+          education: Array.isArray(u.education) ? u.education : [],
+          certifications: Array.isArray(u.certifications) ? u.certifications : [],
           codeforcesHandle: u.codeforcesHandle || u.externalStats?.codeforces?.handle || "",
           leetcodeUsername: u.leetcodeUsername || u.externalStats?.leetcode?.username || "",
           githubUsername: u.githubUsername || u.externalStats?.github?.username || "",
@@ -157,6 +200,75 @@ const ProfileEdit = () => {
     }));
   };
 
+  const toggleHelpTopic = (topic) => {
+    setForm((prev) => ({
+      ...prev,
+      canHelpWith: prev.canHelpWith.includes(topic)
+        ? prev.canHelpWith.filter((item) => item !== topic)
+        : [...prev.canHelpWith, topic],
+    }));
+  };
+
+  const addExperience = () => {
+    setForm((prev) => ({
+      ...prev,
+      experiences: [...prev.experiences, { title: "", company: "", location: "", startDate: "", endDate: "", description: "" }],
+    }));
+  };
+  const updateExperience = (index, field, value) => {
+    setForm((prev) => {
+      const list = [...prev.experiences];
+      list[index] = { ...list[index], [field]: value };
+      return { ...prev, experiences: list };
+    });
+  };
+  const removeExperience = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      experiences: prev.experiences.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addEducation = () => {
+    setForm((prev) => ({
+      ...prev,
+      education: [...prev.education, { school: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "" }],
+    }));
+  };
+  const updateEducation = (index, field, value) => {
+    setForm((prev) => {
+      const list = [...prev.education];
+      list[index] = { ...list[index], [field]: value };
+      return { ...prev, education: list };
+    });
+  };
+  const removeEducation = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      education: prev.education.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addCertification = () => {
+    setForm((prev) => ({
+      ...prev,
+      certifications: [...prev.certifications, { name: "", issuer: "", issueDate: "", credentialUrl: "" }],
+    }));
+  };
+  const updateCertification = (index, field, value) => {
+    setForm((prev) => {
+      const list = [...prev.certifications];
+      list[index] = { ...list[index], [field]: value };
+      return { ...prev, certifications: list };
+    });
+  };
+  const removeCertification = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      certifications: prev.certifications.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSync = async (platform, syncFn, handleKey) => {
     const handle = form[handleKey];
 
@@ -193,7 +305,11 @@ const ProfileEdit = () => {
           formData.append(key, Array.isArray(value) ? value.join(", ") : "");
           return;
         }
-        if (key === "contactPreferences") {
+        if (key === "canHelpWith") {
+          formData.append(key, Array.isArray(value) ? value.join(", ") : "");
+          return;
+        }
+        if (key === "contactPreferences" || key === "experiences" || key === "education" || key === "certifications") {
           formData.append(key, JSON.stringify(value));
           return;
         }
@@ -332,21 +448,82 @@ const ProfileEdit = () => {
             </div>
             <div className="mt-5 grid gap-4">
               <FormInput
-                label="Current Designation"
+                label="Professional Headline"
                 type="text"
-                name="designation"
-                value={form.designation}
+                name="headline"
+                value={form.headline}
                 onChange={handleChange}
-                placeholder="e.g. Software Engineer II"
+                placeholder="e.g. Full-Stack Development | AI | Backend"
               />
               <FormInput
-                label="Current Company"
+                label="Location"
                 type="text"
-                name="currentCompany"
-                value={form.currentCompany}
+                name="location"
+                value={form.location}
                 onChange={handleChange}
-                placeholder="e.g. Google / Microsoft"
+                placeholder="e.g. Pune, India"
               />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormInput
+                  label="Current Designation"
+                  type="text"
+                  name="designation"
+                  value={form.designation}
+                  onChange={handleChange}
+                  placeholder="e.g. Software Engineer II"
+                />
+                <FormInput
+                  label="Current Company"
+                  type="text"
+                  name="currentCompany"
+                  value={form.currentCompany}
+                  onChange={handleChange}
+                  placeholder="e.g. Google / Microsoft"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">
+                    Employment Type
+                  </label>
+                  <select
+                    name="employmentType"
+                    value={form.employmentType}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/60 focus:bg-white/8"
+                  >
+                    <option value="" className="bg-black">Select type...</option>
+                    <option value="Full-time" className="bg-black">Full-time</option>
+                    <option value="Part-time" className="bg-black">Part-time</option>
+                    <option value="Internship" className="bg-black">Internship</option>
+                    <option value="Contract" className="bg-black">Contract</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">
+                    Work Mode
+                  </label>
+                  <select
+                    name="workMode"
+                    value={form.workMode}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/60 focus:bg-white/8"
+                  >
+                    <option value="" className="bg-black">Select mode...</option>
+                    <option value="Remote" className="bg-black">Remote</option>
+                    <option value="Hybrid" className="bg-black">Hybrid</option>
+                    <option value="On-site" className="bg-black">On-site</option>
+                  </select>
+                </div>
+                <FormInput
+                  label="Start Date"
+                  type="text"
+                  name="startDateText"
+                  value={form.startDateText}
+                  onChange={handleChange}
+                  placeholder="e.g. Aug 2026"
+                />
+              </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">
                   Professional Experience / Work History
@@ -397,10 +574,90 @@ const ProfileEdit = () => {
                 onChange={(e) => setForm({ ...form, isMentor: e.target.checked })}
                 className="h-4 w-4 accent-cyan-300"
               />
-              <label htmlFor="isMentor" className="text-sm text-white/75">
+              <label htmlFor="isMentor" className="text-sm font-semibold text-white/75">
                 I&apos;m open to mentoring juniors
               </label>
             </div>
+
+            {form.isMentor && (
+              <div className="mt-6 border-t border-white/10 pt-5 space-y-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">
+                      Mentorship Availability
+                    </label>
+                    <select
+                      name="mentorshipAvailability"
+                      value={form.mentorshipAvailability}
+                      onChange={handleChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/60 focus:bg-white/8"
+                    >
+                      <option value="open" className="bg-black">🟢 Open for mentorship</option>
+                      <option value="limited" className="bg-black">🟡 Limited availability</option>
+                      <option value="unavailable" className="bg-black">⚪ Currently unavailable</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">
+                      Preferred Connection Method
+                    </label>
+                    <select
+                      name="preferredContactMethod"
+                      value={form.preferredContactMethod}
+                      onChange={handleChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/60 focus:bg-white/8"
+                    >
+                      <option value="linkedin" className="bg-black">LinkedIn Profile</option>
+                      <option value="email" className="bg-black">Professional Email</option>
+                      <option value="whatsapp" className="bg-black">WhatsApp Chat</option>
+                      <option value="discord" className="bg-black">Discord Server/DM</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormInput
+                    label="Typical Response Time"
+                    type="text"
+                    name="typicalResponseTime"
+                    value={form.typicalResponseTime}
+                    onChange={handleChange}
+                    placeholder="e.g. 1-2 days"
+                  />
+                  <FormInput
+                    label="Maximum Active Students"
+                    type="number"
+                    name="maxActiveStudents"
+                    value={form.maxActiveStudents}
+                    onChange={handleChange}
+                    placeholder="3"
+                    min={1}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] uppercase tracking-[0.35em] text-white/50 mb-1">
+                    I Can Help With
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {HELP_TOPICS.map((topic) => (
+                      <button
+                        key={topic}
+                        type="button"
+                        onClick={() => toggleHelpTopic(topic)}
+                        className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.25em] transition ${
+                          form.canHelpWith.includes(topic)
+                            ? "border-emerald-400 bg-emerald-400/10 text-emerald-300"
+                            : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           <section className={`${shellCard} p-6 md:p-7`}>
@@ -482,6 +739,245 @@ const ProfileEdit = () => {
                   )}
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Work Experience Section */}
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Work Experience</p>
+                <p className="mt-2 text-sm text-white/60">Add internships, part-time, or full-time roles.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addExperience}
+                className="rounded-full bg-cyan-400/10 border border-cyan-400/20 px-4 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-400/20"
+              >
+                + Add Experience
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-6">
+              {form.experiences.map((exp, idx) => (
+                <div key={idx} className="relative rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-white/45 font-bold">Role #{idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeExperience(idx)}
+                      className="text-xs text-rose-300 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormInput
+                      label="Title / Designation"
+                      type="text"
+                      value={exp.title}
+                      onChange={(e) => updateExperience(idx, "title", e.target.value)}
+                      placeholder="e.g. Frontend Intern"
+                    />
+                    <FormInput
+                      label="Company / Organisation"
+                      type="text"
+                      value={exp.company}
+                      onChange={(e) => updateExperience(idx, "company", e.target.value)}
+                      placeholder="e.g. Acme Corp"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <FormInput
+                      label="Location"
+                      type="text"
+                      value={exp.location}
+                      onChange={(e) => updateExperience(idx, "location", e.target.value)}
+                      placeholder="e.g. Mumbai, India / Remote"
+                    />
+                    <FormInput
+                      label="Start Date"
+                      type="text"
+                      value={exp.startDate}
+                      onChange={(e) => updateExperience(idx, "startDate", e.target.value)}
+                      placeholder="e.g. May 2026"
+                    />
+                    <FormInput
+                      label="End Date"
+                      type="text"
+                      value={exp.endDate}
+                      onChange={(e) => updateExperience(idx, "endDate", e.target.value)}
+                      placeholder="e.g. Aug 2026 / Present"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">Description</label>
+                    <textarea
+                      value={exp.description}
+                      onChange={(e) => updateExperience(idx, "description", e.target.value)}
+                      rows={3}
+                      placeholder="List key achievements, tech stack, or guidance points..."
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                    />
+                  </div>
+                </div>
+              ))}
+              {form.experiences.length === 0 && (
+                <p className="text-center text-xs text-white/30 py-4">No experience items added yet.</p>
+              )}
+            </div>
+          </section>
+
+          {/* Education Section */}
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Education</p>
+                <p className="mt-2 text-sm text-white/60">Share your university, degree, and study background.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addEducation}
+                className="rounded-full bg-cyan-400/10 border border-cyan-400/20 px-4 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-400/20"
+              >
+                + Add Education
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-6">
+              {form.education.map((edu, idx) => (
+                <div key={idx} className="relative rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-white/45 font-bold">School #{idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeEducation(idx)}
+                      className="text-xs text-rose-300 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="sm:col-span-2">
+                      <FormInput
+                        label="School / University"
+                        type="text"
+                        value={edu.school}
+                        onChange={(e) => updateEducation(idx, "school", e.target.value)}
+                        placeholder="e.g. DYP ATU"
+                      />
+                    </div>
+                    <FormInput
+                      label="Degree"
+                      type="text"
+                      value={edu.degree}
+                      onChange={(e) => updateEducation(idx, "degree", e.target.value)}
+                      placeholder="e.g. B.Tech"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="sm:col-span-2">
+                      <FormInput
+                        label="Field of Study"
+                        type="text"
+                        value={edu.fieldOfStudy}
+                        onChange={(e) => updateEducation(idx, "fieldOfStudy", e.target.value)}
+                        placeholder="e.g. Computer Engineering"
+                      />
+                    </div>
+                    <div className="grid gap-2 grid-cols-2">
+                      <FormInput
+                        label="Start Year"
+                        type="text"
+                        value={edu.startDate}
+                        onChange={(e) => updateEducation(idx, "startDate", e.target.value)}
+                        placeholder="2022"
+                      />
+                      <FormInput
+                        label="End Year"
+                        type="text"
+                        value={edu.endDate}
+                        onChange={(e) => updateEducation(idx, "endDate", e.target.value)}
+                        placeholder="2026"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {form.education.length === 0 && (
+                <p className="text-center text-xs text-white/30 py-4">No education items added yet.</p>
+              )}
+            </div>
+          </section>
+
+          {/* Certifications Section */}
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Licenses & Certifications</p>
+                <p className="mt-2 text-sm text-white/60">List courses, test scores, or vendor credentials.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addCertification}
+                className="rounded-full bg-cyan-400/10 border border-cyan-400/20 px-4 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-400/20"
+              >
+                + Add Certification
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-6">
+              {form.certifications.map((cert, idx) => (
+                <div key={idx} className="relative rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-white/45 font-bold">Credential #{idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeCertification(idx)}
+                      className="text-xs text-rose-300 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormInput
+                      label="Certification Name"
+                      type="text"
+                      value={cert.name}
+                      onChange={(e) => updateCertification(idx, "name", e.target.value)}
+                      placeholder="e.g. AWS Solutions Architect"
+                    />
+                    <FormInput
+                      label="Issuing Organisation"
+                      type="text"
+                      value={cert.issuer}
+                      onChange={(e) => updateCertification(idx, "issuer", e.target.value)}
+                      placeholder="e.g. Amazon Web Services"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <FormInput
+                      label="Issue Date"
+                      type="text"
+                      value={cert.issueDate}
+                      onChange={(e) => updateCertification(idx, "issueDate", e.target.value)}
+                      placeholder="e.g. Aug 2026"
+                    />
+                    <div className="sm:col-span-2">
+                      <FormInput
+                        label="Credential URL"
+                        type="url"
+                        value={cert.credentialUrl}
+                        onChange={(e) => updateCertification(idx, "credentialUrl", e.target.value)}
+                        placeholder="https://credly.com/..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {form.certifications.length === 0 && (
+                <p className="text-center text-xs text-white/30 py-4">No certifications added yet.</p>
+              )}
             </div>
           </section>
 

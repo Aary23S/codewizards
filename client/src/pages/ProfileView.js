@@ -32,11 +32,15 @@ const ProfileView = () => {
   const [reqError, setReqError] = useState("");
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [selectedTopic, setSelectedTopic] = useState("");
 
   const handleRequest = async () => {
     if (!message.trim()) return setReqError("Please write a message");
     try {
-      await createMentorshipRequest({ mentorId: profile._id, message });
+      const finalMessage = selectedTopic 
+        ? `[Mentorship Topic: ${selectedTopic}]\n\n${message}`
+        : message;
+      await createMentorshipRequest({ mentorId: profile._id, message: finalMessage });
       setSent(true);
     } catch (err) {
       setReqError(err.response?.data?.message || "Failed to send request");
@@ -170,19 +174,47 @@ const ProfileView = () => {
                 )}
 
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-cyan-200/70">Profile</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[11px] uppercase tracking-[0.35em] text-cyan-200/70">
+                      {profile.role?.toUpperCase()} • BATCH {profile.batch || "N/A"}
+                    </p>
+                    {profile.isVerified && (
+                      <span className="rounded-full bg-cyan-400/10 border border-cyan-400/20 px-2 py-0.5 text-[9px] uppercase tracking-wider text-cyan-300">
+                        ✓ Verified
+                      </span>
+                    )}
+                  </div>
                   <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
                     {profile.name}
                   </h1>
-                  <p className="mt-2 text-sm text-white/60 capitalize">
-                    {profile.role}
-                    {profile.batch ? ` · Batch ${profile.batch}` : ""}
-                  </p>
-                  {profile.isMentor && (
-                    <span className="mt-4 inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.3em] text-emerald-200">
-                      Open to mentor
-                    </span>
+                  {profile.headline && (
+                    <p className="mt-2 text-base font-medium text-cyan-100/90">
+                      {profile.headline}
+                    </p>
                   )}
+                  {profile.location && (
+                    <p className="mt-1 text-xs text-white/50">
+                      📍 {profile.location}
+                    </p>
+                  )}
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    {profile.isMentor && (
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em] font-semibold ${
+                        profile.mentorshipAvailability === "open" ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" :
+                        profile.mentorshipAvailability === "limited" ? "bg-amber-500/10 text-amber-300 border-amber-500/20" :
+                        "bg-white/5 text-white/40 border-white/10"
+                      }`}>
+                        <span className={`h-2 w-2 rounded-full ${
+                          profile.mentorshipAvailability === "open" ? "bg-emerald-400" :
+                          profile.mentorshipAvailability === "limited" ? "bg-amber-400" :
+                          "bg-white/30"
+                        }`} />
+                        {profile.mentorshipAvailability === "open" ? "Open for mentorship" :
+                         profile.mentorshipAvailability === "limited" ? "Limited availability" :
+                         "Unavailable"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -214,7 +246,7 @@ const ProfileView = () => {
 
         <section className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-6">
-            {(profile.designation || profile.currentCompany || profile.professionalExperience) && (
+            {(profile.designation || profile.currentCompany || profile.professionalExperience || profile.canHelpWith?.length > 0) && (
               <div className={`${shellCard} p-6 md:p-7`}>
                 <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Professional Career</p>
                 <div className="mt-4">
@@ -223,10 +255,34 @@ const ProfileView = () => {
                       {profile.designation || "Professional"} {profile.currentCompany ? `at ${profile.currentCompany}` : ""}
                     </h3>
                   )}
+                  {(profile.employmentType || profile.workMode || profile.startDateText) && (
+                    <p className="mt-1 text-xs text-white/50">
+                      {[
+                        profile.employmentType,
+                        profile.workMode,
+                        profile.startDateText ? `Started ${profile.startDateText}` : null
+                      ].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
                   {profile.professionalExperience && (
-                    <p className="mt-4 text-sm leading-7 text-white/65 whitespace-pre-line">
+                    <p className="mt-4 text-sm leading-7 text-white/65 whitespace-pre-line border-t border-white/5 pt-4">
                       {profile.professionalExperience}
                     </p>
+                  )}
+                  {profile.canHelpWith?.length > 0 && (
+                    <div className="mt-6 border-t border-white/5 pt-5">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-3">I Can Help With</p>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.canHelpWith.map((topic) => (
+                          <span
+                            key={topic}
+                            className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300 font-medium"
+                          >
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -243,6 +299,81 @@ const ProfileView = () => {
                     >
                       {domain}
                     </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Experience Section */}
+            {profile.experiences?.length > 0 && (
+              <div className={`${shellCard} p-6 md:p-7`}>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Experience</p>
+                <div className="mt-6 space-y-6">
+                  {profile.experiences.map((exp, idx) => (
+                    <div key={idx} className="flex gap-4 border-l border-white/10 pl-5 relative before:content-[''] before:absolute before:left-[-5px] before:top-1.5 before:w-[9px] before:h-[9px] before:rounded-full before:bg-cyan-400">
+                      <div className="flex-1 space-y-1">
+                        <h4 className="text-base font-bold text-white leading-tight">{exp.title}</h4>
+                        <p className="text-sm font-semibold text-cyan-200/90">{exp.company}</p>
+                        <p className="text-xs text-white/50">
+                          {exp.startDate} – {exp.endDate || "Present"} {exp.location ? `· ${exp.location}` : ""}
+                        </p>
+                        {exp.description && (
+                          <p className="mt-2 text-xs leading-relaxed text-white/60 whitespace-pre-line">
+                            {exp.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Education Section */}
+            {profile.education?.length > 0 && (
+              <div className={`${shellCard} p-6 md:p-7`}>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Education</p>
+                <div className="mt-6 space-y-6">
+                  {profile.education.map((edu, idx) => (
+                    <div key={idx} className="flex gap-4 border-l border-white/10 pl-5 relative before:content-[''] before:absolute before:left-[-5px] before:top-1.5 before:w-[9px] before:h-[9px] before:rounded-full before:bg-indigo-400">
+                      <div className="flex-1 space-y-0.5">
+                        <h4 className="text-base font-bold text-white leading-tight">{edu.school}</h4>
+                        <p className="text-sm font-semibold text-white/80">
+                          {edu.degree} {edu.fieldOfStudy ? `in ${edu.fieldOfStudy}` : ""}
+                        </p>
+                        <p className="text-xs text-white/50">
+                          {edu.startDate} – {edu.endDate}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Certifications Section */}
+            {profile.certifications?.length > 0 && (
+              <div className={`${shellCard} p-6 md:p-7`}>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Licenses & Certifications</p>
+                <div className="mt-6 space-y-4">
+                  {profile.certifications.map((cert, idx) => (
+                    <div key={idx} className="flex items-start justify-between gap-4 rounded-2xl border border-white/5 bg-black/10 p-4">
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-white">{cert.name}</h4>
+                        <p className="text-xs text-white/70">{cert.issuer}</p>
+                        <p className="text-[10px] text-white/45">Issued {cert.issueDate}</p>
+                      </div>
+                      {cert.credentialUrl && (
+                        <a
+                          href={cert.credentialUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-full bg-white/5 border border-white/10 px-3  py-1.5 text-xs text-cyan-300 font-semibold hover:bg-white/10"
+                        >
+                          View Credential
+                        </a>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -505,6 +636,31 @@ const ProfileView = () => {
                   </p>
                 ) : (
                   <>
+                    <div className="mt-4 space-y-4">
+                      <div className="rounded-2xl bg-white/5 p-4 border border-white/5">
+                        <p className="text-[10px] uppercase tracking-[0.25em] text-white/45 mb-1.5">Availability Settings</p>
+                        <p className="text-xs text-white/80">Response time: {profile.typicalResponseTime || "1-3 days"}</p>
+                        <p className="text-xs text-white/80 mt-1">Accepting students limit: {profile.maxActiveStudents ?? 3}</p>
+                        <p className="text-xs text-cyan-300 mt-1 capitalize">Preferred contact: {profile.preferredContactMethod || "LinkedIn"}</p>
+                      </div>
+
+                      {profile.canHelpWith?.length > 0 && (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] uppercase tracking-[0.25em] text-white/45">Select Guidance Topic</label>
+                          <select
+                            value={selectedTopic}
+                            onChange={(e) => setSelectedTopic(e.target.value)}
+                            className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/60 focus:bg-white/8"
+                          >
+                            <option value="" className="bg-black">Choose a topic...</option>
+                            {profile.canHelpWith.map((topic) => (
+                              <option key={topic} value={topic} className="bg-black">{topic}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
                     <textarea
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
@@ -515,7 +671,7 @@ const ProfileView = () => {
                     {reqError && <p className="mt-2 text-sm text-rose-200">{reqError}</p>}
                     <button
                       onClick={handleRequest}
-                      className="mt-4 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100"
+                      className="mt-4 w-full rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100"
                     >
                       Send request
                     </button>

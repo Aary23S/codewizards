@@ -23,6 +23,48 @@ const userSchema = new mongoose.Schema(
     currentCompany: { type: String, default: "" },
     designation: { type: String, default: "" },
     professionalExperience: { type: String, default: "" },
+    
+    // Phase 1 Professional fields
+    location: { type: String, default: "" },
+    headline: { type: String, default: "" },
+    isVerified: { type: Boolean, default: false },
+    employmentType: { type: String, default: "" },
+    workMode: { type: String, default: "" },
+    startDateText: { type: String, default: "" },
+    canHelpWith: [String],
+    mentorshipAvailability: { type: String, enum: ["open", "limited", "unavailable"], default: "open" },
+    maxActiveStudents: { type: Number, default: 3 },
+    typicalResponseTime: { type: String, default: "1-3 days" },
+    preferredContactMethod: { type: String, default: "linkedin" },
+
+    // LinkedIn-Style Subsections
+    experiences: [
+      {
+        title: { type: String, default: "" },
+        company: { type: String, default: "" },
+        location: { type: String, default: "" },
+        startDate: { type: String, default: "" },
+        endDate: { type: String, default: "" },
+        description: { type: String, default: "" }
+      }
+    ],
+    education: [
+      {
+        school: { type: String, default: "" },
+        degree: { type: String, default: "" },
+        fieldOfStudy: { type: String, default: "" },
+        startDate: { type: String, default: "" },
+        endDate: { type: String, default: "" }
+      }
+    ],
+    certifications: [
+      {
+        name: { type: String, default: "" },
+        issuer: { type: String, default: "" },
+        issueDate: { type: String, default: "" },
+        credentialUrl: { type: String, default: "" }
+      }
+    ],
 
     // Social / platform links
     linkedin: String,

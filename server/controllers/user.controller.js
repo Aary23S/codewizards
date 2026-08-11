@@ -56,9 +56,29 @@ const normalizePayload = async (req) => {
       .filter(Boolean);
   }
 
+  if (typeof payload.canHelpWith === "string") {
+    payload.canHelpWith = payload.canHelpWith
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
   if (typeof payload.isMentor === "string") {
     payload.isMentor = payload.isMentor === "true";
   }
+
+  // Parse LinkedIn-style subfields
+  const jsonKeys = ["experiences", "education", "certifications"];
+  jsonKeys.forEach((key) => {
+    if (typeof payload[key] === "string") {
+      try {
+        payload[key] = JSON.parse(payload[key]);
+      } catch (err) {
+        // Fallback to empty list or let validator fail
+        payload[key] = [];
+      }
+    }
+  });
 
   if (req.file) {
     payload.imageUrl = await uploadImage(req.file.buffer, req.file.originalname);

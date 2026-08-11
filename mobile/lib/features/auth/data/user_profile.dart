@@ -20,6 +20,20 @@ class UserProfile {
     this.currentCompany,
     this.designation,
     this.professionalExperience,
+    this.location,
+    this.headline,
+    this.isVerified = false,
+    this.employmentType,
+    this.workMode,
+    this.startDateText,
+    this.canHelpWith = const [],
+    this.mentorshipAvailability = "open",
+    this.maxActiveStudents = 3,
+    this.typicalResponseTime = "1-3 days",
+    this.preferredContactMethod = "linkedin",
+    this.experiences = const [],
+    this.education = const [],
+    this.certifications = const [],
   });
 
   final String id;
@@ -40,6 +54,20 @@ class UserProfile {
   final String? currentCompany;
   final String? designation;
   final String? professionalExperience;
+  final String? location;
+  final String? headline;
+  final bool? isVerified;
+  final String? employmentType;
+  final String? workMode;
+  final String? startDateText;
+  final List<String>? canHelpWith;
+  final String mentorshipAvailability;
+  final int maxActiveStudents;
+  final String typicalResponseTime;
+  final String preferredContactMethod;
+  final List<WorkExperience> experiences;
+  final List<EducationItem> education;
+  final List<CertificationItem> certifications;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -61,6 +89,29 @@ class UserProfile {
       currentCompany: _readNullableText(json['currentCompany']),
       designation: _readNullableText(json['designation']),
       professionalExperience: _readNullableText(json['professionalExperience']),
+      location: _readNullableText(json['location']),
+      headline: _readNullableText(json['headline']),
+      isVerified: readBool(json['isVerified']),
+      employmentType: _readNullableText(json['employmentType']),
+      workMode: _readNullableText(json['workMode']),
+      startDateText: _readNullableText(json['startDateText']),
+      canHelpWith: readStringList(json['canHelpWith']),
+      mentorshipAvailability: readString(json['mentorshipAvailability'] ?? 'open'),
+      maxActiveStudents: readInt(json['maxActiveStudents']) ?? 3,
+      typicalResponseTime: readString(json['typicalResponseTime'] ?? '1-3 days'),
+      preferredContactMethod: readString(json['preferredContactMethod'] ?? 'linkedin'),
+      experiences: (json['experiences'] as List?)
+              ?.map((e) => WorkExperience.fromJson(Map<String, dynamic>.from(e)))
+              .toList() ??
+          const [],
+      education: (json['education'] as List?)
+              ?.map((e) => EducationItem.fromJson(Map<String, dynamic>.from(e)))
+              .toList() ??
+          const [],
+      certifications: (json['certifications'] as List?)
+              ?.map((e) => CertificationItem.fromJson(Map<String, dynamic>.from(e)))
+              .toList() ??
+          const [],
     );
   }
 
@@ -129,4 +180,106 @@ String? _readNullableText(dynamic value) {
   final text = value?.toString().trim();
   if (text == null || text.isEmpty) return null;
   return text;
+}
+
+class WorkExperience {
+  WorkExperience({
+    required this.title,
+    required this.company,
+    required this.location,
+    required this.startDate,
+    required this.endDate,
+    required this.description,
+  });
+
+  final String title;
+  final String company;
+  final String location;
+  final String startDate;
+  final String endDate;
+  final String description;
+
+  factory WorkExperience.fromJson(Map<String, dynamic> json) {
+    return WorkExperience(
+      title: readString(json['title']),
+      company: readString(json['company']),
+      location: readString(json['location']),
+      startDate: readString(json['startDate']),
+      endDate: readString(json['endDate']),
+      description: readString(json['description']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'company': company,
+        'location': location,
+        'startDate': startDate,
+        'endDate': endDate,
+        'description': description,
+      };
+}
+
+class EducationItem {
+  EducationItem({
+    required this.school,
+    required this.degree,
+    required this.fieldOfStudy,
+    required this.startDate,
+    required this.endDate,
+  });
+
+  final String school;
+  final String degree;
+  final String fieldOfStudy;
+  final String startDate;
+  final String endDate;
+
+  factory EducationItem.fromJson(Map<String, dynamic> json) {
+    return EducationItem(
+      school: readString(json['school']),
+      degree: readString(json['degree']),
+      fieldOfStudy: readString(json['fieldOfStudy']),
+      startDate: readString(json['startDate']),
+      endDate: readString(json['endDate']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'school': school,
+        'degree': degree,
+        'fieldOfStudy': fieldOfStudy,
+        'startDate': startDate,
+        'endDate': endDate,
+      };
+}
+
+class CertificationItem {
+  CertificationItem({
+    required this.name,
+    required this.issuer,
+    required this.issueDate,
+    required this.credentialUrl,
+  });
+
+  final String name;
+  final String issuer;
+  final String issueDate;
+  final String credentialUrl;
+
+  factory CertificationItem.fromJson(Map<String, dynamic> json) {
+    return CertificationItem(
+      name: readString(json['name']),
+      issuer: readString(json['issuer']),
+      issueDate: readString(json['issueDate']),
+      credentialUrl: readString(json['credentialUrl']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'issuer': issuer,
+        'issueDate': issueDate,
+        'credentialUrl': credentialUrl,
+      };
 }

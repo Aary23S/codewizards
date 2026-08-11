@@ -27,6 +27,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   String? _errorMessage;
   final _requestController = TextEditingController();
   bool _submittingRequest = false;
+  String? _selectedTopic;
 
   @override
   void didChangeDependencies() {
@@ -80,8 +81,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Future<void> _sendRequest(UserProfile profile) async {
-    final message = _requestController.text.trim();
-    if (message.isEmpty || _submittingRequest) return;
+    final body = _requestController.text.trim();
+    if (body.isEmpty || _submittingRequest) return;
+
+    final topicPrefix = _selectedTopic != null ? '[Mentorship Topic: $_selectedTopic]\n\n' : '';
+    final message = '$topicPrefix$body';
 
     setState(() => _submittingRequest = true);
     try {
@@ -91,6 +95,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       );
       if (!mounted) return;
       _requestController.clear();
+      setState(() => _selectedTopic = null);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Mentorship request sent.')));
@@ -205,8 +210,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   currentUser != null &&
                                   currentUser.id != profile.id)
                                 _RequestBlock(
+                                  profile: profile,
                                   controller: _requestController,
                                   submitting: _submittingRequest,
+                                  selectedTopic: _selectedTopic,
+                                  onTopicChanged: (val) => setState(() => _selectedTopic = val),
                                   onSend: () => _sendRequest(profile),
                                 ),
                             ],
@@ -558,13 +566,19 @@ class _CodingBlock extends StatelessWidget {
 
 class _RequestBlock extends StatelessWidget {
   const _RequestBlock({
+    required this.profile,
     required this.controller,
     required this.submitting,
+    required this.selectedTopic,
+    required this.onTopicChanged,
     required this.onSend,
   });
 
+  final UserProfile profile;
   final TextEditingController controller;
   final bool submitting;
+  final String? selectedTopic;
+  final ValueChanged<String?> onTopicChanged;
   final VoidCallback onSend;
 
   @override
@@ -580,28 +594,87 @@ class _RequestBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Request mentorship',
+            'Request mentorship'.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              letterSpacing: 3,
-              color: Colors.white54,
+              letterSpacing: 2,
+              color: Colors.white38,
             ),
           ),
           const SizedBox(height: 12),
+          // Availability info sub-box
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black.withAlpha(40),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withAlpha(8)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Response time:', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                    Text(profile.typicalResponseTime, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Student limit:', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                    Text(profile.maxActiveStudents.toString(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Preferred Connection:', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                    Text(
+                      profile.preferredContactMethod.toUpperCase(),
+                      style: const TextStyle(color: Color(0xFF5CC8FF), fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (profile.canHelpWith != null && profile.canHelpWith!.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            DropdownButtonFormField<String>(
+              initialValue: selectedTopic,
+              decoration: const InputDecoration(
+                labelText: 'Select guidance topic',
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              dropdownColor: Colors.grey[900],
+              items: [
+                const DropdownMenuItem<String>(value: null, child: Text('Choose a topic...')),
+                ...(profile.canHelpWith ?? const []).map((t) => DropdownMenuItem(value: t, child: Text(t))),
+              ],
+              onChanged: onTopicChanged,
+            ),
+          ],
+          const SizedBox(height: 14),
           TextField(
             controller: controller,
             maxLines: 4,
             minLines: 2,
             decoration: const InputDecoration(
-              hintText:
-                  'Introduce yourself and what you would like guidance on...',
+              hintText: 'Introduce yourself and what you would like guidance on...',
             ),
           ),
           const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: submitting ? null : onSend,
-            child: submitting
-                ? const Text('Sending...')
-                : const Text('Send request'),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: submitting ? null : onSend,
+              child: submitting
+                  ? const Text('Sending...')
+                  : const Text('Send request'),
+            ),
           ),
         ],
       ),
@@ -1228,15 +1301,48 @@ class _ProfessionalCareerCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Professional Career'.toUpperCase(),
-            style: TextStyle(
-              color: Colors.white.withAlpha(100),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Professional Career'.toUpperCase(),
+                style: TextStyle(
+                  color: Colors.white.withAlpha(100),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              if (profile.isVerified == true)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5CC8FF).withAlpha(30),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF5CC8FF).withAlpha(50)),
+                  ),
+                  child: const Text(
+                    '✓ Verified',
+                    style: TextStyle(
+                      color: Color(0xFF5CC8FF),
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
           ),
+          if (profile.headline != null && profile.headline!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              profile.headline!,
+              style: const TextStyle(
+                color: Color(0xFF5CC8FF),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           if ((profile.designation != null && profile.designation!.trim().isNotEmpty) || 
               (profile.currentCompany != null && profile.currentCompany!.trim().isNotEmpty)) ...[
@@ -1248,17 +1354,82 @@ class _ProfessionalCareerCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
           ],
-          if (profile.professionalExperience != null && profile.professionalExperience!.trim().isNotEmpty)
-            Text(
-              profile.professionalExperience!,
-              style: TextStyle(
-                color: Colors.white.withAlpha(160),
-                fontSize: 12,
-                height: 1.5,
+          // Employment info & start date & location
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  [
+                    if (profile.employmentType != null && profile.employmentType!.trim().isNotEmpty) profile.employmentType,
+                    if (profile.workMode != null && profile.workMode!.trim().isNotEmpty) profile.workMode,
+                    if (profile.startDateText != null && profile.startDateText!.trim().isNotEmpty) 'Started ${profile.startDateText}',
+                    if (profile.location != null && profile.location!.trim().isNotEmpty) '📍 ${profile.location}',
+                  ].join(' · '),
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(120),
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (profile.professionalExperience != null && profile.professionalExperience!.trim().isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(50),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withAlpha(10)),
+              ),
+              child: Text(
+                profile.professionalExperience!,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(180),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
             ),
+          ],
+          if (profile.canHelpWith != null && profile.canHelpWith!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'I Can Help With'.toUpperCase(),
+              style: TextStyle(
+                color: Colors.white.withAlpha(100),
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: (profile.canHelpWith ?? const []).map((topic) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF34D399).withAlpha(15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF34D399).withAlpha(30)),
+                  ),
+                  child: Text(
+                    topic,
+                    style: const TextStyle(
+                      color: Color(0xFF34D399),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ],
       ),
     );

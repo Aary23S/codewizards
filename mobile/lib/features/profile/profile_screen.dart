@@ -16,6 +16,7 @@ import 'presentation/connections_screen.dart';
 import 'presentation/about_screen.dart';
 import 'presentation/contributions_screen.dart';
 import 'presentation/mentorship_screen.dart';
+import 'presentation/professional_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -131,6 +132,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _openProfessionalProfile(UserProfile profile) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProfessionalProfileScreen(profile: profile),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
@@ -189,7 +198,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: () => _openAboutScreen(data.profile),
                 ),
                 const SizedBox(height: 18),
-                _ProfessionalCareerCard(profile: data.profile),
+                if (data.profile.role.toLowerCase() != 'student') ...[
+                  InkWell(
+                    onTap: () => _openProfessionalProfile(data.profile),
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: const Color(0xFF5CC8FF).withAlpha(15),
+                        border: Border.all(
+                          color: const Color(0xFF5CC8FF).withAlpha(35),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
+                        children: [
+                          // Container(
+                          //   padding: const EdgeInsets.all(10),
+                          //   decoration: BoxDecoration(
+                          //     color: const Color(0xFF5CC8FF).withAlpha(20),
+                          //     shape: BoxShape.circle,
+                          //   ),
+                          //   child: const Icon(
+                          //     Icons.business_center_rounded,
+                          //     color: Color(0xFF5CC8FF),
+                          //     size: 22,
+                          //   ),
+                          // ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Professional Dashboard',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'View your career profile, guidance preferences, and topics.',
+                                  style: TextStyle(
+                                    color: Colors.white.withAlpha(150),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: Color(0xFF5CC8FF),
+                            size: 14,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
                 _QuickActionsGrid(
                   onEdit: () => _openEditProfile(data.profile),
                   onContributions: () => _openContributionsScreen(
@@ -1657,20 +1727,20 @@ class _ActivityOverviewGrid extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(
-                    'Last 30 days',
-                    style: TextStyle(
-                      color: Colors.white.withAlpha(160),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Colors.white.withAlpha(160),
-                    size: 14,
-                  ),
+                  // Text(
+                  //   'Last 30 days',
+                  //   style: TextStyle(
+                  //     color: Colors.white.withAlpha(160),
+                  //     fontSize: 10,
+                  //     fontWeight: FontWeight.bold,
+                  //   ),
+                  // ),
+                  // const SizedBox(width: 4),
+                  // Icon(
+                  //   Icons.keyboard_arrow_down_rounded,
+                  //   color: Colors.white.withAlpha(160),
+                  //   size: 14,
+                  // ),
                 ],
               ),
             ),
@@ -1757,11 +1827,18 @@ class _ProfessionalCareerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showCareer = (profile.designation != null && profile.designation!.trim().isNotEmpty) ||
-        (profile.currentCompany != null && profile.currentCompany!.trim().isNotEmpty) ||
-        (profile.professionalExperience != null && profile.professionalExperience!.trim().isNotEmpty);
+    final hasCareer =
+        (profile.designation != null &&
+            profile.designation!.trim().isNotEmpty) ||
+        (profile.currentCompany != null &&
+            profile.currentCompany!.trim().isNotEmpty) ||
+        (profile.professionalExperience != null &&
+            profile.professionalExperience!.trim().isNotEmpty) ||
+        (profile.headline != null && profile.headline!.trim().isNotEmpty) ||
+        (profile.location != null && profile.location!.trim().isNotEmpty) ||
+        (profile.canHelpWith != null && profile.canHelpWith!.isNotEmpty);
 
-    if (!showCareer) return const SizedBox.shrink();
+    if (!hasCareer) return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -1774,18 +1851,59 @@ class _ProfessionalCareerCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Professional Career'.toUpperCase(),
-            style: TextStyle(
-              color: Colors.white.withAlpha(100),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Professional Career'.toUpperCase(),
+                style: TextStyle(
+                  color: Colors.white.withAlpha(100),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              if (profile.isVerified == true)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5CC8FF).withAlpha(30),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF5CC8FF).withAlpha(50),
+                    ),
+                  ),
+                  child: const Text(
+                    '✓ Verified',
+                    style: TextStyle(
+                      color: Color(0xFF5CC8FF),
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
           ),
+          if (profile.headline != null &&
+              profile.headline!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              profile.headline!,
+              style: const TextStyle(
+                color: Color(0xFF5CC8FF),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
-          if ((profile.designation != null && profile.designation!.trim().isNotEmpty) || 
-              (profile.currentCompany != null && profile.currentCompany!.trim().isNotEmpty)) ...[
+          if ((profile.designation != null &&
+                  profile.designation!.trim().isNotEmpty) ||
+              (profile.currentCompany != null &&
+                  profile.currentCompany!.trim().isNotEmpty)) ...[
             Text(
               '${profile.designation?.trim().isNotEmpty == true ? profile.designation : 'Professional'}${profile.currentCompany?.trim().isNotEmpty == true ? ' @ ${profile.currentCompany}' : ''}',
               style: const TextStyle(
@@ -1794,17 +1912,97 @@ class _ProfessionalCareerCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
           ],
-          if (profile.professionalExperience != null && profile.professionalExperience!.trim().isNotEmpty)
-            Text(
-              profile.professionalExperience!,
-              style: TextStyle(
-                color: Colors.white.withAlpha(160),
-                fontSize: 12,
-                height: 1.5,
+          // Employment info & start date & location
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  [
+                    if (profile.employmentType != null &&
+                        profile.employmentType!.trim().isNotEmpty)
+                      profile.employmentType,
+                    if (profile.workMode != null &&
+                        profile.workMode!.trim().isNotEmpty)
+                      profile.workMode,
+                    if (profile.startDateText != null &&
+                        profile.startDateText!.trim().isNotEmpty)
+                      'Started ${profile.startDateText}',
+                    if (profile.location != null &&
+                        profile.location!.trim().isNotEmpty)
+                      '📍 ${profile.location}',
+                  ].join(' · '),
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(120),
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (profile.professionalExperience != null &&
+              profile.professionalExperience!.trim().isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(50),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withAlpha(10)),
+              ),
+              child: Text(
+                profile.professionalExperience!,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(180),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
             ),
+          ],
+          if (profile.canHelpWith != null &&
+              profile.canHelpWith!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'I Can Help With'.toUpperCase(),
+              style: TextStyle(
+                color: Colors.white.withAlpha(100),
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: (profile.canHelpWith ?? const []).map((topic) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF34D399).withAlpha(15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF34D399).withAlpha(30),
+                    ),
+                  ),
+                  child: Text(
+                    topic,
+                    style: const TextStyle(
+                      color: Color(0xFF34D399),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ],
       ),
     );

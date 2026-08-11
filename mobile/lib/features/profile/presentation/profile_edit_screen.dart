@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -36,6 +37,21 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     'App Dev',
   ];
 
+  static const _helpTopicOptions = [
+    'DSA & Competitive Programming',
+    'Web Development',
+    'App Development',
+    'AI/ML',
+    'Backend Development',
+    'Project Guidance',
+    'Resume Review',
+    'Interview Preparation',
+    'Internship Preparation',
+    'Career Guidance',
+    'Higher Studies',
+    'Entrepreneurship'
+  ];
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _batchController;
@@ -51,6 +67,21 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late final TextEditingController _designationController;
   late final TextEditingController _currentCompanyController;
   late final TextEditingController _professionalExperienceController;
+  late final TextEditingController _headlineController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _startDateTextController;
+  late final TextEditingController _typicalResponseTimeController;
+  late final TextEditingController _maxActiveStudentsController;
+
+  String? _selectedEmploymentType;
+  String? _selectedWorkMode;
+  String? _selectedMentorshipAvailability;
+  String? _selectedPreferredContactMethod;
+  late List<String> _selectedHelpTopics;
+  late List<WorkExperience> _experiences;
+  late List<EducationItem> _education;
+  late List<CertificationItem> _certifications;
+
   late List<String> _selectedDomains;
   late bool _isMentor;
   String? _currentImageUrl;
@@ -81,7 +112,22 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _designationController = TextEditingController(text: profile.designation ?? '');
     _currentCompanyController = TextEditingController(text: profile.currentCompany ?? '');
     _professionalExperienceController = TextEditingController(text: profile.professionalExperience ?? '');
+    _headlineController = TextEditingController(text: profile.headline ?? '');
+    _locationController = TextEditingController(text: profile.location ?? '');
+    _startDateTextController = TextEditingController(text: profile.startDateText ?? '');
+    _typicalResponseTimeController = TextEditingController(text: profile.typicalResponseTime);
+    _maxActiveStudentsController = TextEditingController(text: profile.maxActiveStudents.toString());
+
+    _selectedEmploymentType = profile.employmentType?.trim().isNotEmpty == true ? profile.employmentType : null;
+    _selectedWorkMode = profile.workMode?.trim().isNotEmpty == true ? profile.workMode : null;
+    _selectedMentorshipAvailability = profile.mentorshipAvailability;
+    _selectedPreferredContactMethod = profile.preferredContactMethod;
+    _selectedHelpTopics = List<String>.from(profile.canHelpWith ?? const []);
+
     _selectedDomains = List<String>.from(profile.domain);
+    _experiences = List<WorkExperience>.from(profile.experiences);
+    _education = List<EducationItem>.from(profile.education);
+    _certifications = List<CertificationItem>.from(profile.certifications);
     _isMentor = profile.isMentor;
     _currentImageUrl = profile.imageUrl;
   }
@@ -102,6 +148,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _designationController.dispose();
     _currentCompanyController.dispose();
     _professionalExperienceController.dispose();
+    _headlineController.dispose();
+    _locationController.dispose();
+    _startDateTextController.dispose();
+    _typicalResponseTimeController.dispose();
+    _maxActiveStudentsController.dispose();
     super.dispose();
   }
 
@@ -159,6 +210,16 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         'designation': _nullIfBlank(_designationController.text),
         'currentCompany': _nullIfBlank(_currentCompanyController.text),
         'professionalExperience': _nullIfBlank(_professionalExperienceController.text),
+        'headline': _nullIfBlank(_headlineController.text),
+        'location': _nullIfBlank(_locationController.text),
+        'startDateText': _nullIfBlank(_startDateTextController.text),
+        'employmentType': _selectedEmploymentType,
+        'workMode': _selectedWorkMode,
+        'mentorshipAvailability': _selectedMentorshipAvailability,
+        'preferredContactMethod': _selectedPreferredContactMethod,
+        'typicalResponseTime': _typicalResponseTimeController.text.trim(),
+        'maxActiveStudents': int.tryParse(_maxActiveStudentsController.text.trim()) ?? 3,
+        'canHelpWith': _selectedHelpTopics.join(', '),
         'domain': _selectedDomains.join(', '),
         'isMentor': _isMentor.toString(),
         'github': _nullIfBlank(_githubController.text),
@@ -169,6 +230,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         'leetcodeUsername': _nullIfBlank(_leetcodeUsernameController.text),
         'codeforcesHandle': _nullIfBlank(_codeforcesHandleController.text),
         'githubUsername': _nullIfBlank(_githubUsernameController.text),
+        'experiences': jsonEncode(_experiences.map((e) => e.toJson()).toList()),
+        'education': jsonEncode(_education.map((e) => e.toJson()).toList()),
+        'certifications': jsonEncode(_certifications.map((e) => e.toJson()).toList()),
       }..removeWhere((key, value) => value == null));
 
       if (_pickedImageBytes != null) {
@@ -311,13 +375,62 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 child: Column(
                   children: [
                     TextFormField(
-                      controller: _designationController,
-                      decoration: const InputDecoration(labelText: 'Current designation (e.g. Software Engineer II)'),
+                      controller: _headlineController,
+                      decoration: const InputDecoration(labelText: 'Professional headline (e.g. Full-Stack Developer)'),
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
-                      controller: _currentCompanyController,
-                      decoration: const InputDecoration(labelText: 'Current company (e.g. Google)'),
+                      controller: _locationController,
+                      decoration: const InputDecoration(labelText: 'Location (e.g. Pune, India)'),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _designationController,
+                            decoration: const InputDecoration(labelText: 'Designation'),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _currentCompanyController,
+                            decoration: const InputDecoration(labelText: 'Company'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _selectedEmploymentType,
+                            decoration: const InputDecoration(labelText: 'Employment Type'),
+                            items: ['Full-time', 'Part-time', 'Internship', 'Contract']
+                                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                                .toList(),
+                            onChanged: (val) => setState(() => _selectedEmploymentType = val),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _selectedWorkMode,
+                            decoration: const InputDecoration(labelText: 'Work Mode'),
+                            items: ['Remote', 'Hybrid', 'On-site']
+                                .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                                .toList(),
+                            onChanged: (val) => setState(() => _selectedWorkMode = val),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _startDateTextController,
+                      decoration: const InputDecoration(labelText: 'Start Date (e.g. Aug 2026)'),
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
@@ -351,13 +464,89 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               ),
               const SizedBox(height: 16),
               _SectionCard(
-                title: 'Mentorship',
-                subtitle: 'Keep your mentor availability aligned with the web dashboard.',
-                child: SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _isMentor,
-                  onChanged: (value) => setState(() => _isMentor = value),
-                  title: const Text("I'm open to mentoring juniors"),
+                title: 'Mentorship Settings',
+                subtitle: 'Keep your mentor availability, topics, and connection preferences aligned.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _isMentor,
+                      onChanged: (value) => setState(() => _isMentor = value),
+                      title: const Text("I'm open to mentoring juniors"),
+                    ),
+                    if (_isMentor) ...[
+                      const SizedBox(height: 14),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedMentorshipAvailability,
+                        decoration: const InputDecoration(labelText: 'Availability Status'),
+                        items: const [
+                          DropdownMenuItem(value: 'open', child: Text('🟢 Open for mentorship')),
+                          DropdownMenuItem(value: 'limited', child: Text('🟡 Limited availability')),
+                          DropdownMenuItem(value: 'unavailable', child: Text('⚪ Currently unavailable')),
+                        ],
+                        onChanged: (val) => setState(() => _selectedMentorshipAvailability = val ?? 'open'),
+                      ),
+                      const SizedBox(height: 14),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedPreferredContactMethod,
+                        decoration: const InputDecoration(labelText: 'Preferred Contact Method (visible to accepted mentees)'),
+                        items: const [
+                          DropdownMenuItem(value: 'linkedin', child: Text('LinkedIn Profile')),
+                          DropdownMenuItem(value: 'email', child: Text('Professional Email')),
+                          DropdownMenuItem(value: 'whatsapp', child: Text('WhatsApp Chat')),
+                          DropdownMenuItem(value: 'discord', child: Text('Discord Server/DM')),
+                        ],
+                        onChanged: (val) => setState(() => _selectedPreferredContactMethod = val ?? 'linkedin'),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _typicalResponseTimeController,
+                              decoration: const InputDecoration(labelText: 'Typical Response Time'),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _maxActiveStudentsController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(labelText: 'Max Active Students'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'I Can Help With',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _helpTopicOptions
+                            .map(
+                              (topic) => FilterChip(
+                                selected: _selectedHelpTopics.contains(topic),
+                                label: Text(topic),
+                                onSelected: (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedHelpTopics.add(topic);
+                                    } else {
+                                      _selectedHelpTopics.remove(topic);
+                                    }
+                                  });
+                                },
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
@@ -415,6 +604,160 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // Work Experience Card
+              _SectionCard(
+                title: 'Work Experience',
+                subtitle: 'Add details of internships, part-time, or full-time roles.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _experiences.length,
+                      itemBuilder: (context, index) {
+                        final exp = _experiences[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          color: Colors.white.withAlpha(5),
+                          child: ListTile(
+                            title: Text(exp.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text('${exp.company} · ${exp.startDate} - ${exp.endDate}'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 18),
+                                  onPressed: () => _showExperienceDialog(existing: exp, index: index),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 18, color: Colors.redAccent),
+                                  onPressed: () => setState(() => _experiences.removeAt(index)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    if (_experiences.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text('No experience records added yet.', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                      ),
+                    OutlinedButton.icon(
+                      onPressed: () => _showExperienceDialog(),
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('Add experience'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Education Card
+              _SectionCard(
+                title: 'Education',
+                subtitle: 'Share details of your schools, degrees, and graduation years.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _education.length,
+                      itemBuilder: (context, index) {
+                        final edu = _education[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          color: Colors.white.withAlpha(5),
+                          child: ListTile(
+                            title: Text(edu.school, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text('${edu.degree} · ${edu.startDate} - ${edu.endDate}'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 18),
+                                  onPressed: () => _showEducationDialog(existing: edu, index: index),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 18, color: Colors.redAccent),
+                                  onPressed: () => setState(() => _education.removeAt(index)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    if (_education.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text('No education records added yet.', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                      ),
+                    OutlinedButton.icon(
+                      onPressed: () => _showEducationDialog(),
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('Add education'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Certifications Card
+              _SectionCard(
+                title: 'Licenses & Certifications',
+                subtitle: 'List your courses, badges, or verify credentials.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _certifications.length,
+                      itemBuilder: (context, index) {
+                        final cert = _certifications[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          color: Colors.white.withAlpha(5),
+                          child: ListTile(
+                            title: Text(cert.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text('${cert.issuer} · ${cert.issueDate}'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 18),
+                                  onPressed: () => _showCertificationDialog(existing: cert, index: index),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 18, color: Colors.redAccent),
+                                  onPressed: () => setState(() => _certifications.removeAt(index)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    if (_certifications.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text('No certifications added yet.', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                      ),
+                    OutlinedButton.icon(
+                      onPressed: () => _showCertificationDialog(),
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('Add certification'),
+                    ),
+                  ],
+                ),
+              ),
+
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -448,6 +791,160 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showExperienceDialog({WorkExperience? existing, int? index}) {
+    final titleCtrl = TextEditingController(text: existing?.title ?? '');
+    final companyCtrl = TextEditingController(text: existing?.company ?? '');
+    final locationCtrl = TextEditingController(text: existing?.location ?? '');
+    final startCtrl = TextEditingController(text: existing?.startDate ?? '');
+    final endCtrl = TextEditingController(text: existing?.endDate ?? '');
+    final descCtrl = TextEditingController(text: existing?.description ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(existing == null ? 'Add Experience' : 'Edit Experience'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title / Role')),
+              TextField(controller: companyCtrl, decoration: const InputDecoration(labelText: 'Company')),
+              TextField(controller: locationCtrl, decoration: const InputDecoration(labelText: 'Location')),
+              TextField(controller: startCtrl, decoration: const InputDecoration(labelText: 'Start Date (e.g. May 2026)')),
+              TextField(controller: endCtrl, decoration: const InputDecoration(labelText: 'End Date (e.g. Aug 2026)')),
+              TextField(
+                controller: descCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Description / Achievements'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              final exp = WorkExperience(
+                title: titleCtrl.text.trim(),
+                company: companyCtrl.text.trim(),
+                location: locationCtrl.text.trim(),
+                startDate: startCtrl.text.trim(),
+                endDate: endCtrl.text.trim(),
+                description: descCtrl.text.trim(),
+              );
+              setState(() {
+                if (index == null) {
+                  _experiences.add(exp);
+                } else {
+                  _experiences[index] = exp;
+                }
+              });
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEducationDialog({EducationItem? existing, int? index}) {
+    final schoolCtrl = TextEditingController(text: existing?.school ?? '');
+    final degreeCtrl = TextEditingController(text: existing?.degree ?? '');
+    final fieldCtrl = TextEditingController(text: existing?.fieldOfStudy ?? '');
+    final startCtrl = TextEditingController(text: existing?.startDate ?? '');
+    final endCtrl = TextEditingController(text: existing?.endDate ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(existing == null ? 'Add Education' : 'Edit Education'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: schoolCtrl, decoration: const InputDecoration(labelText: 'School / University')),
+              TextField(controller: degreeCtrl, decoration: const InputDecoration(labelText: 'Degree')),
+              TextField(controller: fieldCtrl, decoration: const InputDecoration(labelText: 'Field of Study')),
+              TextField(controller: startCtrl, decoration: const InputDecoration(labelText: 'Start Year')),
+              TextField(controller: endCtrl, decoration: const InputDecoration(labelText: 'End Year')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              final edu = EducationItem(
+                school: schoolCtrl.text.trim(),
+                degree: degreeCtrl.text.trim(),
+                fieldOfStudy: fieldCtrl.text.trim(),
+                startDate: startCtrl.text.trim(),
+                endDate: endCtrl.text.trim(),
+              );
+              setState(() {
+                if (index == null) {
+                  _education.add(edu);
+                } else {
+                  _education[index] = edu;
+                }
+              });
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCertificationDialog({CertificationItem? existing, int? index}) {
+    final nameCtrl = TextEditingController(text: existing?.name ?? '');
+    final issuerCtrl = TextEditingController(text: existing?.issuer ?? '');
+    final dateCtrl = TextEditingController(text: existing?.issueDate ?? '');
+    final urlCtrl = TextEditingController(text: existing?.credentialUrl ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(existing == null ? 'Add Certification' : 'Edit Certification'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Certification Name')),
+              TextField(controller: issuerCtrl, decoration: const InputDecoration(labelText: 'Issuer')),
+              TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Issue Date (e.g. Aug 2026)')),
+              TextField(controller: urlCtrl, decoration: const InputDecoration(labelText: 'Credential URL')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              final cert = CertificationItem(
+                name: nameCtrl.text.trim(),
+                issuer: issuerCtrl.text.trim(),
+                issueDate: dateCtrl.text.trim(),
+                credentialUrl: urlCtrl.text.trim(),
+              );
+              setState(() {
+                if (index == null) {
+                  _certifications.add(cert);
+                } else {
+                  _certifications[index] = cert;
+                }
+              });
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
