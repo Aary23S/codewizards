@@ -83,7 +83,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           child: FutureBuilder<AdminOverview>(
             future: _future,
             builder: (context, snapshot) {
-              final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+              final loading =
+                  snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData;
 
               if (snapshot.hasError || _errorMessage != null) {
                 return ListView(
@@ -109,7 +111,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   _SectionHeader(
                     eyebrow: 'Admin',
                     title: 'Manage the club from one console.',
-                    description: 'This control panel mirrors the web hierarchy while staying mobile-first and compact.',
+                    description:
+                        'This control panel mirrors the web hierarchy while staying mobile-first and compact.',
                   ),
                   const SizedBox(height: 16),
                   if (loading)
@@ -117,17 +120,53 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   else if (overview == null)
                     const _EmptyPanel(message: 'No admin metrics available.')
                   else
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 1.55,
-                      children: [
-                        for (final metric in overview.metrics)
-                          _MetricCard(label: metric.label, value: metric.value),
-                      ],
+                    SizedBox(
+                      height: 90,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: overview.metrics.length,
+                        itemBuilder: (context, index) {
+                          final metric = overview.metrics[index];
+                          return Container(
+                            margin: const EdgeInsets.only(right: 12),
+                            width: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.white.withAlpha(8),
+                              border: Border.all(
+                                color: Colors.white.withAlpha(15),
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  metric.value.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  metric.label.toUpperCase(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white.withAlpha(120),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   const SizedBox(height: 16),
                   _AdminSectionsBlock(
@@ -195,12 +234,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       config: AdminCrudConfig(
         title: 'Users',
         eyebrow: 'Users',
-        description: 'Manage access, mentor status, and user profiles in sync with the backend.',
+        description:
+            'Manage access, mentor status, and user profiles in sync with the backend.',
         createButtonLabel: 'Add User',
         formTitle: 'Create user',
         loader: () => repo.fetchList('/users'),
-        create: (payload) => repo.createUser(_normalizeUserPayload(payload, creating: true)),
-        update: (id, payload) => repo.updateUser(id, _normalizeUserPayload(payload, creating: false)),
+        create: (payload) =>
+            repo.createUser(_normalizeUserPayload(payload, creating: true)),
+        update: (id, payload) => repo.updateUser(
+          id,
+          _normalizeUserPayload(payload, creating: false),
+        ),
         delete: repo.deleteUser,
         extraAction: (item) async {
           if (_isProtectedAdmin(item)) return;
@@ -211,13 +255,21 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           await repo.suspendUser(
             id,
             isSuspended: !suspended,
-            suspendedReason: suspended ? null : _string(item['suspendedReason'], fallback: 'Suspended by admin'),
+            suspendedReason: suspended
+                ? null
+                : _string(
+                    item['suspendedReason'],
+                    fallback: 'Suspended by admin',
+                  ),
           );
         },
         secondaryAction: (item) async {
           final id = _id(item);
           if (id == null) return;
-          final currentRole = _string(item['role'], fallback: 'student').toLowerCase();
+          final currentRole = _string(
+            item['role'],
+            fallback: 'student',
+          ).toLowerCase();
           final isPrimary = _isPrimaryAdmin(item);
           final targetRole = currentRole == 'admin' ? 'student' : 'admin';
           if (isPrimary && targetRole != 'admin') return;
@@ -226,25 +278,79 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         fields: const [
           AdminFieldSpec(key: 'name', label: 'Name'),
           AdminFieldSpec(key: 'email', label: 'Email'),
-          AdminFieldSpec(key: 'password', label: 'Password', required: false, hintText: 'Leave blank to keep current password'),
+          AdminFieldSpec(
+            key: 'password',
+            label: 'Password',
+            required: false,
+            hintText: 'Leave blank to keep current password',
+          ),
           AdminFieldSpec(
             key: 'role',
             label: 'Role',
             type: AdminFieldType.dropdown,
             options: ['student', 'mentor', 'senior', 'alumni', 'admin'],
           ),
-          AdminFieldSpec(key: 'batch', label: 'Batch', type: AdminFieldType.number, required: false),
-          AdminFieldSpec(key: 'domain', label: 'Domains', hintText: 'Comma separated domains, e.g. Web, Flutter'),
-          AdminFieldSpec(key: 'bio', label: 'Bio', type: AdminFieldType.multiline, required: false),
+          AdminFieldSpec(
+            key: 'batch',
+            label: 'Batch',
+            type: AdminFieldType.number,
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'domain',
+            label: 'Domains',
+            hintText: 'Comma separated domains, e.g. Web, Flutter',
+          ),
+          AdminFieldSpec(
+            key: 'bio',
+            label: 'Bio',
+            type: AdminFieldType.multiline,
+            required: false,
+          ),
           AdminFieldSpec(key: 'imageUrl', label: 'Image URL', required: false),
-          AdminFieldSpec(key: 'isMentor', label: 'Open to mentor', type: AdminFieldType.boolean, required: false),
-          AdminFieldSpec(key: 'githubUrl', label: 'GitHub URL', required: false),
-          AdminFieldSpec(key: 'linkedinUrl', label: 'LinkedIn URL', required: false),
-          AdminFieldSpec(key: 'leetcodeUrl', label: 'LeetCode URL', required: false),
-          AdminFieldSpec(key: 'codeforcesUrl', label: 'Codeforces URL', required: false),
-          AdminFieldSpec(key: 'portfolioUrl', label: 'Portfolio URL', required: false),
-          AdminFieldSpec(key: 'isSuspended', label: 'Suspended', type: AdminFieldType.boolean, required: false),
-          AdminFieldSpec(key: 'suspendedReason', label: 'Suspended Reason', type: AdminFieldType.multiline, required: false),
+          AdminFieldSpec(
+            key: 'isMentor',
+            label: 'Open to mentor',
+            type: AdminFieldType.boolean,
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'githubUrl',
+            label: 'GitHub URL',
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'linkedinUrl',
+            label: 'LinkedIn URL',
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'leetcodeUrl',
+            label: 'LeetCode URL',
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'codeforcesUrl',
+            label: 'Codeforces URL',
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'portfolioUrl',
+            label: 'Portfolio URL',
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'isSuspended',
+            label: 'Suspended',
+            type: AdminFieldType.boolean,
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'suspendedReason',
+            label: 'Suspended Reason',
+            type: AdminFieldType.multiline,
+            required: false,
+          ),
         ],
         cardData: (item) {
           final name = _string(item['name'], fallback: 'Unnamed user');
@@ -264,8 +370,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             subtitle: '$email • Batch $batch',
             badges: badges,
             canDelete: !isProtected,
-            extraActionLabel: isProtected || role == 'admin' ? null : (_boolLabel(item['isSuspended']) ? 'Unsuspend' : 'Suspend'),
-            secondaryActionLabel: isPrimary ? null : (role == 'admin' ? 'Demote Admin' : 'Promote Admin'),
+            extraActionLabel: isProtected || role == 'admin'
+                ? null
+                : (_boolLabel(item['isSuspended']) ? 'Unsuspend' : 'Suspend'),
+            secondaryActionLabel: isPrimary
+                ? null
+                : (role == 'admin' ? 'Demote Admin' : 'Promote Admin'),
           );
         },
       ),
@@ -282,18 +392,44 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         createButtonLabel: 'Add Project',
         formTitle: 'Add project',
         loader: () => repo.fetchList('/projects'),
-        create: (payload) => repo.createObject('/projects', _normalizeProjectPayload(payload)),
-        update: (id, payload) => repo.updateObject('/projects/$id', _normalizeProjectPayload(payload)),
+        create: (payload) =>
+            repo.createObject('/projects', _normalizeProjectPayload(payload)),
+        update: (id, payload) => repo.updateObject(
+          '/projects/$id',
+          _normalizeProjectPayload(payload),
+        ),
         delete: (id) => repo.deleteObject('/projects/$id'),
         fields: const [
           AdminFieldSpec(key: 'title', label: 'Title'),
-          AdminFieldSpec(key: 'description', label: 'Description', type: AdminFieldType.multiline),
-          AdminFieldSpec(key: 'techStack', label: 'Tech Stack', hintText: 'Comma separated, e.g. React, Node.js'),
-          AdminFieldSpec(key: 'contributors', label: 'Contributors', required: false, hintText: 'Comma separated names'),
-          AdminFieldSpec(key: 'githubUrl', label: 'GitHub URL', required: false),
+          AdminFieldSpec(
+            key: 'description',
+            label: 'Description',
+            type: AdminFieldType.multiline,
+          ),
+          AdminFieldSpec(
+            key: 'techStack',
+            label: 'Tech Stack',
+            hintText: 'Comma separated, e.g. React, Node.js',
+          ),
+          AdminFieldSpec(
+            key: 'contributors',
+            label: 'Contributors',
+            required: false,
+            hintText: 'Comma separated names',
+          ),
+          AdminFieldSpec(
+            key: 'githubUrl',
+            label: 'GitHub URL',
+            required: false,
+          ),
           AdminFieldSpec(key: 'demoUrl', label: 'Demo URL', required: false),
           AdminFieldSpec(key: 'imageUrl', label: 'Image URL', required: false),
-          AdminFieldSpec(key: 'featured', label: 'Featured', type: AdminFieldType.boolean, required: false),
+          AdminFieldSpec(
+            key: 'featured',
+            label: 'Featured',
+            type: AdminFieldType.boolean,
+            required: false,
+          ),
         ],
         cardData: (item) {
           final tech = _csvItems(item['techStack']).take(3).join(' · ');
@@ -320,8 +456,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         createButtonLabel: 'Add Event',
         formTitle: 'Add event',
         loader: () => repo.fetchList('/events'),
-        create: (payload) => repo.createObject('/events', _normalizeEventPayload(payload)),
-        update: (id, payload) => repo.updateObject('/events/$id', _normalizeEventPayload(payload)),
+        create: (payload) =>
+            repo.createObject('/events', _normalizeEventPayload(payload)),
+        update: (id, payload) =>
+            repo.updateObject('/events/$id', _normalizeEventPayload(payload)),
         delete: (id) => repo.deleteObject('/events/$id'),
         fields: const [
           AdminFieldSpec(key: 'title', label: 'Title'),
@@ -331,23 +469,37 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             type: AdminFieldType.dropdown,
             options: ['workshop', 'hackathon', 'seminar', 'meetup', 'other'],
           ),
-          AdminFieldSpec(key: 'description', label: 'Description', type: AdminFieldType.multiline),
+          AdminFieldSpec(
+            key: 'description',
+            label: 'Description',
+            type: AdminFieldType.multiline,
+          ),
           AdminFieldSpec(key: 'date', label: 'Date', hintText: 'YYYY-MM-DD'),
           AdminFieldSpec(key: 'venue', label: 'Venue', required: false),
           AdminFieldSpec(key: 'imageUrl', label: 'Image URL', required: false),
-          AdminFieldSpec(key: 'registrationLink', label: 'Registration Link', required: false),
+          AdminFieldSpec(
+            key: 'registrationLink',
+            label: 'Registration Link',
+            required: false,
+          ),
           AdminFieldSpec(
             key: 'status',
             label: 'Status',
             type: AdminFieldType.dropdown,
             options: ['upcoming', 'completed'],
           ),
-          AdminFieldSpec(key: 'featured', label: 'Featured', type: AdminFieldType.boolean, required: false),
+          AdminFieldSpec(
+            key: 'featured',
+            label: 'Featured',
+            type: AdminFieldType.boolean,
+            required: false,
+          ),
         ],
         cardData: (item) {
           return AdminRecordCardData(
             title: _string(item['title'], fallback: 'Untitled event'),
-            subtitle: '${_displayRole(_string(item['type'], fallback: 'event'))} • ${_string(item['date'], fallback: 'No date')}',
+            subtitle:
+                '${_displayRole(_string(item['type'], fallback: 'event'))} • ${_string(item['date'], fallback: 'No date')}',
             badges: [
               _string(item['status'], fallback: 'upcoming'),
               if (_boolLabel(item['featured'])) 'Featured',
@@ -369,19 +521,27 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         formTitle: 'Post announcement',
         loader: () => repo.fetchList('/announcements'),
         create: (payload) => repo.createObject('/announcements', payload),
-        update: (id, payload) => repo.updateObject('/announcements/$id', payload),
+        update: (id, payload) =>
+            repo.updateObject('/announcements/$id', payload),
         delete: (id) => repo.deleteObject('/announcements/$id'),
         fields: const [
           AdminFieldSpec(key: 'title', label: 'Title'),
-          AdminFieldSpec(key: 'body', label: 'Body', type: AdminFieldType.multiline),
-          AdminFieldSpec(key: 'important', label: 'Mark as important', type: AdminFieldType.boolean, required: false),
+          AdminFieldSpec(
+            key: 'body',
+            label: 'Body',
+            type: AdminFieldType.multiline,
+          ),
+          AdminFieldSpec(
+            key: 'important',
+            label: 'Mark as important',
+            type: AdminFieldType.boolean,
+            required: false,
+          ),
         ],
         cardData: (item) => AdminRecordCardData(
           title: _string(item['title'], fallback: 'Untitled announcement'),
           subtitle: _excerpt(_string(item['body']), 120),
-          badges: [
-            if (_boolLabel(item['important'])) 'Important',
-          ],
+          badges: [if (_boolLabel(item['important'])) 'Important'],
         ),
       ),
     );
@@ -401,18 +561,26 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         update: (id, payload) => repo.updateObject('/timeline/$id', payload),
         delete: (id) => repo.deleteObject('/timeline/$id'),
         fields: const [
-          AdminFieldSpec(key: 'year', label: 'Year', type: AdminFieldType.number),
+          AdminFieldSpec(
+            key: 'year',
+            label: 'Year',
+            type: AdminFieldType.number,
+          ),
           AdminFieldSpec(key: 'month', label: 'Month', required: false),
           AdminFieldSpec(key: 'title', label: 'Title'),
-          AdminFieldSpec(key: 'description', label: 'Description', type: AdminFieldType.multiline),
+          AdminFieldSpec(
+            key: 'description',
+            label: 'Description',
+            type: AdminFieldType.multiline,
+          ),
           AdminFieldSpec(key: 'imageUrl', label: 'Image URL', required: false),
         ],
         cardData: (item) => AdminRecordCardData(
           title: _string(item['title'], fallback: 'Timeline item'),
-          subtitle: '${_string(item['month'], fallback: 'Month')} ${_string(item['year'], fallback: '')}'.trim(),
-          badges: [
-            if (_string(item['year']).isNotEmpty) _string(item['year']),
-          ],
+          subtitle:
+              '${_string(item['month'], fallback: 'Month')} ${_string(item['year'], fallback: '')}'
+                  .trim(),
+          badges: [if (_string(item['year']).isNotEmpty) _string(item['year'])],
         ),
       ),
     );
@@ -440,14 +608,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             type: AdminFieldType.dropdown,
             options: ['event', 'poster', 'team', 'other'],
           ),
-          AdminFieldSpec(key: 'eventRef', label: 'Event Reference', required: false),
+          AdminFieldSpec(
+            key: 'eventRef',
+            label: 'Event Reference',
+            required: false,
+          ),
         ],
         cardData: (item) => AdminRecordCardData(
           title: _string(item['title'], fallback: 'Untitled photo'),
           subtitle: _string(item['category'], fallback: 'gallery'),
-          badges: [
-            if (_string(item['eventRef']).isNotEmpty) 'Event linked',
-          ],
+          badges: [if (_string(item['eventRef']).isNotEmpty) 'Event linked'],
         ),
       ),
     );
@@ -469,19 +639,42 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         delete: (id) => repo.deleteObject('/doubts/$id'),
         fields: const [
           AdminFieldSpec(key: 'title', label: 'Title'),
-          AdminFieldSpec(key: 'body', label: 'Body', type: AdminFieldType.multiline),
+          AdminFieldSpec(
+            key: 'body',
+            label: 'Body',
+            type: AdminFieldType.multiline,
+          ),
           AdminFieldSpec(key: 'domain', label: 'Domain', required: false),
-          AdminFieldSpec(key: 'resolved', label: 'Resolved', type: AdminFieldType.boolean, required: false),
+          AdminFieldSpec(
+            key: 'resolved',
+            label: 'Resolved',
+            type: AdminFieldType.boolean,
+            required: false,
+          ),
         ],
-        cardData: (item) => AdminRecordCardData(
-          title: _string(item['title'], fallback: 'Untitled question'),
-          subtitle: _excerpt(_string(item['body']), 120),
-          badges: [
-            _string(item['domain'], fallback: 'general'),
-            if (_boolLabel(item['resolved'])) 'Resolved',
-            if (_string(item['upvotes']).isNotEmpty) '${_string(item['upvotes'])} upvotes',
-          ],
-        ),
+        cardData: (item) {
+          final upvotesVal = item['upvotes'];
+          int upvotesCount = 0;
+          if (upvotesVal is List) {
+            upvotesCount = upvotesVal.length;
+          } else if (upvotesVal is num) {
+            upvotesCount = upvotesVal.toInt();
+          } else if (upvotesVal != null) {
+            final parsed = int.tryParse(upvotesVal.toString());
+            if (parsed != null) {
+              upvotesCount = parsed;
+            }
+          }
+          return AdminRecordCardData(
+            title: _string(item['title'], fallback: 'Untitled question'),
+            subtitle: _excerpt(_string(item['body']), 120),
+            badges: [
+              _string(item['domain'], fallback: 'general'),
+              if (_boolLabel(item['resolved'])) 'Resolved',
+              '$upvotesCount upvotes',
+            ],
+          );
+        },
       ),
     );
   }
@@ -496,24 +689,42 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         createButtonLabel: 'Add Blog',
         formTitle: 'Add blog',
         loader: () => repo.fetchList('/blogs'),
-        create: (payload) => repo.createObject('/blogs', _normalizeBlogPayload(payload)),
-        update: (id, payload) => repo.updateObject('/blogs/$id', _normalizeBlogPayload(payload)),
+        create: (payload) =>
+            repo.createObject('/blogs', _normalizeBlogPayload(payload)),
+        update: (id, payload) =>
+            repo.updateObject('/blogs/$id', _normalizeBlogPayload(payload)),
         delete: (id) => repo.deleteObject('/blogs/$id'),
         onItemTap: (item) async {
           final id = _id(item);
           if (id == null || !mounted) return;
           await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => BlogDetailScreen(blogId: id),
-            ),
+            MaterialPageRoute(builder: (_) => BlogDetailScreen(blogId: id)),
           );
         },
         fields: const [
           AdminFieldSpec(key: 'title', label: 'Title'),
-          AdminFieldSpec(key: 'content', label: 'Content', type: AdminFieldType.multiline),
-          AdminFieldSpec(key: 'coverImage', label: 'Cover Image URL', required: false),
-          AdminFieldSpec(key: 'tags', label: 'Tags', required: false, hintText: 'Comma separated tags'),
-          AdminFieldSpec(key: 'published', label: 'Published', type: AdminFieldType.boolean, required: false),
+          AdminFieldSpec(
+            key: 'content',
+            label: 'Content',
+            type: AdminFieldType.multiline,
+          ),
+          AdminFieldSpec(
+            key: 'coverImage',
+            label: 'Cover Image URL',
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'tags',
+            label: 'Tags',
+            required: false,
+            hintText: 'Comma separated tags',
+          ),
+          AdminFieldSpec(
+            key: 'published',
+            label: 'Published',
+            type: AdminFieldType.boolean,
+            required: false,
+          ),
         ],
         cardData: (item) => AdminRecordCardData(
           title: _string(item['title'], fallback: 'Untitled blog'),
@@ -533,12 +744,19 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       config: AdminCrudConfig(
         title: 'Opportunities',
         eyebrow: 'Opportunities',
-        description: 'Publish and moderate opportunities with a cleaner editor.',
+        description:
+            'Publish and moderate opportunities with a cleaner editor.',
         createButtonLabel: 'Add Opportunity',
         formTitle: 'Add opportunity',
         loader: () => repo.fetchList('/opportunities'),
-        create: (payload) => repo.createObject('/opportunities', _normalizeOpportunityPayload(payload)),
-        update: (id, payload) => repo.updateObject('/opportunities/$id', _normalizeOpportunityPayload(payload)),
+        create: (payload) => repo.createObject(
+          '/opportunities',
+          _normalizeOpportunityPayload(payload),
+        ),
+        update: (id, payload) => repo.updateObject(
+          '/opportunities/$id',
+          _normalizeOpportunityPayload(payload),
+        ),
         delete: (id) => repo.deleteObject('/opportunities/$id'),
         fields: const [
           AdminFieldSpec(key: 'title', label: 'Title'),
@@ -551,9 +769,24 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           ),
           AdminFieldSpec(key: 'domain', label: 'Domain', required: false),
           AdminFieldSpec(key: 'applyLink', label: 'Apply Link'),
-          AdminFieldSpec(key: 'deadline', label: 'Deadline', required: false, hintText: 'YYYY-MM-DD'),
-          AdminFieldSpec(key: 'description', label: 'Description', type: AdminFieldType.multiline, required: false),
-          AdminFieldSpec(key: 'isActive', label: 'Active', type: AdminFieldType.boolean, required: false),
+          AdminFieldSpec(
+            key: 'deadline',
+            label: 'Deadline',
+            required: false,
+            hintText: 'YYYY-MM-DD',
+          ),
+          AdminFieldSpec(
+            key: 'description',
+            label: 'Description',
+            type: AdminFieldType.multiline,
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'isActive',
+            label: 'Active',
+            type: AdminFieldType.boolean,
+            required: false,
+          ),
         ],
         cardData: (item) => AdminRecordCardData(
           title: _string(item['title'], fallback: 'Untitled opportunity'),
@@ -574,7 +807,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       config: AdminCrudConfig(
         title: 'Resources',
         eyebrow: 'Resources',
-        description: 'Publish learning materials, guides, and references for the community.',
+        description:
+            'Publish learning materials, guides, and references for the community.',
         createButtonLabel: 'Add Resource',
         formTitle: 'Add resource',
         loader: () => repo.fetchList('/resources'),
@@ -591,7 +825,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             options: ['PDF', 'GitHub', 'YouTube', 'Docs', 'Other'],
           ),
           AdminFieldSpec(key: 'domain', label: 'Domain', required: false),
-          AdminFieldSpec(key: 'description', label: 'Description', type: AdminFieldType.multiline, required: false),
+          AdminFieldSpec(
+            key: 'description',
+            label: 'Description',
+            type: AdminFieldType.multiline,
+            required: false,
+          ),
         ],
         cardData: (item) => AdminRecordCardData(
           title: _string(item['title'], fallback: 'Untitled resource'),
@@ -620,13 +859,19 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         createButtonLabel: 'Add Member',
         formTitle: 'Add team member',
         loader: () => repo.fetchList('/team'),
-        create: (payload) => repo.createObject('/team', _normalizeTeamPayload(payload)),
-        update: (id, payload) => repo.updateObject('/team/$id', _normalizeTeamPayload(payload)),
+        create: (payload) =>
+            repo.createObject('/team', _normalizeTeamPayload(payload)),
+        update: (id, payload) =>
+            repo.updateObject('/team/$id', _normalizeTeamPayload(payload)),
         delete: (id) => repo.deleteObject('/team/$id'),
         fields: const [
           AdminFieldSpec(key: 'name', label: 'Name'),
           AdminFieldSpec(key: 'role', label: 'Role'),
-          AdminFieldSpec(key: 'subtitle', label: 'Subtitle / Department / Batch note', required: false),
+          AdminFieldSpec(
+            key: 'subtitle',
+            label: 'Subtitle / Department / Batch note',
+            required: false,
+          ),
           AdminFieldSpec(key: 'teamYear', label: 'Team Year', required: false),
           AdminFieldSpec(
             key: 'category',
@@ -635,19 +880,39 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             options: ['founder', 'faculty', 'core', 'mentor'],
           ),
           AdminFieldSpec(key: 'batch', label: 'Batch', required: false),
-          AdminFieldSpec(key: 'domain', label: 'Domains', required: false, hintText: 'Comma separated domains'),
+          AdminFieldSpec(
+            key: 'domain',
+            label: 'Domains',
+            required: false,
+            hintText: 'Comma separated domains',
+          ),
           AdminFieldSpec(key: 'imageUrl', label: 'Image URL', required: false),
-          AdminFieldSpec(key: 'linkedinUrl', label: 'LinkedIn URL', required: false),
-          AdminFieldSpec(key: 'githubUrl', label: 'GitHub URL', required: false),
-          AdminFieldSpec(key: 'order', label: 'Order', type: AdminFieldType.number, required: false),
+          AdminFieldSpec(
+            key: 'linkedinUrl',
+            label: 'LinkedIn URL',
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'githubUrl',
+            label: 'GitHub URL',
+            required: false,
+          ),
+          AdminFieldSpec(
+            key: 'order',
+            label: 'Order',
+            type: AdminFieldType.number,
+            required: false,
+          ),
         ],
         cardData: (item) => AdminRecordCardData(
           title: _string(item['name'], fallback: 'Unnamed member'),
           subtitle: _string(item['role'], fallback: 'Team member'),
           badges: [
             _string(item['category'], fallback: 'team'),
-            if (_string(item['batch']).isNotEmpty) 'Batch ${_string(item['batch'])}',
-            if (_string(item['teamYear']).isNotEmpty) 'Year ${_string(item['teamYear'])}',
+            if (_string(item['batch']).isNotEmpty)
+              'Batch ${_string(item['batch'])}',
+            if (_string(item['teamYear']).isNotEmpty)
+              'Year ${_string(item['teamYear'])}',
           ],
         ),
       ),
@@ -656,10 +921,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 }
 
 class _HeroPanel extends StatelessWidget {
-  const _HeroPanel({
-    required this.userName,
-    required this.role,
-  });
+  const _HeroPanel({required this.userName, required this.role});
 
   final String userName;
   final String role;
@@ -670,32 +932,61 @@ class _HeroPanel extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         gradient: const LinearGradient(
-          colors: [Color(0xFF151515), Color(0xFF090909)],
+          colors: [Color(0xFF1E1E1E), Color(0xFF121212)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.white.withAlpha(20)),
+        border: Border.all(color: Colors.white.withAlpha(15)),
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'ADMIN',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'ADMIN',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   letterSpacing: 3.2,
                   color: Colors.white54,
                 ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF34D399).withAlpha(20),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF34D399).withAlpha(40),
+                  ),
+                ),
+                child: const Text(
+                  '🟢 Operational',
+                  style: TextStyle(
+                    color: Color(0xFF34D399),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Text(
             'Control Panel',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 34),
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
             'Manage club users, content, and communication from a single mobile view.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              height: 1.5,
+              color: Colors.white60,
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -723,16 +1014,16 @@ class _Chip extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: Colors.white.withAlpha(10),
-        border: Border.all(color: Colors.white.withAlpha(20)),
+        color: Colors.white.withAlpha(8),
+        border: Border.all(color: Colors.white.withAlpha(15)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Colors.white70,
-              letterSpacing: 0.6,
-            ),
+          color: Colors.white70,
+          letterSpacing: 0.6,
+        ),
       ),
     );
   }
@@ -757,55 +1048,26 @@ class _SectionHeader extends StatelessWidget {
         Text(
           eyebrow.toUpperCase(),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                letterSpacing: 3,
-                color: Colors.white54,
-              ),
+            letterSpacing: 3,
+            color: Colors.white54,
+          ),
         ),
         const SizedBox(height: 8),
-        Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 24)),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 6),
-        Text(description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+        Text(
+          description,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(height: 1.5, color: Colors.white60),
+        ),
       ],
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final int value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        color: Colors.white.withAlpha(10),
-        border: Border.all(color: Colors.white.withAlpha(20)),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value.toString(),
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 2,
-                  color: Colors.white54,
-                ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -841,16 +1103,16 @@ class _EmptyPanel extends StatelessWidget {
         border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       padding: const EdgeInsets.all(18),
-      child: Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+      ),
     );
   }
 }
 
 class _ErrorPanel extends StatelessWidget {
-  const _ErrorPanel({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorPanel({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -867,9 +1129,17 @@ class _ErrorPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Unable to load admin metrics', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Unable to load admin metrics',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
-          Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            message,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 14),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
@@ -886,7 +1156,8 @@ String _displayRole(String role) {
 
 String _friendlyError(Object? error) {
   final text = error.toString();
-  if (text.contains('401')) return 'Your session expired. Please sign in again.';
+  if (text.contains('401'))
+    return 'Your session expired. Please sign in again.';
   if (text.contains('SocketException') || text.contains('DioException')) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }
@@ -919,67 +1190,183 @@ enum AdminSection {
   points,
 }
 
-class _AdminSectionsBlock extends StatelessWidget {
-  const _AdminSectionsBlock({
-    required this.onSectionTap,
+class _AdminSectionItem {
+  const _AdminSectionItem({
+    required this.section,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
   });
+  final AdminSection section;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+}
+
+class _CategoryGroup {
+  const _CategoryGroup({required this.title, required this.items});
+  final String title;
+  final List<_AdminSectionItem> items;
+}
+
+class _AdminSectionsBlock extends StatelessWidget {
+  const _AdminSectionsBlock({required this.onSectionTap});
 
   final ValueChanged<AdminSection> onSectionTap;
 
   @override
   Widget build(BuildContext context) {
-    final sections = const [
-      (AdminSection.users, 'Users', 'Manage access'),
-      (AdminSection.projects, 'Projects', 'Review content'),
-      (AdminSection.events, 'Events', 'Edit listings'),
-      (AdminSection.announcements, 'Announcements', 'Broadcast notices'),
-      (AdminSection.timeline, 'Timeline', 'Update milestones'),
-      (AdminSection.gallery, 'Gallery', 'Curate media'),
-      (AdminSection.doubts, 'Doubts', 'Moderate forum'),
-      (AdminSection.blogs, 'Blogs', 'Manage posts'),
-      (AdminSection.opportunities, 'Opportunities', 'Career feed'),
-      (AdminSection.resources, 'Resources', 'Learning library'),
-      (AdminSection.team, 'Team', 'Staff profiles'),
-      (AdminSection.contact, 'Contact', 'Update links'),
-      (AdminSection.points, 'Points', 'Adjust rules'),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        color: Colors.white.withAlpha(10),
-        border: Border.all(color: Colors.white.withAlpha(20)),
-      ),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Admin sections',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 3,
-                  color: Colors.white54,
-                ),
+    final categories = [
+      _CategoryGroup(
+        title: 'Directory & Members',
+        items: const [
+          _AdminSectionItem(
+            section: AdminSection.users,
+            title: 'Users',
+            subtitle: 'Manage user access, roles, and profiles',
+            icon: Icons.people_rounded,
           ),
-          const SizedBox(height: 14),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.5,
-            children: [
-              for (final entry in sections)
-                _AdminSectionTile(
-                  title: entry.$2,
-                  subtitle: entry.$3,
-                  onTap: () => onSectionTap(entry.$1),
-                ),
-            ],
+          _AdminSectionItem(
+            section: AdminSection.team,
+            title: 'Team',
+            subtitle: 'Manage founders, core teams, and yearly staff',
+            icon: Icons.group_rounded,
           ),
         ],
       ),
+      _CategoryGroup(
+        title: 'Broadcasts & Content',
+        items: const [
+          _AdminSectionItem(
+            section: AdminSection.announcements,
+            title: 'Announcements',
+            subtitle: 'Pin important updates for the club community',
+            icon: Icons.campaign_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.blogs,
+            title: 'Blogs',
+            subtitle: 'Publish articles and educational reads',
+            icon: Icons.article_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.timeline,
+            title: 'Timeline',
+            subtitle: 'Record historical milestones and awards',
+            icon: Icons.timeline_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.gallery,
+            title: 'Gallery',
+            subtitle: 'Curate event photos and poster galleries',
+            icon: Icons.collections_rounded,
+          ),
+        ],
+      ),
+      _CategoryGroup(
+        title: 'Club & Learning Activities',
+        items: const [
+          _AdminSectionItem(
+            section: AdminSection.projects,
+            title: 'Projects',
+            subtitle: 'Moderate student and project submissions',
+            icon: Icons.code_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.events,
+            title: 'Events',
+            subtitle: 'Organize workshops, hackathons, and webinars',
+            icon: Icons.event_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.opportunities,
+            title: 'Opportunities',
+            subtitle: 'Publish jobs and internships filter feed',
+            icon: Icons.work_outline_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.resources,
+            title: 'Resources',
+            subtitle: 'Manage the learning e-library & resources',
+            icon: Icons.class_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.doubts,
+            title: 'Doubts',
+            subtitle: 'Resolve forum questions and unresolved threads',
+            icon: Icons.help_outline_rounded,
+          ),
+        ],
+      ),
+      _CategoryGroup(
+        title: 'Configurations',
+        items: const [
+          _AdminSectionItem(
+            section: AdminSection.contact,
+            title: 'Contact Information',
+            subtitle: 'Update email, socials, and location details',
+            icon: Icons.contact_mail_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.points,
+            title: 'Point Scoring Rules',
+            subtitle: 'Adjust game rules & leaderboard metrics',
+            icon: Icons.stars_rounded,
+          ),
+        ],
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final cat in categories) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              color: Colors.white.withAlpha(8),
+              border: Border.all(color: Colors.white.withAlpha(15)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    cat.title.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 2,
+                      color: Colors.white.withAlpha(100),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: cat.items.length,
+                  separatorBuilder: (context, index) => const Divider(
+                    height: 1,
+                    indent: 50,
+                    color: Colors.white10,
+                  ),
+                  itemBuilder: (context, index) {
+                    final entry = cat.items[index];
+                    return _AdminSectionTile(
+                      title: entry.title,
+                      subtitle: entry.subtitle,
+                      icon: entry.icon,
+                      onTap: () => onSectionTap(entry.section),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -988,36 +1375,59 @@ class _AdminSectionTile extends StatelessWidget {
   const _AdminSectionTile({
     required this.title,
     required this.subtitle,
+    required this.icon,
     required this.onTap,
   });
 
   final String title;
   final String subtitle;
+  final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: Colors.black.withAlpha(36),
-          border: Border.all(color: Colors.white.withAlpha(20)),
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
           children: [
-            Text(
-              title.toUpperCase(),
-              style: Theme.of(context).textTheme.titleMedium,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(8),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: Colors.white.withAlpha(200), size: 18),
             ),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white60),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(120),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white.withAlpha(60),
+              size: 20,
             ),
           ],
         ),
@@ -1040,7 +1450,8 @@ class AdminListPage extends StatefulWidget {
   final String eyebrow;
   final String description;
   final Future<List<Map<String, dynamic>>> Function() loader;
-  final Widget Function(BuildContext context, Map<String, dynamic> item) itemBuilder;
+  final Widget Function(BuildContext context, Map<String, dynamic> item)
+  itemBuilder;
 
   @override
   State<AdminListPage> createState() => _AdminListPageState();
@@ -1081,7 +1492,9 @@ class _AdminListPageState extends State<AdminListPage> {
           child: FutureBuilder<List<Map<String, dynamic>>>(
             future: _future,
             builder: (context, snapshot) {
-              final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+              final loading =
+                  snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData;
               final items = snapshot.data ?? const <Map<String, dynamic>>[];
 
               if (snapshot.hasError || _errorMessage != null) {
@@ -1165,9 +1578,17 @@ class _ListTileCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 6),
-                      Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4)),
+                      Text(
+                        subtitle,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(height: 1.4),
+                      ),
                     ],
                   ),
                 ),
@@ -1178,10 +1599,15 @@ class _ListTileCard extends StatelessWidget {
                       color: Colors.white.withAlpha(10),
                       border: Border.all(color: Colors.white.withAlpha(20)),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     child: Text(
                       trailingLabel,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelSmall?.copyWith(color: Colors.white70),
                     ),
                   ),
               ],
@@ -1247,23 +1673,30 @@ class _AdminContactPageState extends State<AdminContactPage> {
     if (_saving) return;
     setState(() => _saving = true);
     try {
-      final payload = <String, dynamic>{
-        'email': _emailController.text.trim(),
-        'location': _locationController.text.trim(),
-        'department': _departmentController.text.trim(),
-        'github': _githubController.text.trim(),
-        'linkedin': _linkedinController.text.trim(),
-        'instagram': _instagramController.text.trim(),
-        'twitter': _twitterController.text.trim(),
-      }..removeWhere((key, value) => value == null || value.toString().trim().isEmpty);
+      final payload =
+          <String, dynamic>{
+            'email': _emailController.text.trim(),
+            'location': _locationController.text.trim(),
+            'department': _departmentController.text.trim(),
+            'github': _githubController.text.trim(),
+            'linkedin': _linkedinController.text.trim(),
+            'instagram': _instagramController.text.trim(),
+            'twitter': _twitterController.text.trim(),
+          }..removeWhere(
+            (key, value) => value == null || value.toString().trim().isEmpty,
+          );
 
       await context.read<AdminRepository>().updateContact(payload);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contact updated.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Contact updated.')));
       await _refresh();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1290,13 +1723,18 @@ class _AdminContactPageState extends State<AdminContactPage> {
           child: FutureBuilder<Map<String, dynamic>>(
             future: _future,
             builder: (context, snapshot) {
-              final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+              final loading =
+                  snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData;
               if (snapshot.hasError || _errorMessage != null) {
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   children: [
-                    _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                    _ErrorPanel(
+                      message: _errorMessage ?? _friendlyError(snapshot.error),
+                      onRetry: _refresh,
+                    ),
                   ],
                 );
               }
@@ -1313,7 +1751,8 @@ class _AdminContactPageState extends State<AdminContactPage> {
                   const _SectionHeader(
                     eyebrow: 'Reach out',
                     title: 'Contact, managed from the same backend record.',
-                    description: 'Edit official contact details and social links here.',
+                    description:
+                        'Edit official contact details and social links here.',
                   ),
                   const SizedBox(height: 16),
                   if (loading)
@@ -1321,17 +1760,40 @@ class _AdminContactPageState extends State<AdminContactPage> {
                   else
                     _AdminFormPanel(
                       children: [
-                        _AdminTextField(controller: _emailController, label: 'Email'),
-                        _AdminTextField(controller: _locationController, label: 'Location'),
-                        _AdminTextField(controller: _departmentController, label: 'Department'),
-                        _AdminTextField(controller: _githubController, label: 'GitHub'),
-                        _AdminTextField(controller: _linkedinController, label: 'LinkedIn'),
-                        _AdminTextField(controller: _instagramController, label: 'Instagram'),
-                        _AdminTextField(controller: _twitterController, label: 'Twitter'),
+                        _AdminTextField(
+                          controller: _emailController,
+                          label: 'Email',
+                        ),
+                        _AdminTextField(
+                          controller: _locationController,
+                          label: 'Location',
+                        ),
+                        _AdminTextField(
+                          controller: _departmentController,
+                          label: 'Department',
+                        ),
+                        _AdminTextField(
+                          controller: _githubController,
+                          label: 'GitHub',
+                        ),
+                        _AdminTextField(
+                          controller: _linkedinController,
+                          label: 'LinkedIn',
+                        ),
+                        _AdminTextField(
+                          controller: _instagramController,
+                          label: 'Instagram',
+                        ),
+                        _AdminTextField(
+                          controller: _twitterController,
+                          label: 'Twitter',
+                        ),
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: _saving ? null : _save,
-                          child: _saving ? const Text('Saving...') : const Text('Save contact'),
+                          child: _saving
+                              ? const Text('Saving...')
+                              : const Text('Save contact'),
                         ),
                       ],
                     ),
@@ -1376,7 +1838,9 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
   }
 
   Future<void> _editRule(Map<String, dynamic> rule) async {
-    final flatPointsController = TextEditingController(text: _string(rule['flatPoints']));
+    final flatPointsController = TextEditingController(
+      text: _string(rule['flatPoints']),
+    );
     final repo = context.read<AdminRepository>();
     try {
       final saved = await showDialog<bool>(
@@ -1390,8 +1854,14 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
               decoration: const InputDecoration(labelText: 'Flat points'),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
-              ElevatedButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Save')),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Save'),
+              ),
             ],
           );
         },
@@ -1400,10 +1870,9 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
       if (saved != true || !mounted) return;
       final id = _id(rule);
       if (id == null) return;
-      await repo.updatePointRule(
-            id,
-            {'flatPoints': int.tryParse(flatPointsController.text.trim()) ?? 0},
-          );
+      await repo.updatePointRule(id, {
+        'flatPoints': int.tryParse(flatPointsController.text.trim()) ?? 0,
+      });
       await _refresh();
     } finally {
       flatPointsController.dispose();
@@ -1421,7 +1890,9 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
           child: FutureBuilder<List<Map<String, dynamic>>>(
             future: _future,
             builder: (context, snapshot) {
-              final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+              final loading =
+                  snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData;
               final items = snapshot.data ?? const <Map<String, dynamic>>[];
 
               if (snapshot.hasError || _errorMessage != null) {
@@ -1429,7 +1900,10 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   children: [
-                    _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                    _ErrorPanel(
+                      message: _errorMessage ?? _friendlyError(snapshot.error),
+                      onRetry: _refresh,
+                    ),
                   ],
                 );
               }
@@ -1455,7 +1929,8 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
                         child: _ListTileCard(
                           item: item,
                           title: _string(item['key'], fallback: 'Rule'),
-                          subtitle: 'Flat points: ${_string(item['flatPoints'], fallback: '0')}',
+                          subtitle:
+                              'Flat points: ${_string(item['flatPoints'], fallback: '0')}',
                           trailingLabel: 'Edit',
                           onTap: () => _editRule(item),
                         ),
@@ -1494,10 +1969,7 @@ class _AdminFormPanel extends StatelessWidget {
 }
 
 class _AdminTextField extends StatelessWidget {
-  const _AdminTextField({
-    required this.controller,
-    required this.label,
-  });
+  const _AdminTextField({required this.controller, required this.label});
 
   final TextEditingController controller;
   final String label;
@@ -1535,11 +2007,18 @@ bool _boolLabel(dynamic value) {
 
 List<String> _csvItems(dynamic value) {
   if (value is List) {
-    return value.map((item) => item.toString().trim()).where((item) => item.isNotEmpty).toList();
+    return value
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
   }
   final text = value?.toString().trim();
   if (text == null || text.isEmpty) return const [];
-  return text.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
+  return text
+      .split(',')
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty)
+      .toList();
 }
 
 String _excerpt(String value, [int maxLength = 96]) {
@@ -1548,7 +2027,10 @@ String _excerpt(String value, [int maxLength = 96]) {
   return '${text.substring(0, maxLength).trimRight()}...';
 }
 
-Map<String, dynamic> _normalizeUserPayload(Map<String, dynamic> payload, {required bool creating}) {
+Map<String, dynamic> _normalizeUserPayload(
+  Map<String, dynamic> payload, {
+  required bool creating,
+}) {
   final data = Map<String, dynamic>.from(payload);
   data['domain'] = _csvItems(data['domain']);
   if (_string(data['password']).isEmpty) {
@@ -1576,7 +2058,9 @@ Map<String, dynamic> _normalizeBlogPayload(Map<String, dynamic> payload) {
   return data;
 }
 
-Map<String, dynamic> _normalizeOpportunityPayload(Map<String, dynamic> payload) {
+Map<String, dynamic> _normalizeOpportunityPayload(
+  Map<String, dynamic> payload,
+) {
   final data = Map<String, dynamic>.from(payload);
   if (_string(data['domain']).isEmpty) {
     data.remove('domain');

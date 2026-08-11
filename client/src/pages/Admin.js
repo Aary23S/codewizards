@@ -57,11 +57,10 @@ const TABS = [
 const TabButton = ({ active, children, ...props }) => (
   <button
     {...props}
-    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.28em] transition ${
-      active
+    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.28em] transition ${active
         ? "border-white bg-white text-black"
         : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white"
-    }`}
+      }`}
   >
     {children}
   </button>
@@ -574,11 +573,10 @@ const Admin = () => {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSuspendModal({ user, reason: user.suspendedReason || "" })}
-                    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.28em] transition ${
-                      user.isSuspended
+                    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.28em] transition ${user.isSuspended
                         ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
                         : "border-amber-400/30 bg-amber-400/10 text-amber-200"
-                    }`}
+                      }`}
                   >
                     {user.isSuspended ? "Unsuspend" : "Suspend"}
                   </button>
@@ -837,9 +835,8 @@ const Admin = () => {
             {doubts.map((item) => (
               <div
                 key={item._id}
-                className={`${shellCard} flex items-start justify-between gap-4 p-5 ${
-                  item.resolved ? "border-emerald-400/20" : ""
-                }`}
+                className={`${shellCard} flex items-start justify-between gap-4 p-5 ${item.resolved ? "border-emerald-400/20" : ""
+                  }`}
               >
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex flex-wrap gap-2">
@@ -871,7 +868,7 @@ const Admin = () => {
           <section className="mt-6 space-y-4">
             <p className="text-sm text-white/55">{blogs.length} total posts · Admin can delete any post</p>
             {blogs.map((item) => (
-                <div key={item._id} className={`${shellCard} flex items-start justify-between gap-4 p-5`}>
+              <div key={item._id} className={`${shellCard} flex items-start justify-between gap-4 p-5`}>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-semibold text-white">{item.title}</p>
                   <p className="mt-2 text-sm text-white/55">
@@ -948,7 +945,7 @@ const Admin = () => {
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                  <button onClick={() => setEditingOpportunity(item)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                        <button onClick={() => setEditingOpportunity(item)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
                           Edit
                         </button>
                         <button onClick={() => handleDeleteOpportunity(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
@@ -1225,7 +1222,7 @@ const Admin = () => {
               <input className={fieldClass} placeholder="GitHub URL" value={editingTeamMember.github || ""} onChange={(e) => setEditingTeamMember({ ...editingTeamMember, github: e.target.value })} />
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
-                <button onClick={saveTeamMemberUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+              <button onClick={saveTeamMemberUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
                 Save
               </button>
               <button onClick={() => setEditingTeamMember(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
@@ -1350,11 +1347,10 @@ const Admin = () => {
             <div className="mt-5 flex flex-wrap gap-3">
               <button
                 onClick={handleSuspend}
-                className={`rounded-full px-5 py-3 text-sm font-semibold transition ${
-                  suspendModal.user.isSuspended
+                className={`rounded-full px-5 py-3 text-sm font-semibold transition ${suspendModal.user.isSuspended
                     ? "bg-emerald-500 text-white hover:bg-emerald-400"
                     : "bg-rose-500 text-white hover:bg-rose-400"
-                }`}
+                  }`}
               >
                 {suspendModal.user.isSuspended ? "Restore Access" : "Confirm Suspend"}
               </button>

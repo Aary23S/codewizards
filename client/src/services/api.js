@@ -4,7 +4,7 @@ import axios from "axios";
 export const api = axios.create({
   baseURL:
     typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
       ? "http://localhost:5000/api/v1"
       : "https://codewizards-mu2a.onrender.com/api/v1",
 });
