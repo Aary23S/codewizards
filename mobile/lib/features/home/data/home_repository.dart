@@ -21,7 +21,7 @@ class HomeRepository {
   Future<List<EventItem>> fetchEvents() async {
     final data = await _apiClient.getData('/events');
     final events = _mapList(data, EventItem.fromJson);
-    events.sort((a, b) => (a.date ?? DateTime(1900)).compareTo(b.date ?? DateTime(1900)));
+    events.sort((a, b) => (b.date ?? DateTime(1900)).compareTo(a.date ?? DateTime(1900)));
     return events;
   }
 
