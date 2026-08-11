@@ -38,6 +38,9 @@ const ProfileEdit = () => {
     name: "",
     batch: "",
     bio: "",
+    currentCompany: "",
+    designation: "",
+    professionalExperience: "",
     github: "",
     linkedin: "",
     leetcode: "",
@@ -91,6 +94,9 @@ const ProfileEdit = () => {
           name: u.name || "",
           batch: u.batch ?? "",
           bio: u.bio || "",
+          currentCompany: u.currentCompany || "",
+          designation: u.designation || "",
+          professionalExperience: u.professionalExperience || "",
           github: u.github || "",
           linkedin: u.linkedin || "",
           leetcode: u.leetcode || "",
@@ -311,6 +317,46 @@ const ProfileEdit = () => {
                   onChange={handleChange}
                   rows={4}
                   placeholder="Tell others about yourself..."
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className={`${shellCard} p-6 md:p-7`}>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Professional Career</p>
+              <p className="mt-2 text-sm text-white/60">
+                Share your current company, designation, and professional background so juniors can seek guidance.
+              </p>
+            </div>
+            <div className="mt-5 grid gap-4">
+              <FormInput
+                label="Current Designation"
+                type="text"
+                name="designation"
+                value={form.designation}
+                onChange={handleChange}
+                placeholder="e.g. Software Engineer II"
+              />
+              <FormInput
+                label="Current Company"
+                type="text"
+                name="currentCompany"
+                value={form.currentCompany}
+                onChange={handleChange}
+                placeholder="e.g. Google / Microsoft"
+              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] uppercase tracking-[0.35em] text-white/50">
+                  Professional Experience / Work History
+                </label>
+                <textarea
+                  name="professionalExperience"
+                  value={form.professionalExperience}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Share a brief overview of your internships, work history, tech stacks, or guidance topics..."
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
                 />
               </div>

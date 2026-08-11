@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -64,7 +66,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const _SectionBlock(
             eyebrow: 'Explore',
             title: 'Open a section',
-            description: 'Each card opens a dedicated page that mirrors the web subcategory structure.',
+            description:
+                'Each card opens a dedicated page that mirrors the web subcategory structure.',
             child: _ExploreHint(),
           ),
         ],
@@ -134,20 +137,26 @@ class _GalleryExplorePageState extends State<GalleryExplorePage> {
     return _SectionScaffold(
       title: 'Gallery',
       eyebrow: 'Moments',
-      description: 'Gallery items are shown as a visual grid with the same backend data used on web.',
+      description:
+          'Gallery items are shown as a visual grid with the same backend data used on web.',
       child: RefreshIndicator(
         onRefresh: _refresh,
         child: FutureBuilder<List<GalleryItem>>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -155,7 +164,12 @@ class _GalleryExplorePageState extends State<GalleryExplorePage> {
             final items = snapshot.data ?? const <GalleryItem>[];
             final filtered = _selectedCategory == 'all'
                 ? items
-                : items.where((item) => item.category.toLowerCase() == _selectedCategory).toList();
+                : items
+                      .where(
+                        (item) =>
+                            item.category.toLowerCase() == _selectedCategory,
+                      )
+                      .toList();
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -164,7 +178,8 @@ class _GalleryExplorePageState extends State<GalleryExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Gallery',
                   title: 'Gallery, presented as a visual grid.',
-                  description: 'Same gallery data, clearer media presentation, better spacing, and a more premium feel.',
+                  description:
+                      'Same gallery data, clearer media presentation, better spacing, and a more premium feel.',
                   child: loading
                       ? const _LoadingBlock()
                       : Column(
@@ -178,26 +193,41 @@ class _GalleryExplorePageState extends State<GalleryExplorePage> {
                                 itemCount: categories.length,
                                 itemBuilder: (context, idx) {
                                   final category = categories[idx];
-                                  final isSelected = _selectedCategory == category.$1;
+                                  final isSelected =
+                                      _selectedCategory == category.$1;
                                   return GestureDetector(
                                     onTap: () {
-                                      setState(() => _selectedCategory = category.$1);
+                                      setState(
+                                        () => _selectedCategory = category.$1,
+                                      );
                                     },
                                     child: Container(
-                                      margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-                                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                                      margin: const EdgeInsets.only(
+                                        right: 8,
+                                        top: 4,
+                                        bottom: 4,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                      ),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(20),
-                                        color: isSelected ? Colors.white : Colors.white.withAlpha(12),
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.white.withAlpha(12),
                                         border: Border.all(
-                                          color: isSelected ? Colors.white : Colors.white.withAlpha(20),
+                                          color: isSelected
+                                              ? Colors.white
+                                              : Colors.white.withAlpha(20),
                                         ),
                                       ),
                                       child: Center(
                                         child: Text(
                                           category.$2.toUpperCase(),
                                           style: TextStyle(
-                                            color: isSelected ? Colors.black : Colors.white70,
+                                            color: isSelected
+                                                ? Colors.black
+                                                : Colors.white70,
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
                                             letterSpacing: 1.0,
@@ -211,7 +241,10 @@ class _GalleryExplorePageState extends State<GalleryExplorePage> {
                             ),
                             const SizedBox(height: 20),
                             if (filtered.isEmpty)
-                              const _EmptyBlock(message: 'No gallery items found for this category.')
+                              const _EmptyBlock(
+                                message:
+                                    'No gallery items found for this category.',
+                              )
                             else
                               GridView.count(
                                 shrinkWrap: true,
@@ -219,7 +252,9 @@ class _GalleryExplorePageState extends State<GalleryExplorePage> {
                                 crossAxisCount: 1,
                                 mainAxisSpacing: 12,
                                 childAspectRatio: 1.18,
-                                children: filtered.map((item) => _GalleryCard(item: item)).toList(),
+                                children: filtered
+                                    .map((item) => _GalleryCard(item: item))
+                                    .toList(),
                               ),
                           ],
                         ),
@@ -237,7 +272,8 @@ class OpportunitiesExplorePage extends StatefulWidget {
   const OpportunitiesExplorePage({super.key});
 
   @override
-  State<OpportunitiesExplorePage> createState() => _OpportunitiesExplorePageState();
+  State<OpportunitiesExplorePage> createState() =>
+      _OpportunitiesExplorePageState();
 }
 
 class _OpportunitiesExplorePageState extends State<OpportunitiesExplorePage> {
@@ -245,7 +281,13 @@ class _OpportunitiesExplorePageState extends State<OpportunitiesExplorePage> {
   String? _errorMessage;
   String _selectedType = 'all';
   String _selectedDomain = 'all';
-  static const List<String> _defaultTypes = ['all', 'internship', 'full-time job', 'freelance', 'open source'];
+  static const List<String> _defaultTypes = [
+    'all',
+    'internship',
+    'full-time job',
+    'freelance',
+    'open source',
+  ];
   static const List<String> _defaultDomains = [
     'all',
     'web',
@@ -332,29 +374,38 @@ class _OpportunitiesExplorePageState extends State<OpportunitiesExplorePage> {
     return _SectionScaffold(
       title: 'Opportunities',
       eyebrow: 'Grow your career',
-      description: 'A cleaner opportunity feed with easier filters and the same backend data as web.',
+      description:
+          'A cleaner opportunity feed with easier filters and the same backend data as web.',
       child: RefreshIndicator(
         onRefresh: _refresh,
         child: FutureBuilder<List<OpportunityItem>>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
 
             final items = snapshot.data ?? const <OpportunityItem>[];
             final filtered = items.where((item) {
-              final typeOk = _selectedType == 'all' || item.type.toLowerCase() == _selectedType;
+              final typeOk =
+                  _selectedType == 'all' ||
+                  item.type.toLowerCase() == _selectedType;
               final domain = item.domain?.toLowerCase();
-              final domainOk = _selectedDomain == 'all' || domain == _selectedDomain;
+              final domainOk =
+                  _selectedDomain == 'all' || domain == _selectedDomain;
               return typeOk && domainOk;
             }).toList();
 
@@ -367,7 +418,8 @@ class _OpportunitiesExplorePageState extends State<OpportunitiesExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Opportunities',
                   title: 'Opportunities in a cleaner, premium feed.',
-                  description: 'Filters are lighter to use on mobile and the same posting data is still sourced from the backend.',
+                  description:
+                      'Filters are lighter to use on mobile and the same posting data is still sourced from the backend.',
                   child: loading
                       ? const _LoadingBlock()
                       : Column(
@@ -376,15 +428,24 @@ class _OpportunitiesExplorePageState extends State<OpportunitiesExplorePage> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _SummaryCard(label: 'Visible', value: '${filtered.length}'),
+                                  child: _SummaryCard(
+                                    label: 'Visible',
+                                    value: '${filtered.length}',
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: _SummaryCard(label: 'Active', value: '$activeCount'),
+                                  child: _SummaryCard(
+                                    label: 'Active',
+                                    value: '$activeCount',
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: _SummaryCard(label: 'Closed', value: '$inactiveCount'),
+                                  child: _SummaryCard(
+                                    label: 'Closed',
+                                    value: '$inactiveCount',
+                                  ),
                                 ),
                               ],
                             ),
@@ -393,14 +454,16 @@ class _OpportunitiesExplorePageState extends State<OpportunitiesExplorePage> {
                               children: [
                                 Expanded(
                                   child: _FilterPill(
-                                    label: 'Type: ${_prettyFilterLabel(_selectedType)}',
+                                    label:
+                                        'Type: ${_prettyFilterLabel(_selectedType)}',
                                     onTap: () => _openTypeFilter(items),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: _FilterPill(
-                                    label: 'Domain: ${_prettyFilterLabel(_selectedDomain)}',
+                                    label:
+                                        'Domain: ${_prettyFilterLabel(_selectedDomain)}',
                                     onTap: () => _openDomainFilter(items),
                                   ),
                                 ),
@@ -408,14 +471,23 @@ class _OpportunitiesExplorePageState extends State<OpportunitiesExplorePage> {
                             ),
                             const SizedBox(height: 14),
                             if (filtered.isEmpty)
-                              const _EmptyBlock(message: 'No opportunities found. Check back soon.')
+                              const _EmptyBlock(
+                                message:
+                                    'No opportunities found. Check back soon.',
+                              )
                             else
                               Column(
                                 children: filtered
-                                    .map((opportunity) => Padding(
-                                          padding: const EdgeInsets.only(bottom: 12),
-                                          child: _OpportunityCard(opportunity: opportunity),
-                                        ))
+                                    .map(
+                                      (opportunity) => Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
+                                        child: _OpportunityCard(
+                                          opportunity: opportunity,
+                                        ),
+                                      ),
+                                    )
                                     .toList(),
                               ),
                           ],
@@ -466,30 +538,37 @@ class _LegacyExplorePageState extends State<LegacyExplorePage> {
     return _SectionScaffold(
       title: 'Legacy',
       eyebrow: 'Our journey',
-      description: 'Milestones, achievements, and turning points in a cleaner timeline.',
+      description:
+          'Milestones, achievements, and turning points in a cleaner timeline.',
       child: RefreshIndicator(
         onRefresh: _refresh,
         child: FutureBuilder<List<TimelineItem>>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
 
             final items = snapshot.data ?? const <TimelineItem>[];
-            final sorted = [...items]..sort((a, b) {
-              final yearCompare = a.year.compareTo(b.year);
-              if (yearCompare != 0) return yearCompare;
-              return (a.month ?? '').compareTo(b.month ?? '');
-            });
+            final sorted = [...items]
+              ..sort((a, b) {
+                final yearCompare = a.year.compareTo(b.year);
+                if (yearCompare != 0) return yearCompare;
+                return (a.month ?? '').compareTo(b.month ?? '');
+              });
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -498,12 +577,15 @@ class _LegacyExplorePageState extends State<LegacyExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Legacy',
                   title: 'Club legacy, presented like a living timeline.',
-                  description: 'Same backend data, cleaner mobile spacing, and a more deliberate narrative.',
+                  description:
+                      'Same backend data, cleaner mobile spacing, and a more deliberate narrative.',
                   child: loading
                       ? const _LoadingBlock()
                       : sorted.isEmpty
-                          ? const _EmptyBlock(message: 'No legacy milestones found.')
-                          : _TimelineRail(items: sorted),
+                      ? const _EmptyBlock(
+                          message: 'No legacy milestones found.',
+                        )
+                      : _TimelineRail(items: sorted),
                 ),
               ],
             );
@@ -553,10 +635,7 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
       'resolved' => true,
       _ => null,
     };
-    return repo.fetchForum(
-      domain: _domainFilter,
-      resolved: resolved,
-    );
+    return repo.fetchForum(domain: _domainFilter, resolved: resolved);
   }
 
   Future<void> _refresh() async {
@@ -600,9 +679,9 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
       await _reload();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -646,21 +725,28 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
         child: FutureBuilder<List<DoubtItem>>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
 
             final items = snapshot.data ?? const <DoubtItem>[];
             final filtered = items;
-            final resolvedCount = filtered.where((item) => item.resolved).length;
+            final resolvedCount = filtered
+                .where((item) => item.resolved)
+                .length;
             final openCount = filtered.length - resolvedCount;
 
             return ListView(
@@ -670,7 +756,8 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Forum',
                   title: 'Doubt forum, restyled without changing the flow.',
-                  description: 'Users can post questions, answer threads, upvote posts, and the author can mark a question resolved.',
+                  description:
+                      'Users can post questions, answer threads, upvote posts, and the author can mark a question resolved.',
                   child: loading
                       ? const _LoadingBlock()
                       : Column(
@@ -678,19 +765,39 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
                           children: [
                             Row(
                               children: [
-                                Expanded(child: _SummaryCard(label: 'All', value: '${filtered.length}')),
+                                Expanded(
+                                  child: _SummaryCard(
+                                    label: 'All',
+                                    value: '${filtered.length}',
+                                  ),
+                                ),
                                 const SizedBox(width: 10),
-                                Expanded(child: _SummaryCard(label: 'Open', value: '$openCount')),
+                                Expanded(
+                                  child: _SummaryCard(
+                                    label: 'Open',
+                                    value: '$openCount',
+                                  ),
+                                ),
                                 const SizedBox(width: 10),
-                                Expanded(child: _SummaryCard(label: 'Resolved', value: '$resolvedCount')),
+                                Expanded(
+                                  child: _SummaryCard(
+                                    label: 'Resolved',
+                                    value: '$resolvedCount',
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 14),
-                            Text('Filters', style: Theme.of(context).textTheme.titleSmall),
+                            Text(
+                              'Filters',
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
                             const SizedBox(height: 6),
                             Text(
                               'Choose a status and domain. Apply once to refresh the feed.',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(height: 1.5),
                             ),
                             const SizedBox(height: 12),
                             Wrap(
@@ -700,14 +807,16 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
                                 SizedBox(
                                   width: 152,
                                   child: _FilterPill(
-                                    label: 'Status: ${_prettyFilterLabel(_statusFilter)}',
+                                    label:
+                                        'Status: ${_prettyFilterLabel(_statusFilter)}',
                                     onTap: () => _editFilters(items),
                                   ),
                                 ),
                                 SizedBox(
                                   width: 152,
                                   child: _FilterPill(
-                                    label: 'Domain: ${_prettyFilterLabel(_domainFilter)}',
+                                    label:
+                                        'Domain: ${_prettyFilterLabel(_domainFilter)}',
                                     onTap: () => _editFilters(items),
                                   ),
                                 ),
@@ -724,36 +833,49 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
                             ),
                             const SizedBox(height: 14),
                             if (filtered.isEmpty)
-                              const _EmptyBlock(message: 'No forum posts yet. Start the first question.'),
+                              const _EmptyBlock(
+                                message:
+                                    'No forum posts yet. Start the first question.',
+                              ),
                             for (final doubt in filtered) ...[
                               _ForumCard(
                                 doubt: doubt,
                                 currentUserId: currentUser?.id,
                                 isAdmin: isAdmin,
                                 onToggleUpvote: () async {
-                                  await context.read<ExploreRepository>().toggleForumUpvote(doubt.id);
+                                  await context
+                                      .read<ExploreRepository>()
+                                      .toggleForumUpvote(doubt.id);
                                   await _reload();
                                 },
                                 onToggleResolve: () async {
-                                  await context.read<ExploreRepository>().toggleForumResolve(doubt.id);
+                                  await context
+                                      .read<ExploreRepository>()
+                                      .toggleForumResolve(doubt.id);
                                   await _reload();
                                 },
                                 onDeleteQuestion: () async {
-                                  await context.read<ExploreRepository>().deleteForumQuestion(doubt.id);
+                                  await context
+                                      .read<ExploreRepository>()
+                                      .deleteForumQuestion(doubt.id);
                                   await _reload();
                                 },
                                 onReply: (body) async {
-                                  await context.read<ExploreRepository>().addForumReply(
-                                    doubtId: doubt.id,
-                                    body: body,
-                                  );
+                                  await context
+                                      .read<ExploreRepository>()
+                                      .addForumReply(
+                                        doubtId: doubt.id,
+                                        body: body,
+                                      );
                                   await _reload();
                                 },
                                 onDeleteReply: (replyId) async {
-                                  await context.read<ExploreRepository>().deleteForumReply(
-                                    doubtId: doubt.id,
-                                    replyId: replyId,
-                                  );
+                                  await context
+                                      .read<ExploreRepository>()
+                                      .deleteForumReply(
+                                        doubtId: doubt.id,
+                                        replyId: replyId,
+                                      );
                                   await _reload();
                                 },
                               ),
@@ -834,9 +956,9 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
           Text(
             'Tracker',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 3,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -854,14 +976,17 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
                 label: Text(platform.label),
                 onSelected: (_) => setState(() => _selected = platform),
                 labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: isSelected ? Colors.black : Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: isSelected ? Colors.black : Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
                 selectedColor: Colors.white,
                 backgroundColor: const Color(0xFF1A1A1A),
                 side: BorderSide(color: Colors.white.withAlpha(28)),
                 showCheckmark: false,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
               );
             }).toList(),
           ),
@@ -871,7 +996,10 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
             runSpacing: 10,
             children: [
               _SummaryCard(label: 'Total', value: _contribCount(insight.total)),
-              _SummaryCard(label: insight.primaryLabel, value: _contribCount(insight.primaryValue)),
+              _SummaryCard(
+                label: insight.primaryLabel,
+                value: _contribCount(insight.primaryValue),
+              ),
               _SummaryCard(label: 'Last sync', value: _syncAgeLabel(lastSync)),
             ],
           ),
@@ -882,7 +1010,8 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
             description: insight.description,
             child: insight.metrics.isEmpty
                 ? const _EmptyBlock(
-                    message: 'No stats available yet. Add handles in profile and sync to populate the tracker.',
+                    message:
+                        'No stats available yet. Add handles in profile and sync to populate the tracker.',
                   )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -896,9 +1025,21 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          if (widget.codingProfile.leetcodeUsername != null) _MiniChip(text: 'LeetCode: ${widget.codingProfile.leetcodeUsername}'),
-                          if (widget.codingProfile.codeforcesHandle != null) _MiniChip(text: 'Codeforces: ${widget.codingProfile.codeforcesHandle}'),
-                          if (widget.codingProfile.githubUsername != null) _MiniChip(text: 'GitHub: ${widget.codingProfile.githubUsername}'),
+                          if (widget.codingProfile.leetcodeUsername != null)
+                            _MiniChip(
+                              text:
+                                  'LeetCode: ${widget.codingProfile.leetcodeUsername}',
+                            ),
+                          if (widget.codingProfile.codeforcesHandle != null)
+                            _MiniChip(
+                              text:
+                                  'Codeforces: ${widget.codingProfile.codeforcesHandle}',
+                            ),
+                          if (widget.codingProfile.githubUsername != null)
+                            _MiniChip(
+                              text:
+                                  'GitHub: ${widget.codingProfile.githubUsername}',
+                            ),
                         ],
                       ),
                     ],
@@ -919,7 +1060,8 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
         return _CodingTrackerInsight(
           eyebrow: 'LeetCode',
           title: 'Solved problems, broken down by difficulty.',
-          description: 'A single tracker that shows your solved counts instead of raw activity noise.',
+          description:
+              'A single tracker that shows your solved counts instead of raw activity noise.',
           primaryLabel: 'Solved',
           primaryValue: leet.totalSolved,
           total: leet.totalSolved,
@@ -936,7 +1078,8 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
         return _CodingTrackerInsight(
           eyebrow: 'Codeforces',
           title: 'Contest and problem-solving strength at a glance.',
-          description: 'Performance is summarized as counts and rating rather than individual submissions.',
+          description:
+              'Performance is summarized as counts and rating rather than individual submissions.',
           primaryLabel: 'Rating',
           primaryValue: cf.rating,
           total: cf.solvedCount,
@@ -953,7 +1096,8 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
         return _CodingTrackerInsight(
           eyebrow: 'GitHub',
           title: 'Contribution activity by engagement signals.',
-          description: 'A compact tracker for public repo activity and contribution volume.',
+          description:
+              'A compact tracker for public repo activity and contribution volume.',
           primaryLabel: 'Contribs',
           primaryValue: gh.contributions,
           total: gh.contributions,
@@ -971,10 +1115,7 @@ class _CodingStatsBlockState extends State<_CodingStatsBlock> {
 }
 
 class _TrackerChart extends StatelessWidget {
-  const _TrackerChart({
-    required this.metrics,
-    required this.accent,
-  });
+  const _TrackerChart({required this.metrics, required this.accent});
 
   final List<_TrackerMetric> metrics;
   final Color accent;
@@ -985,15 +1126,17 @@ class _TrackerChart extends StatelessWidget {
     final maxValue = available.isEmpty
         ? 1.0
         : available
-            .map((metric) => metric.value!.toDouble())
-            .reduce((a, b) => a > b ? a : b)
-            .clamp(1.0, double.infinity)
-            .toDouble();
+              .map((metric) => metric.value!.toDouble())
+              .reduce((a, b) => a > b ? a : b)
+              .clamp(1.0, double.infinity)
+              .toDouble();
 
     return Column(
       children: available.map((metric) {
         final value = metric.value?.toDouble() ?? 0;
-        final widthFactor = value <= 0 ? 0.0 : (value / maxValue).clamp(0.08, 1.0).toDouble();
+        final widthFactor = value <= 0
+            ? 0.0
+            : (value / maxValue).clamp(0.08, 1.0).toDouble();
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Column(
@@ -1004,11 +1147,15 @@ class _TrackerChart extends StatelessWidget {
                 children: [
                   Text(
                     metric.label,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     _contribCount(metric.value),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white54),
                   ),
                 ],
               ),
@@ -1102,7 +1249,8 @@ class ContributionsExplorePage extends StatefulWidget {
   const ContributionsExplorePage({super.key});
 
   @override
-  State<ContributionsExplorePage> createState() => _ContributionsExplorePageState();
+  State<ContributionsExplorePage> createState() =>
+      _ContributionsExplorePageState();
 }
 
 class _ContributionsExplorePageState extends State<ContributionsExplorePage> {
@@ -1157,20 +1305,26 @@ class _ContributionsExplorePageState extends State<ContributionsExplorePage> {
     return _SectionScaffold(
       title: 'Contributions',
       eyebrow: 'Coding profile',
-      description: 'Your connected coding handles and cached contribution stats in one dedicated mobile page.',
+      description:
+          'Your connected coding handles and cached contribution stats in one dedicated mobile page.',
       child: RefreshIndicator(
         onRefresh: _refresh,
         child: FutureBuilder<CodingProfileItem?>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -1183,7 +1337,8 @@ class _ContributionsExplorePageState extends State<ContributionsExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Coding',
                   title: 'Coding contributions, presented more clearly.',
-                  description: 'A wider layout with clean stats, connected handles, and a readable activity feed.',
+                  description:
+                      'A wider layout with clean stats, connected handles, and a readable activity feed.',
                   child: loading
                       ? const _LoadingBlock()
                       : Column(
@@ -1194,7 +1349,8 @@ class _ContributionsExplorePageState extends State<ContributionsExplorePage> {
                               const SizedBox(height: 14),
                             ] else
                               const _EmptyBlock(
-                                message: 'No coding profile connected yet. Add usernames in your profile and sync to populate this page.',
+                                message:
+                                    'No coding profile connected yet. Add usernames in your profile and sync to populate this page.',
                               ),
                             const SizedBox(height: 12),
                             SizedBox(
@@ -1249,9 +1405,7 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
 
   Future<void> _openBlog(BlogItem blog) async {
     await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => BlogDetailScreen(blogId: blog.id),
-      ),
+      MaterialPageRoute(builder: (_) => BlogDetailScreen(blogId: blog.id)),
     );
     if (!mounted) return;
     await _refresh();
@@ -1269,26 +1423,24 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
 
     try {
       await context.read<ExploreRepository>().createBlog(
-            title: draft.title,
-            content: draft.content,
-            coverImage: draft.coverImage,
-            tags: draft.tags,
-          );
+        title: draft.title,
+        content: draft.content,
+        coverImage: draft.coverImage,
+        tags: draft.tags,
+      );
       await _refresh();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
   Future<void> _openAuthorPosts(_BlogAuthorGroup group) async {
     if (group.posts.isEmpty) return;
     await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => _BlogAuthorPostsPage(group: group),
-      ),
+      MaterialPageRoute(builder: (_) => _BlogAuthorPostsPage(group: group)),
     );
     if (!mounted) return;
     await _refresh();
@@ -1301,20 +1453,26 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
     return _SectionScaffold(
       title: 'Blog',
       eyebrow: 'Ideas and learnings',
-      description: 'Users can post blog entries, browse posts, and read them in a dedicated view.',
+      description:
+          'Users can post blog entries, browse posts, and read them in a dedicated view.',
       child: RefreshIndicator(
         onRefresh: _refresh,
         child: FutureBuilder<List<BlogItem>>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -1322,8 +1480,10 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
             final items = snapshot.data ?? const <BlogItem>[];
             final sorted = [...items]
               ..sort((a, b) {
-                final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-                final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final aDate =
+                    a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final bDate =
+                    b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
                 return bDate.compareTo(aDate);
               });
             final latestPosts = sorted.take(10).toList();
@@ -1336,7 +1496,8 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Blog',
                   title: 'Blog authors and latest posts.',
-                  description: 'Browse by writer first, then jump straight into the latest 10 posts with a dedicated reader.',
+                  description:
+                      'Browse by writer first, then jump straight into the latest 10 posts with a dedicated reader.',
                   child: loading
                       ? const _LoadingBlock()
                       : Column(
@@ -1354,18 +1515,22 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
                             if (currentUser != null) const SizedBox(height: 14),
                             _SectionMiniHeader(
                               title: 'Browse by author',
-                              description: 'Tap a writer to see all of their posts.',
+                              description:
+                                  'Tap a writer to see all of their posts.',
                             ),
                             const SizedBox(height: 12),
                             if (authorGroups.isEmpty)
-                              const _EmptyBlock(message: 'No authors found yet.')
+                              const _EmptyBlock(
+                                message: 'No authors found yet.',
+                              )
                             else
                               SizedBox(
                                 height: 160,
                                 child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: authorGroups.length,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
                                     final group = authorGroups[index];
                                     return SizedBox(
@@ -1381,7 +1546,8 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
                             const SizedBox(height: 18),
                             _SectionMiniHeader(
                               title: 'Latest 10 posts',
-                              description: 'Quick read cards for the most recent uploads.',
+                              description:
+                                  'Quick read cards for the most recent uploads.',
                             ),
                             const SizedBox(height: 12),
                             if (latestPosts.isEmpty)
@@ -1391,7 +1557,9 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
                                 children: latestPosts
                                     .map(
                                       (blog) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 12),
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
                                         child: _BlogCard(
                                           blog: blog,
                                           onTap: () => _openBlog(blog),
@@ -1470,29 +1638,42 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final message = _messageController.text.trim();
-    if (targetEmail == null || targetEmail.isEmpty || message.isEmpty || _sending) return;
+    if (targetEmail == null ||
+        targetEmail.isEmpty ||
+        message.isEmpty ||
+        _sending) {
+      return;
+    }
 
     setState(() => _sending = true);
     try {
-      final subject = Uri.encodeComponent('CodeWizards contact from ${name.isEmpty ? 'mobile app' : name}');
-      final body = Uri.encodeComponent([
-        if (name.isNotEmpty) 'Name: $name',
-        if (email.isNotEmpty) 'Email: $email',
-        '',
-        message,
-      ].join('\n'));
+      final subject = Uri.encodeComponent(
+        'CodeWizards contact from ${name.isEmpty ? 'mobile app' : name}',
+      );
+      final body = Uri.encodeComponent(
+        [
+          if (name.isNotEmpty) 'Name: $name',
+          if (email.isNotEmpty) 'Email: $email',
+          '',
+          message,
+        ].join('\n'),
+      );
       final uri = Uri.parse('mailto:$targetEmail?subject=$subject&body=$body');
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } on MissingPluginException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email launcher is initializing. Please fully restart the app once.')),
+        const SnackBar(
+          content: Text(
+            'Email launcher is initializing. Please fully restart the app once.',
+          ),
+        ),
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -1503,20 +1684,26 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
     return _SectionScaffold(
       title: 'Contact',
       eyebrow: 'Get in touch',
-      description: 'Contact details stay data-driven while the layout matches the web hierarchy on mobile.',
+      description:
+          'Contact details stay data-driven while the layout matches the web hierarchy on mobile.',
       child: RefreshIndicator(
         onRefresh: _refresh,
         child: FutureBuilder<ContactInfoItem>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -1544,7 +1731,8 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Get in touch',
                   title: 'Contact, with the same visual system.',
-                  description: 'Contact details stay data-driven while the action area is easier to use on mobile.',
+                  description:
+                      'Contact details stay data-driven while the action area is easier to use on mobile.',
                   child: loading
                       ? const _LoadingBlock()
                       : Column(
@@ -1624,7 +1812,11 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
     } on MissingPluginException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email launcher is initializing. Please fully restart the app once.')),
+        const SnackBar(
+          content: Text(
+            'Email launcher is initializing. Please fully restart the app once.',
+          ),
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -1680,7 +1872,11 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
     } on MissingPluginException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Link launcher is initializing. Please fully restart the app once.')),
+        const SnackBar(
+          content: Text(
+            'Link launcher is initializing. Please fully restart the app once.',
+          ),
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -1695,20 +1891,26 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
     return _SectionScaffold(
       title: 'Resources',
       eyebrow: 'Learn',
-      description: 'A unified library for guides, references, and learning materials across the community.',
+      description:
+          'A unified library for guides, references, and learning materials across the community.',
       child: RefreshIndicator(
         onRefresh: _refresh,
         child: FutureBuilder<List<ResourceItem>>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -1716,7 +1918,9 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
             final resources = snapshot.data ?? <ResourceItem>[];
             final categories = <String>{
               'all',
-              ...resources.map((item) => item.category.trim()).where((value) => value.isNotEmpty),
+              ...resources
+                  .map((item) => item.category.trim())
+                  .where((value) => value.isNotEmpty),
             }.toList();
             final domains = <String>{
               'all',
@@ -1736,23 +1940,31 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
               return a.toLowerCase().compareTo(b.toLowerCase());
             });
             final filtered = resources.where((item) {
-              final categoryMatch = _selectedCategory == 'all' ||
-                  item.category.trim().toLowerCase() == _selectedCategory.toLowerCase();
+              final categoryMatch =
+                  _selectedCategory == 'all' ||
+                  item.category.trim().toLowerCase() ==
+                      _selectedCategory.toLowerCase();
               final domainValue = item.domain?.trim().toLowerCase() ?? '';
-              final domainMatch = _selectedDomain == 'all' || domainValue == _selectedDomain.toLowerCase();
+              final domainMatch =
+                  _selectedDomain == 'all' ||
+                  domainValue == _selectedDomain.toLowerCase();
               return categoryMatch && domainMatch;
             }).toList();
             final grouped = <String, List<ResourceItem>>{};
             for (final item in filtered) {
-              final key = item.category.trim().isNotEmpty ? item.category.trim() : 'Other';
+              final key = item.category.trim().isNotEmpty
+                  ? item.category.trim()
+                  : 'Other';
               grouped.putIfAbsent(key, () => <ResourceItem>[]).add(item);
             }
             final groupOrder = ['PDF', 'GitHub', 'YouTube', 'Docs', 'Other'];
             final orderedGroups = <MapEntry<String, List<ResourceItem>>>[
               for (final key in groupOrder)
-                if (grouped.containsKey(key)) MapEntry(key, grouped.remove(key)!),
-              ...grouped.entries.toList()
-                ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase())),
+                if (grouped.containsKey(key))
+                  MapEntry(key, grouped.remove(key)!),
+              ...grouped.entries.toList()..sort(
+                (a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()),
+              ),
             ];
 
             return ListView(
@@ -1762,23 +1974,44 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Learn',
                   title: 'Resources, organized for easier browsing.',
-                  description: 'Browse the same backend collection as web with a cleaner editorial layout and quicker filters.',
+                  description:
+                      'Browse the same backend collection as web with a cleaner editorial layout and quicker filters.',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Expanded(child: _MiniStat(label: 'Items', value: resources.length.toString())),
+                          Expanded(
+                            child: _MiniStat(
+                              label: 'Items',
+                              value: resources.length.toString(),
+                            ),
+                          ),
                           const SizedBox(width: 10),
-                          Expanded(child: _MiniStat(label: 'Types', value: (categories.length - 1).clamp(0, 999).toString())),
+                          Expanded(
+                            child: _MiniStat(
+                              label: 'Types',
+                              value: (categories.length - 1)
+                                  .clamp(0, 999)
+                                  .toString(),
+                            ),
+                          ),
                           const SizedBox(width: 10),
-                          Expanded(child: _MiniStat(label: 'Domains', value: (domains.length - 1).clamp(0, 999).toString())),
+                          Expanded(
+                            child: _MiniStat(
+                              label: 'Domains',
+                              value: (domains.length - 1)
+                                  .clamp(0, 999)
+                                  .toString(),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Type',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
                               color: Colors.white70,
                               letterSpacing: 1.6,
                             ),
@@ -1792,26 +2025,40 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
                           itemCount: categories.length,
                           itemBuilder: (context, idx) {
                             final category = categories[idx];
-                            final isSelected = _selectedCategory == category.toLowerCase();
+                            final isSelected =
+                                _selectedCategory == category.toLowerCase();
                             return GestureDetector(
                               onTap: () {
-                                setState(() => _selectedCategory = category.toLowerCase());
+                                setState(
+                                  () => _selectedCategory = category
+                                      .toLowerCase(),
+                                );
                               },
                               child: Container(
                                 margin: const EdgeInsets.only(right: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
-                                  color: isSelected ? Colors.white : Colors.white.withAlpha(12),
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.white.withAlpha(12),
                                   border: Border.all(
-                                    color: isSelected ? Colors.white : Colors.white.withAlpha(20),
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.white.withAlpha(20),
                                   ),
                                 ),
                                 child: Center(
                                   child: Text(
-                                    category == 'all' ? 'ALL' : category.toUpperCase(),
+                                    category == 'all'
+                                        ? 'ALL'
+                                        : category.toUpperCase(),
                                     style: TextStyle(
-                                      color: isSelected ? Colors.black : Colors.white70,
+                                      color: isSelected
+                                          ? Colors.black
+                                          : Colors.white70,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.0,
@@ -1826,7 +2073,8 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
                       const SizedBox(height: 16),
                       Text(
                         'Domain',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
                               color: Colors.white70,
                               letterSpacing: 1.6,
                             ),
@@ -1840,26 +2088,39 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
                           itemCount: domains.length,
                           itemBuilder: (context, idx) {
                             final domain = domains[idx];
-                            final isSelected = _selectedDomain == domain.toLowerCase();
+                            final isSelected =
+                                _selectedDomain == domain.toLowerCase();
                             return GestureDetector(
                               onTap: () {
-                                setState(() => _selectedDomain = domain.toLowerCase());
+                                setState(
+                                  () => _selectedDomain = domain.toLowerCase(),
+                                );
                               },
                               child: Container(
                                 margin: const EdgeInsets.only(right: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
-                                  color: isSelected ? const Color(0xFFFFC857) : Colors.white.withAlpha(12),
+                                  color: isSelected
+                                      ? const Color(0xFFFFC857)
+                                      : Colors.white.withAlpha(12),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFFFFC857) : Colors.white.withAlpha(20),
+                                    color: isSelected
+                                        ? const Color(0xFFFFC857)
+                                        : Colors.white.withAlpha(20),
                                   ),
                                 ),
                                 child: Center(
                                   child: Text(
-                                    domain == 'all' ? 'ALL' : domain.toUpperCase(),
+                                    domain == 'all'
+                                        ? 'ALL'
+                                        : domain.toUpperCase(),
                                     style: TextStyle(
-                                      color: isSelected ? Colors.black : Colors.white70,
+                                      color: isSelected
+                                          ? Colors.black
+                                          : Colors.white70,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.0,
@@ -1875,18 +2136,25 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
                       if (loading)
                         const _LoadingBlock()
                       else if (filtered.isEmpty)
-                        const _EmptyBlock(message: 'No resources yet. Check back soon.')
+                        const _EmptyBlock(
+                          message: 'No resources yet. Check back soon.',
+                        )
                       else
                         Column(
                           children: [
                             for (final group in orderedGroups) ...[
-                              _ResourceGroupHeader(title: group.key, count: group.value.length),
+                              _ResourceGroupHeader(
+                                title: group.key,
+                                count: group.value.length,
+                              ),
                               const SizedBox(height: 12),
                               Column(
                                 children: group.value
                                     .map(
                                       (item) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 12),
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
                                         child: _ResourceCard(
                                           resource: item,
                                           onTap: () => _openResource(item.url),
@@ -1933,9 +2201,11 @@ List<_BlogAuthorGroup> _groupBlogAuthors(List<BlogItem> items) {
     final authorKey = (blog.authorId?.trim().isNotEmpty ?? false)
         ? blog.authorId!.trim()
         : (blog.authorName?.trim().isNotEmpty ?? false)
-            ? blog.authorName!.trim().toLowerCase()
-            : 'unknown-author';
-    final authorName = (blog.authorName?.trim().isNotEmpty ?? false) ? blog.authorName!.trim() : 'Unknown author';
+        ? blog.authorName!.trim().toLowerCase()
+        : 'unknown-author';
+    final authorName = (blog.authorName?.trim().isNotEmpty ?? false)
+        ? blog.authorName!.trim()
+        : 'Unknown author';
     groups.putIfAbsent(authorKey, () => <BlogItem>[]).add(blog);
     names[authorKey] = authorName;
   }
@@ -1947,8 +2217,10 @@ List<_BlogAuthorGroup> _groupBlogAuthors(List<BlogItem> items) {
           name: names[entry.key] ?? 'Unknown author',
           posts: [...entry.value]
             ..sort((a, b) {
-              final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-              final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+              final aDate =
+                  a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+              final bDate =
+                  b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
               return bDate.compareTo(aDate);
             }),
         ),
@@ -1956,8 +2228,10 @@ List<_BlogAuthorGroup> _groupBlogAuthors(List<BlogItem> items) {
       .toList();
 
   result.sort((a, b) {
-    final aDate = a.latestPost.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-    final bDate = b.latestPost.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final aDate =
+        a.latestPost.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final bDate =
+        b.latestPost.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
     return bDate.compareTo(aDate);
   });
   return result;
@@ -2013,11 +2287,18 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
         var query = '';
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final filteredDomains = domains.where((domain) => domain.toLowerCase().contains(query.toLowerCase())).toList();
+            final filteredDomains = domains
+                .where(
+                  (domain) =>
+                      domain.toLowerCase().contains(query.toLowerCase()),
+                )
+                .toList();
             return Container(
               decoration: BoxDecoration(
                 color: const Color(0xFF111111),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
                 border: Border.all(color: Colors.white.withAlpha(20)),
               ),
               padding: EdgeInsets.fromLTRB(
@@ -2043,7 +2324,10 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text('Choose domain', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Choose domain',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       onChanged: (value) => setSheetState(() => query = value),
@@ -2054,7 +2338,9 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
                         fillColor: Colors.white.withAlpha(8),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.white.withAlpha(16)),
+                          borderSide: BorderSide(
+                            color: Colors.white.withAlpha(16),
+                          ),
                         ),
                       ),
                     ),
@@ -2064,13 +2350,15 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
                       child: ListView.separated(
                         shrinkWrap: true,
                         itemCount: filteredDomains.length + 1,
-                        separatorBuilder: (context, index) => const SizedBox(height: 8),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           if (index == 0) {
                             return _DomainChoiceTile(
                               label: 'All domains',
                               selected: _selectedDomain == 'all',
-                              onTap: () => Navigator.of(sheetContext).pop('all'),
+                              onTap: () =>
+                                  Navigator.of(sheetContext).pop('all'),
                             );
                           }
                           final domain = filteredDomains[index - 1];
@@ -2098,20 +2386,26 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
     return _SectionScaffold(
       title: 'Connect',
       eyebrow: 'Find your guide',
-      description: 'Browse students, seniors, alumni, and mentors in a dedicated directory that keeps the same mobile theme.',
+      description:
+          'Browse students, seniors, alumni, and mentors in a dedicated directory that keeps the same mobile theme.',
       child: RefreshIndicator(
         onRefresh: _refresh,
         child: FutureBuilder<List<UserProfile>>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -2119,7 +2413,9 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
             final items = snapshot.data ?? const <UserProfile>[];
             final domains = <String>{
               'all',
-              ...items.expand((user) => user.domain).map((domain) => domain.toLowerCase()),
+              ...items
+                  .expand((user) => user.domain)
+                  .map((domain) => domain.toLowerCase()),
             }.toList();
 
             final grouped = _groupConnectProfiles(items, _selectedDomain);
@@ -2138,7 +2434,8 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
                 _SectionBlock(
                   eyebrow: 'Directory',
                   title: 'Connect, presented as a clean directory.',
-                  description: 'Same users data, clearer layout, and direct profile navigation.',
+                  description:
+                      'Same users data, clearer layout, and direct profile navigation.',
                   child: loading
                       ? const _LoadingBlock()
                       : Column(
@@ -2146,15 +2443,26 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
                           children: [
                             Row(
                               children: [
-                                Expanded(child: _SummaryCard(label: 'Users', value: '${items.length}')),
+                                Expanded(
+                                  child: _SummaryCard(
+                                    label: 'Users',
+                                    value: '${items.length}',
+                                  ),
+                                ),
                                 const SizedBox(width: 10),
-                                Expanded(child: _SummaryCard(label: 'Mentors', value: '$mentorCount')),
+                                Expanded(
+                                  child: _SummaryCard(
+                                    label: 'Mentors',
+                                    value: '$mentorCount',
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 14),
                             _SectionMiniHeader(
                               title: 'Browse by group',
-                              description: 'Tap a group card to switch between students, seniors, alumni, and mentors.',
+                              description:
+                                  'Tap a group card to switch between students, seniors, alumni, and mentors.',
                             ),
                             const SizedBox(height: 10),
                             GridView.count(
@@ -2169,32 +2477,37 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
                                   title: 'Students',
                                   count: studentCount,
                                   selected: _selectedRole == 'student',
-                                  onTap: () => setState(() => _selectedRole = 'student'),
+                                  onTap: () =>
+                                      setState(() => _selectedRole = 'student'),
                                 ),
                                 _RoleFilterCard(
                                   title: 'Seniors',
                                   count: seniorCount,
                                   selected: _selectedRole == 'senior',
-                                  onTap: () => setState(() => _selectedRole = 'senior'),
+                                  onTap: () =>
+                                      setState(() => _selectedRole = 'senior'),
                                 ),
                                 _RoleFilterCard(
                                   title: 'Alumni',
                                   count: alumniCount,
                                   selected: _selectedRole == 'alumni',
-                                  onTap: () => setState(() => _selectedRole = 'alumni'),
+                                  onTap: () =>
+                                      setState(() => _selectedRole = 'alumni'),
                                 ),
                                 _RoleFilterCard(
                                   title: 'Mentors',
                                   count: mentorGroupCount,
                                   selected: _selectedRole == 'mentor',
-                                  onTap: () => setState(() => _selectedRole = 'mentor'),
+                                  onTap: () =>
+                                      setState(() => _selectedRole = 'mentor'),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 14),
                             _SectionMiniHeader(
                               title: 'Domain filter',
-                              description: 'Pick one domain instead of scanning a long chip list.',
+                              description:
+                                  'Pick one domain instead of scanning a long chip list.',
                             ),
                             const SizedBox(height: 8),
                             _DomainPickerCard(
@@ -2207,18 +2520,26 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
                             ),
                             const SizedBox(height: 16),
                             _SectionMiniHeader(
-                              title: _selectedRole == 'all' ? 'All users' : _prettyFilterLabel(_selectedRole),
-                              description: 'Tap a profile card to open the full public profile.',
+                              title: _selectedRole == 'all'
+                                  ? 'All users'
+                                  : _prettyFilterLabel(_selectedRole),
+                              description:
+                                  'Tap a profile card to open the full public profile.',
                             ),
                             const SizedBox(height: 10),
                             if (filtered.isEmpty)
-                              const _EmptyBlock(message: 'No users found for this group and domain.')
+                              const _EmptyBlock(
+                                message:
+                                    'No users found for this group and domain.',
+                              )
                             else
                               Column(
                                 children: filtered
                                     .map(
                                       (user) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 12),
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
                                         child: _DirectoryCard(
                                           profile: user,
                                           onTap: () => _openProfile(user),
@@ -2239,7 +2560,10 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
   }
 }
 
-Map<String, List<UserProfile>> _groupConnectProfiles(List<UserProfile> items, String selectedDomain) {
+Map<String, List<UserProfile>> _groupConnectProfiles(
+  List<UserProfile> items,
+  String selectedDomain,
+) {
   final grouped = <String, List<UserProfile>>{
     'student': <UserProfile>[],
     'senior': <UserProfile>[],
@@ -2286,8 +2610,12 @@ class _RoleFilterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = selected ? const Color(0xFFF2C86D) : Colors.white.withAlpha(20);
-    final background = selected ? const Color(0xFF2B2210) : Colors.white.withAlpha(8);
+    final accent = selected
+        ? const Color(0xFFF2C86D)
+        : Colors.white.withAlpha(20);
+    final background = selected
+        ? const Color(0xFF2B2210)
+        : Colors.white.withAlpha(8);
 
     return Material(
       color: Colors.transparent,
@@ -2308,21 +2636,23 @@ class _RoleFilterCard extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 17,
-                      color: selected ? Colors.white : Colors.white.withAlpha(220),
-                    ),
+                  fontSize: 17,
+                  color: selected ? Colors.white : Colors.white.withAlpha(220),
+                ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     '$count users',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white54,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white54),
                   ),
                   Icon(
-                    selected ? Icons.radio_button_checked : Icons.arrow_forward_ios_rounded,
+                    selected
+                        ? Icons.radio_button_checked
+                        : Icons.arrow_forward_ios_rounded,
                     size: 14,
                     color: selected ? const Color(0xFFF2C86D) : Colors.white38,
                   ),
@@ -2337,10 +2667,7 @@ class _RoleFilterCard extends StatelessWidget {
 }
 
 class _DomainPickerCard extends StatelessWidget {
-  const _DomainPickerCard({
-    required this.value,
-    required this.onTap,
-  });
+  const _DomainPickerCard({required this.value, required this.onTap});
 
   final String value;
   final VoidCallback onTap;
@@ -2361,20 +2688,34 @@ class _DomainPickerCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             children: [
-              Icon(Icons.filter_list_rounded, color: Colors.white.withAlpha(190)),
+              Icon(
+                Icons.filter_list_rounded,
+                color: Colors.white.withAlpha(190),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Domain', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white54)),
+                    Text(
+                      'Domain',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelSmall?.copyWith(color: Colors.white54),
+                    ),
                     const SizedBox(height: 2),
-                    Text(_prettyFilterLabel(value), style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      _prettyFilterLabel(value),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 10),
-              Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withAlpha(140)),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Colors.white.withAlpha(140),
+              ),
             ],
           ),
         ),
@@ -2404,8 +2745,14 @@ class _DomainChoiceTile extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: selected ? const Color(0xFFF2C86D).withAlpha(32) : Colors.white.withAlpha(8),
-            border: Border.all(color: selected ? const Color(0xFFF2C86D) : Colors.white.withAlpha(18)),
+            color: selected
+                ? const Color(0xFFF2C86D).withAlpha(32)
+                : Colors.white.withAlpha(8),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFFF2C86D)
+                  : Colors.white.withAlpha(18),
+            ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
@@ -2417,7 +2764,10 @@ class _DomainChoiceTile extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
             ],
           ),
@@ -2487,14 +2837,19 @@ class _SectionDataPageState<T> extends State<_SectionDataPage<T>> {
         child: FutureBuilder<List<T>>(
           future: _future,
           builder: (context, snapshot) {
-            final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
             if (snapshot.hasError || _errorMessage != null) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -2511,19 +2866,23 @@ class _SectionDataPageState<T> extends State<_SectionDataPage<T>> {
                   child: loading
                       ? const _LoadingBlock()
                       : items.isEmpty
-                          ? _EmptyBlock(message: widget.emptyMessage)
-                          : Column(
-                              children: items
-                                  .asMap()
-                                  .entries
-                                  .map(
-                                    (entry) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
-                                      child: widget.itemBuilder(context, entry.value, entry.key),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
+                      ? _EmptyBlock(message: widget.emptyMessage)
+                      : Column(
+                          children: items
+                              .asMap()
+                              .entries
+                              .map(
+                                (entry) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: widget.itemBuilder(
+                                    context,
+                                    entry.value,
+                                    entry.key,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
                 ),
               ],
             );
@@ -2593,7 +2952,10 @@ class _SectionSinglePageState<T> extends State<_SectionSinglePage<T>> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                  _ErrorPanel(
+                    message: _errorMessage ?? _friendlyError(snapshot.error),
+                    onRetry: _refresh,
+                  ),
                 ],
               );
             }
@@ -2640,7 +3002,11 @@ class _SectionScaffold extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: _SectionIntro(eyebrow: eyebrow, title: title, description: description),
+              child: _SectionIntro(
+                eyebrow: eyebrow,
+                title: title,
+                description: description,
+              ),
             ),
             Expanded(child: child),
           ],
@@ -2680,14 +3046,24 @@ class _SectionIntro extends StatelessWidget {
           Text(
             eyebrow.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 2.6,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 2.6,
+              color: Colors.white54,
+            ),
           ),
           const SizedBox(height: 12),
-          Text(title, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 36, height: 1.05)),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontSize: 36, height: 1.05),
+          ),
           const SizedBox(height: 12),
-          Text(description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6)),
+          Text(
+            description,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.6),
+          ),
         ],
       ),
     );
@@ -2716,19 +3092,23 @@ class _HeroSection extends StatelessWidget {
           Text(
             'WHAT WE BUILT',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 3.2,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 3.2,
+              color: Colors.white54,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             'Projects, gallery, and more as separate sections.',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 36),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontSize: 36),
           ),
           const SizedBox(height: 12),
           Text(
             'Tap a category to open its own page and keep the same web-inspired visual language on mobile.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.6),
           ),
         ],
       ),
@@ -2776,15 +3156,18 @@ class _ExploreTileGrid extends StatelessWidget {
                   color: Colors.white.withAlpha(10),
                   border: Border.all(color: Colors.white.withAlpha(20)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     item.$1,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Colors.white70,
-                          letterSpacing: 1.2,
-                        ),
+                      color: Colors.white70,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
               ),
@@ -2823,14 +3206,19 @@ class _SectionBlock extends StatelessWidget {
           Text(
             eyebrow.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 3,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
           ),
           const SizedBox(height: 8),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 6),
-          Text(description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            description,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 14),
           child,
         ],
@@ -2867,17 +3255,26 @@ class _ProjectCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (project.featured) const _Badge(text: 'FEATURED', color: Color(0xFF34D399)),
+          if (project.featured)
+            const _Badge(text: 'FEATURED', color: Color(0xFF34D399)),
           if (project.featured) const SizedBox(height: 8),
           Text(project.title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 6),
-          Text(project.description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            project.description,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           if (project.techStack.isNotEmpty) ...[
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: project.techStack.take(4).map((tech) => _MiniChip(text: tech)).toList(),
+              children: project.techStack
+                  .take(4)
+                  .map((tech) => _MiniChip(text: tech))
+                  .toList(),
             ),
           ],
         ],
@@ -2887,17 +3284,16 @@ class _ProjectCard extends StatelessWidget {
 }
 
 class _ResourceCard extends StatelessWidget {
-  const _ResourceCard({
-    required this.resource,
-    required this.onTap,
-  });
+  const _ResourceCard({required this.resource, required this.onTap});
 
   final ResourceItem resource;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final host = Uri.tryParse(resource.url)?.host.replaceFirst(RegExp(r'^www\.'), '');
+    final host = Uri.tryParse(
+      resource.url,
+    )?.host.replaceFirst(RegExp(r'^www\.'), '');
     final badges = _resourceHighlights(resource);
     return InkWell(
       borderRadius: BorderRadius.circular(22),
@@ -2914,27 +3310,40 @@ class _ResourceCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                _Badge(text: resource.category.toUpperCase(), color: const Color(0xFF5CC8FF)),
+                _Badge(
+                  text: resource.category.toUpperCase(),
+                  color: const Color(0xFF5CC8FF),
+                ),
                 const SizedBox(width: 8),
                 if ((resource.domain ?? '').trim().isNotEmpty)
-                  _Badge(text: resource.domain!.toUpperCase(), color: const Color(0xFFFFC857)),
+                  _Badge(
+                    text: resource.domain!.toUpperCase(),
+                    color: const Color(0xFFFFC857),
+                  ),
                 const Spacer(),
-                const Icon(Icons.arrow_outward_rounded, color: Colors.white60, size: 18),
+                const Icon(
+                  Icons.arrow_outward_rounded,
+                  color: Colors.white60,
+                  size: 18,
+                ),
               ],
             ),
             const SizedBox(height: 14),
             Text(
               resource.title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             if (host != null && host.isNotEmpty) ...[
               const SizedBox(height: 4),
-               Text(
+              Text(
                 host,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.white38,
-                      letterSpacing: 0.8,
-                    ),
+                  color: Colors.white38,
+                  letterSpacing: 0.8,
+                ),
               ),
             ],
             const SizedBox(height: 12),
@@ -2942,14 +3351,25 @@ class _ResourceCard extends StatelessWidget {
               resource.description?.trim().isNotEmpty == true
                   ? resource.description!
                   : 'Open this resource for more details.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5, color: Colors.white70),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                height: 1.5,
+                color: Colors.white70,
+              ),
             ),
             if (badges.isNotEmpty) ...[
               const SizedBox(height: 14),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: badges.take(3).map((badge) => _Badge(text: badge, color: const Color(0xFF8B5CF6).withAlpha(180))).toList(),
+                children: badges
+                    .take(3)
+                    .map(
+                      (badge) => _Badge(
+                        text: badge,
+                        color: const Color(0xFF8B5CF6).withAlpha(180),
+                      ),
+                    )
+                    .toList(),
               ),
             ],
           ],
@@ -2973,13 +3393,20 @@ List<String> _resourceHighlights(ResourceItem resource) {
     if (!badges.contains(value)) badges.add(value);
   }
 
-  if (text.contains('beginner') || text.contains('starter') || text.contains('intro')) {
+  if (text.contains('beginner') ||
+      text.contains('starter') ||
+      text.contains('intro')) {
     addBadge('Beginner');
   }
-  if (text.contains('interview') || text.contains('placement') || text.contains('dsa') || text.contains('cp')) {
+  if (text.contains('interview') ||
+      text.contains('placement') ||
+      text.contains('dsa') ||
+      text.contains('cp')) {
     addBadge('Interview Prep');
   }
-  if (text.contains('official') || text.contains('docs') || text.contains('reference')) {
+  if (text.contains('official') ||
+      text.contains('docs') ||
+      text.contains('reference')) {
     addBadge('Core Reference');
   }
   if (text.contains('youtube') || text.contains('video')) {
@@ -2995,10 +3422,7 @@ List<String> _resourceHighlights(ResourceItem resource) {
 }
 
 class _MiniStat extends StatelessWidget {
-  const _MiniStat({
-    required this.label,
-    required this.value,
-  });
+  const _MiniStat({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -3017,15 +3441,17 @@ class _MiniStat extends StatelessWidget {
         children: [
           Text(
             value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 24),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontSize: 24),
           ),
           const SizedBox(height: 4),
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Colors.white54,
-                  letterSpacing: 2.2,
-                ),
+              color: Colors.white54,
+              letterSpacing: 2.2,
+            ),
           ),
         ],
       ),
@@ -3034,10 +3460,7 @@ class _MiniStat extends StatelessWidget {
 }
 
 class _ResourceGroupHeader extends StatelessWidget {
-  const _ResourceGroupHeader({
-    required this.title,
-    required this.count,
-  });
+  const _ResourceGroupHeader({required this.title, required this.count});
 
   final String title;
   final int count;
@@ -3050,16 +3473,16 @@ class _ResourceGroupHeader extends StatelessWidget {
         Text(
           title.toUpperCase(),
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Colors.white70,
-                letterSpacing: 2.0,
-              ),
+            color: Colors.white70,
+            letterSpacing: 2.0,
+          ),
         ),
         Text(
           '$count items',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.white38,
-                letterSpacing: 1.0,
-              ),
+            color: Colors.white38,
+            letterSpacing: 1.0,
+          ),
         ),
       ],
     );
@@ -3072,7 +3495,9 @@ class _GalleryCard extends StatelessWidget {
   final GalleryItem item;
 
   void _showImageDetails(BuildContext context) {
-    final urls = item.imageUrls.isNotEmpty ? item.imageUrls : [item.imageUrl].where((url) => url.isNotEmpty).toList();
+    final urls = item.imageUrls.isNotEmpty
+        ? item.imageUrls
+        : [item.imageUrl].where((url) => url.isNotEmpty).toList();
     if (urls.isEmpty) return;
 
     showDialog(
@@ -3101,7 +3526,9 @@ class _GalleryCard extends StatelessWidget {
                       child: SafeNetworkImage(
                         imageUrl: urls[idx],
                         fit: BoxFit.contain,
-                        placeholder: Container(color: Colors.white.withAlpha(8)),
+                        placeholder: Container(
+                          color: Colors.white.withAlpha(8),
+                        ),
                       ),
                     ),
                   ),
@@ -3112,7 +3539,11 @@ class _GalleryCard extends StatelessWidget {
             Text(
               item.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             if (urls.length > 1) ...[
               const SizedBox(height: 6),
@@ -3129,7 +3560,9 @@ class _GalleryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final urls = item.imageUrls.isNotEmpty ? item.imageUrls : [item.imageUrl].where((url) => url.isNotEmpty).toList();
+    final urls = item.imageUrls.isNotEmpty
+        ? item.imageUrls
+        : [item.imageUrl].where((url) => url.isNotEmpty).toList();
 
     return GestureDetector(
       onTap: () => _showImageDetails(context),
@@ -3153,7 +3586,10 @@ class _GalleryCard extends StatelessWidget {
                 top: 14,
                 right: 14,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withAlpha(180),
                     borderRadius: BorderRadius.circular(12),
@@ -3161,7 +3597,11 @@ class _GalleryCard extends StatelessWidget {
                   ),
                   child: Text(
                     '${urls.length} photos',
-                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -3190,11 +3630,16 @@ class _GalleryCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF5CC8FF).withAlpha(40),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFF5CC8FF).withAlpha(80)),
+                            border: Border.all(
+                              color: const Color(0xFF5CC8FF).withAlpha(80),
+                            ),
                           ),
                           child: Text(
                             item.category.toUpperCase(),
@@ -3209,7 +3654,10 @@ class _GalleryCard extends StatelessWidget {
                         if (item.eventRef != null && item.eventRef!.isNotEmpty)
                           Text(
                             item.eventRef!,
-                            style: const TextStyle(color: Colors.white54, fontSize: 10),
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 10,
+                            ),
                           ),
                       ],
                     ),
@@ -3253,7 +3701,9 @@ class _BlogCard extends StatelessWidget {
     final published = blog.createdAt?.toLocal();
     final publishedText = published?.toIso8601String().split('T').first ?? '';
     final excerptLimit = compact ? 130 : 170;
-    final excerpt = blog.content.length > excerptLimit ? '${blog.content.substring(0, excerptLimit)}...' : blog.content;
+    final excerpt = blog.content.length > excerptLimit
+        ? '${blog.content.substring(0, excerptLimit)}...'
+        : blog.content;
 
     return Material(
       color: Colors.transparent,
@@ -3288,21 +3738,40 @@ class _BlogCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        if (blog.authorName != null && blog.authorName!.isNotEmpty)
-                          _Badge(text: blog.authorName!.toUpperCase(), color: const Color(0xFF5CC8FF)),
-                        if (publishedText.isNotEmpty) _Badge(text: publishedText, color: const Color(0xFF34D399)),
+                        if (blog.authorName != null &&
+                            blog.authorName!.isNotEmpty)
+                          _Badge(
+                            text: blog.authorName!.toUpperCase(),
+                            color: const Color(0xFF5CC8FF),
+                          ),
+                        if (publishedText.isNotEmpty)
+                          _Badge(
+                            text: publishedText,
+                            color: const Color(0xFF34D399),
+                          ),
                       ],
                     ),
                     SizedBox(height: compact ? 7 : 8),
-                    Text(blog.title, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      blog.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 6),
-                    Text(excerpt, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+                    Text(
+                      excerpt,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                    ),
                     if (blog.tags.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: blog.tags.take(compact ? 2 : 3).map((tag) => _MiniChip(text: tag)).toList(),
+                        children: blog.tags
+                            .take(compact ? 2 : 3)
+                            .map((tag) => _MiniChip(text: tag))
+                            .toList(),
                       ),
                     ],
                     if (onReadMore != null) ...[
@@ -3327,10 +3796,7 @@ class _BlogCard extends StatelessWidget {
 }
 
 class _SectionMiniHeader extends StatelessWidget {
-  const _SectionMiniHeader({
-    required this.title,
-    required this.description,
-  });
+  const _SectionMiniHeader({required this.title, required this.description});
 
   final String title;
   final String description;
@@ -3342,7 +3808,9 @@ class _SectionMiniHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 18),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontSize: 18),
         ),
         const SizedBox(height: 4),
         Text(
@@ -3355,10 +3823,7 @@ class _SectionMiniHeader extends StatelessWidget {
 }
 
 class _BlogAuthorCard extends StatelessWidget {
-  const _BlogAuthorCard({
-    required this.group,
-    required this.onTap,
-  });
+  const _BlogAuthorCard({required this.group, required this.onTap});
 
   final _BlogAuthorGroup group;
   final VoidCallback onTap;
@@ -3367,7 +3832,9 @@ class _BlogAuthorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final initial = _initialOf(group.name);
     final latest = group.latestPost.createdAt?.toLocal();
-    final latestText = latest == null ? 'No date' : '${latest.day.toString().padLeft(2, '0')} ${_monthName(latest.month)} ${latest.year}';
+    final latestText = latest == null
+        ? 'No date'
+        : '${latest.day.toString().padLeft(2, '0')} ${_monthName(latest.month)} ${latest.year}';
     final previewPosts = group.posts.take(2).toList();
 
     return Material(
@@ -3397,7 +3864,9 @@ class _BlogAuthorCard extends StatelessWidget {
                     alignment: Alignment.center,
                     child: Text(
                       initial,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(color: Colors.black),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -3405,11 +3874,17 @@ class _BlogAuthorCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          group.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 3),
                         Text(
                           '${group.posts.length} posts',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.white70),
                         ),
                       ],
                     ),
@@ -3419,7 +3894,9 @@ class _BlogAuthorCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 'Latest: $latestText',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white54),
               ),
               if (previewPosts.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -3427,7 +3904,9 @@ class _BlogAuthorCard extends StatelessWidget {
                   previewPosts.first.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white70),
                 ),
               ],
               const Spacer(),
@@ -3436,9 +3915,9 @@ class _BlogAuthorCard extends StatelessWidget {
                 child: Text(
                   'Tap to open',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Colors.white54,
-                        letterSpacing: 0.8,
-                      ),
+                    color: Colors.white54,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ),
             ],
@@ -3458,9 +3937,7 @@ class _BlogAuthorPostsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Author posts'),
-      ),
+      appBar: AppBar(title: const Text('Author posts')),
       body: SafeArea(
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -3479,7 +3956,9 @@ class _BlogAuthorPostsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   if (group.posts.isEmpty)
-                    const _EmptyBlock(message: 'No posts found for this author.')
+                    const _EmptyBlock(
+                      message: 'No posts found for this author.',
+                    )
                   else
                     Column(
                       children: group.posts
@@ -3490,12 +3969,14 @@ class _BlogAuthorPostsPage extends StatelessWidget {
                                 blog: blog,
                                 onTap: () => Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => BlogDetailScreen(blogId: blog.id),
+                                    builder: (_) =>
+                                        BlogDetailScreen(blogId: blog.id),
                                   ),
                                 ),
                                 onReadMore: () => Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => BlogDetailScreen(blogId: blog.id),
+                                    builder: (_) =>
+                                        BlogDetailScreen(blogId: blog.id),
                                   ),
                                 ),
                               ),
@@ -3553,9 +4034,9 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     }
   }
 
@@ -3572,14 +4053,19 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
           child: FutureBuilder<BlogItem>(
             future: _future,
             builder: (context, snapshot) {
-              final loading = snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData;
+              final loading =
+                  snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData;
 
               if (snapshot.hasError || _errorMessage != null) {
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   children: [
-                    _ErrorPanel(message: _errorMessage ?? _friendlyError(snapshot.error), onRetry: _refresh),
+                    _ErrorPanel(
+                      message: _errorMessage ?? _friendlyError(snapshot.error),
+                      onRetry: _refresh,
+                    ),
                   ],
                 );
               }
@@ -3589,7 +4075,9 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                 return const SizedBox.shrink();
               }
 
-              final canManage = isAdmin || (currentUser != null && currentUser.id == blog.authorId);
+              final canManage =
+                  isAdmin ||
+                  (currentUser != null && currentUser.id == blog.authorId);
               final published = blog.createdAt?.toLocal();
               final publishedText = published == null
                   ? ''
@@ -3602,13 +4090,15 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                   _SectionBlock(
                     eyebrow: 'Read',
                     title: blog.title,
-                    description: 'Open the full post and review the content in a dedicated view.',
+                    description:
+                        'Open the full post and review the content in a dedicated view.',
                     child: loading
                         ? const _LoadingBlock()
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (blog.coverImage != null && blog.coverImage!.isNotEmpty)
+                              if (blog.coverImage != null &&
+                                  blog.coverImage!.isNotEmpty)
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(24),
                                   child: AspectRatio(
@@ -3616,33 +4106,52 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                                     child: SafeNetworkImage(
                                       imageUrl: blog.coverImage,
                                       fit: BoxFit.cover,
-                                      placeholder: Container(color: Colors.white.withAlpha(8)),
+                                      placeholder: Container(
+                                        color: Colors.white.withAlpha(8),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              if (blog.coverImage != null && blog.coverImage!.isNotEmpty) const SizedBox(height: 14),
+                              if (blog.coverImage != null &&
+                                  blog.coverImage!.isNotEmpty)
+                                const SizedBox(height: 14),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  if (blog.authorName != null && blog.authorName!.isNotEmpty)
-                                    _Badge(text: blog.authorName!.toUpperCase(), color: const Color(0xFF5CC8FF)),
-                                  if (publishedText.isNotEmpty) _Badge(text: publishedText, color: const Color(0xFF34D399)),
+                                  if (blog.authorName != null &&
+                                      blog.authorName!.isNotEmpty)
+                                    _Badge(
+                                      text: blog.authorName!.toUpperCase(),
+                                      color: const Color(0xFF5CC8FF),
+                                    ),
+                                  if (publishedText.isNotEmpty)
+                                    _Badge(
+                                      text: publishedText,
+                                      color: const Color(0xFF34D399),
+                                    ),
                                   if (canManage)
-                                    _Badge(text: 'MANAGE', color: const Color(0xFFF5B14C)),
+                                    _Badge(
+                                      text: 'MANAGE',
+                                      color: const Color(0xFFF5B14C),
+                                    ),
                                 ],
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 blog.content,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.65),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(height: 1.65),
                               ),
                               if (blog.tags.isNotEmpty) ...[
                                 const SizedBox(height: 16),
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
-                                  children: blog.tags.map((tag) => _MiniChip(text: tag)).toList(),
+                                  children: blog.tags
+                                      .map((tag) => _MiniChip(text: tag))
+                                      .toList(),
                                 ),
                               ],
                               if (canManage) ...[
@@ -3651,7 +4160,10 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                                   alignment: Alignment.centerRight,
                                   child: OutlinedButton.icon(
                                     onPressed: () => _deleteBlog(blog),
-                                    icon: const Icon(Icons.delete_outline, size: 18),
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      size: 18,
+                                    ),
                                     label: const Text('Delete post'),
                                   ),
                                 ),
@@ -3739,30 +4251,45 @@ class _BlogCreateSheetState extends State<_BlogCreateSheet> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text('New Post', style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'New Post',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _titleController,
                       decoration: const InputDecoration(labelText: 'Title'),
-                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Enter a title' : null,
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
+                          ? 'Enter a title'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _contentController,
-                      decoration: const InputDecoration(labelText: 'Write your article here...'),
+                      decoration: const InputDecoration(
+                        labelText: 'Write your article here...',
+                      ),
                       minLines: 8,
                       maxLines: 14,
-                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Enter content' : null,
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
+                          ? 'Enter content'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _coverController,
-                      decoration: const InputDecoration(labelText: 'Cover image URL (optional)'),
+                      decoration: const InputDecoration(
+                        labelText: 'Cover image URL (optional)',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _tagsController,
-                      decoration: const InputDecoration(labelText: 'Tags - comma separated'),
+                      decoration: const InputDecoration(
+                        labelText: 'Tags - comma separated',
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Row(
@@ -3828,23 +4355,40 @@ class _OpportunityCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _Badge(text: opportunity.type.toUpperCase(), color: const Color(0xFF5CC8FF)),
+              _Badge(
+                text: opportunity.type.toUpperCase(),
+                color: const Color(0xFF5CC8FF),
+              ),
               if (opportunity.domain != null && opportunity.domain!.isNotEmpty)
-                _Badge(text: opportunity.domain!.toUpperCase(), color: const Color(0xFF34D399)),
+                _Badge(
+                  text: opportunity.domain!.toUpperCase(),
+                  color: const Color(0xFF34D399),
+                ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(opportunity.title, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            opportunity.title,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 4),
-          Text(opportunity.company, style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            opportunity.company,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           const SizedBox(height: 6),
           Text(
-            opportunity.description ?? 'Open this opportunity for more details.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+            opportunity.description ??
+                'Open this opportunity for more details.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
           const SizedBox(height: 8),
           Text(
-            opportunity.applyLink.isNotEmpty ? opportunity.applyLink : 'Application link unavailable',
+            opportunity.applyLink.isNotEmpty
+                ? opportunity.applyLink
+                : 'Application link unavailable',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -3871,16 +4415,23 @@ class _TimelineCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            milestone.month == null || milestone.month!.isEmpty ? '${milestone.year}' : '${milestone.month} ${milestone.year}',
+            milestone.month == null || milestone.month!.isEmpty
+                ? '${milestone.year}'
+                : '${milestone.month} ${milestone.year}',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 2.4,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 2.4,
+              color: Colors.white54,
+            ),
           ),
           const SizedBox(height: 8),
           Text(milestone.title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 6),
-          Text(milestone.description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            milestone.description,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
         ],
       ),
     );
@@ -3900,7 +4451,9 @@ class _TimelineRail extends StatelessWidget {
           .entries
           .map(
             (entry) => Padding(
-              padding: EdgeInsets.only(bottom: entry.key == items.length - 1 ? 0 : 12),
+              padding: EdgeInsets.only(
+                bottom: entry.key == items.length - 1 ? 0 : 12,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3914,7 +4467,9 @@ class _TimelineRail extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: const Color(0xFFF5B14C).withAlpha(70),
-                            border: Border.all(color: const Color(0xFFF5B14C).withAlpha(130)),
+                            border: Border.all(
+                              color: const Color(0xFFF5B14C).withAlpha(130),
+                            ),
                           ),
                         ),
                         if (entry.key != items.length - 1)
@@ -3996,14 +4551,22 @@ class _ForumFilterSheetState extends State<_ForumFilterSheet> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Text('Forum Filters', style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    'Forum Filters',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 6),
                   Text(
                     'Choose a post status and domain.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(height: 1.5),
                   ),
                   const SizedBox(height: 18),
-                  Text('Status', style: Theme.of(context).textTheme.labelMedium),
+                  Text(
+                    'Status',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
@@ -4019,7 +4582,10 @@ class _ForumFilterSheetState extends State<_ForumFilterSheet> {
                         .toList(),
                   ),
                   const SizedBox(height: 18),
-                  Text('Domain', style: Theme.of(context).textTheme.labelMedium),
+                  Text(
+                    'Domain',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
@@ -4039,14 +4605,24 @@ class _ForumFilterSheetState extends State<_ForumFilterSheet> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(const _ForumFilterSelection(status: 'all', domain: 'all')),
+                          onPressed: () => Navigator.of(context).pop(
+                            const _ForumFilterSelection(
+                              status: 'all',
+                              domain: 'all',
+                            ),
+                          ),
                           child: const Text('Reset'),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(_ForumFilterSelection(status: _status, domain: _domain)),
+                          onPressed: () => Navigator.of(context).pop(
+                            _ForumFilterSelection(
+                              status: _status,
+                              domain: _domain,
+                            ),
+                          ),
                           child: const Text('Apply'),
                         ),
                       ),
@@ -4124,25 +4700,37 @@ class _NewForumQuestionSheetState extends State<_NewForumQuestionSheet> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text('Ask a Question', style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Ask a Question',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _titleController,
                       decoration: const InputDecoration(labelText: 'Title'),
-                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Enter a title' : null,
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
+                          ? 'Enter a title'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _bodyController,
                       decoration: const InputDecoration(labelText: 'Body'),
                       maxLines: 5,
-                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Enter a body' : null,
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
+                          ? 'Enter a body'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _domainController,
                       decoration: const InputDecoration(labelText: 'Domain'),
-                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Enter a domain' : null,
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
+                          ? 'Enter a domain'
+                          : null,
                     ),
                     const SizedBox(height: 20),
                     Row(
@@ -4187,7 +4775,8 @@ class _OpportunityFilterSheet extends StatefulWidget {
   final String selectedValue;
 
   @override
-  State<_OpportunityFilterSheet> createState() => _OpportunityFilterSheetState();
+  State<_OpportunityFilterSheet> createState() =>
+      _OpportunityFilterSheetState();
 }
 
 class _OpportunityFilterSheetState extends State<_OpportunityFilterSheet> {
@@ -4221,14 +4810,22 @@ class _OpportunityFilterSheetState extends State<_OpportunityFilterSheet> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Text('${widget.title} Filter', style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    '${widget.title} Filter',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 6),
                   Text(
                     widget.subtitle,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(height: 1.5),
                   ),
                   const SizedBox(height: 18),
-                  Text(widget.title, style: Theme.of(context).textTheme.labelMedium),
+                  Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
@@ -4238,7 +4835,8 @@ class _OpportunityFilterSheetState extends State<_OpportunityFilterSheet> {
                           (option) => ChoiceChip(
                             label: Text(_prettyFilterLabel(option)),
                             selected: _selectedValue == option,
-                            onSelected: (_) => setState(() => _selectedValue = option),
+                            onSelected: (_) =>
+                                setState(() => _selectedValue = option),
                           ),
                         )
                         .toList(),
@@ -4255,7 +4853,8 @@ class _OpportunityFilterSheetState extends State<_OpportunityFilterSheet> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(_selectedValue),
+                          onPressed: () =>
+                              Navigator.of(context).pop(_selectedValue),
                           child: const Text('Apply'),
                         ),
                       ),
@@ -4294,10 +4893,7 @@ String _initialOf(String value) {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryCard({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -4319,9 +4915,9 @@ class _SummaryCard extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 1.8,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 1.8,
+              color: Colors.white54,
+            ),
           ),
         ],
       ),
@@ -4330,10 +4926,7 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _FilterPill extends StatelessWidget {
-  const _FilterPill({
-    required this.label,
-    required this.onTap,
-  });
+  const _FilterPill({required this.label, required this.onTap});
 
   final String label;
   final VoidCallback onTap;
@@ -4407,12 +5000,14 @@ class _ForumCardState extends State<_ForumCard> {
 
   bool get _canManageQuestion {
     final authorId = widget.doubt.authorId;
-    return widget.isAdmin || (authorId != null && authorId == widget.currentUserId);
+    return widget.isAdmin ||
+        (authorId != null && authorId == widget.currentUserId);
   }
 
   bool _canDeleteReply(DoubtReplyItem reply) {
     final authorId = reply.authorId;
-    return widget.isAdmin || (authorId != null && authorId == widget.currentUserId);
+    return widget.isAdmin ||
+        (authorId != null && authorId == widget.currentUserId);
   }
 
   Future<void> _runAction(Future<void> Function() action) async {
@@ -4458,7 +5053,9 @@ class _ForumCardState extends State<_ForumCard> {
         borderRadius: BorderRadius.circular(24),
         color: Colors.black.withAlpha(54),
         border: Border.all(
-          color: widget.doubt.resolved ? const Color(0xFF34D399).withAlpha(80) : Colors.white.withAlpha(20),
+          color: widget.doubt.resolved
+              ? const Color(0xFF34D399).withAlpha(80)
+              : Colors.white.withAlpha(20),
         ),
       ),
       padding: const EdgeInsets.all(16),
@@ -4470,33 +5067,52 @@ class _ForumCardState extends State<_ForumCard> {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              if (widget.doubt.resolved) const _Badge(text: 'RESOLVED', color: Color(0xFF34D399)),
-              if (!widget.doubt.resolved) const _Badge(text: 'OPEN', color: Color(0xFFF59E0B)),
-              if (widget.doubt.domain != null && widget.doubt.domain!.isNotEmpty)
-                _Badge(text: widget.doubt.domain!.toUpperCase(), color: const Color(0xFFF5B14C)),
+              if (widget.doubt.resolved)
+                const _Badge(text: 'RESOLVED', color: Color(0xFF34D399)),
+              if (!widget.doubt.resolved)
+                const _Badge(text: 'OPEN', color: Color(0xFFF59E0B)),
+              if (widget.doubt.domain != null &&
+                  widget.doubt.domain!.isNotEmpty)
+                _Badge(
+                  text: widget.doubt.domain!.toUpperCase(),
+                  color: const Color(0xFFF5B14C),
+                ),
               if (createdText.isNotEmpty)
                 Text(
                   createdText,
-                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white54,
+                  ),
                 ),
               const SizedBox(width: 4),
               if (_canManageQuestion)
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-                  onPressed: _isBusy ? null : () => _runAction(widget.onDeleteQuestion),
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
+                  ),
+                  onPressed: _isBusy
+                      ? null
+                      : () => _runAction(widget.onDeleteQuestion),
                   icon: const Icon(Icons.delete_outline, size: 18),
                   tooltip: 'Delete question',
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(widget.doubt.title, style: theme.textTheme.titleLarge?.copyWith(height: 1.15)),
+          Text(
+            widget.doubt.title,
+            style: theme.textTheme.titleLarge?.copyWith(height: 1.15),
+          ),
           const SizedBox(height: 10),
           Text(
             widget.doubt.body,
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.6, color: Colors.white.withAlpha(220)),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.6,
+              color: Colors.white.withAlpha(220),
+            ),
           ),
           const SizedBox(height: 14),
           Row(
@@ -4521,18 +5137,27 @@ class _ForumCardState extends State<_ForumCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(authorName, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(
+                      authorName,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     if (authorRole != null && authorRole.isNotEmpty)
                       Text(
                         authorRole,
-                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white54,
+                        ),
                       ),
                   ],
                 ),
               ),
               Text(
                 '${widget.doubt.upvotes} upvotes',
-                style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white70,
+                ),
               ),
             ],
           ),
@@ -4542,15 +5167,26 @@ class _ForumCardState extends State<_ForumCard> {
             runSpacing: 10,
             children: [
               OutlinedButton.icon(
-                onPressed: _isBusy ? null : () => _runAction(widget.onToggleUpvote),
+                onPressed: _isBusy
+                    ? null
+                    : () => _runAction(widget.onToggleUpvote),
                 icon: const Icon(Icons.arrow_upward_rounded, size: 18),
                 label: Text('Upvote (${widget.doubt.upvotes})'),
               ),
               if (_canManageQuestion)
                 OutlinedButton.icon(
-                  onPressed: _isBusy ? null : () => _runAction(widget.onToggleResolve),
-                  icon: Icon(widget.doubt.resolved ? Icons.radio_button_checked : Icons.radio_button_off, size: 18),
-                  label: Text(widget.doubt.resolved ? 'Mark open' : 'Mark resolved'),
+                  onPressed: _isBusy
+                      ? null
+                      : () => _runAction(widget.onToggleResolve),
+                  icon: Icon(
+                    widget.doubt.resolved
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    size: 18,
+                  ),
+                  label: Text(
+                    widget.doubt.resolved ? 'Mark open' : 'Mark resolved',
+                  ),
                 ),
             ],
           ),
@@ -4558,14 +5194,19 @@ class _ForumCardState extends State<_ForumCard> {
           Divider(color: Colors.white.withAlpha(20), height: 1),
           const SizedBox(height: 14),
           Text(
-            widget.doubt.replies.isEmpty ? 'Replies' : 'Replies (${widget.doubt.replies.length})',
+            widget.doubt.replies.isEmpty
+                ? 'Replies'
+                : 'Replies (${widget.doubt.replies.length})',
             style: theme.textTheme.titleSmall,
           ),
           const SizedBox(height: 10),
           if (widget.doubt.replies.isEmpty)
             Text(
               'No replies yet. Add the first answer below.',
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54, height: 1.5),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.white54,
+                height: 1.5,
+              ),
             )
           else
             Column(
@@ -4577,7 +5218,11 @@ class _ForumCardState extends State<_ForumCard> {
                         reply: reply,
                         currentUserId: widget.currentUserId,
                         isAdmin: widget.isAdmin,
-                        onDelete: _canDeleteReply(reply) && !_isBusy ? () => _runAction(() => widget.onDeleteReply(reply.id)) : null,
+                        onDelete: _canDeleteReply(reply) && !_isBusy
+                            ? () => _runAction(
+                                () => widget.onDeleteReply(reply.id),
+                              )
+                            : null,
                       ),
                     ),
                   )
@@ -4589,9 +5234,7 @@ class _ForumCardState extends State<_ForumCard> {
             maxLines: 4,
             minLines: 1,
             textInputAction: TextInputAction.newline,
-            decoration: const InputDecoration(
-              hintText: 'Write a reply...',
-            ),
+            decoration: const InputDecoration(hintText: 'Write a reply...'),
           ),
           const SizedBox(height: 10),
           Align(
@@ -4602,7 +5245,10 @@ class _ForumCardState extends State<_ForumCard> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.black,
+                      ),
                     )
                   : const Icon(Icons.send_rounded, size: 18),
               label: const Text('Reply'),
@@ -4635,7 +5281,9 @@ class _ReplyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final author = (reply.authorName?.trim().isNotEmpty ?? false) ? reply.authorName!.trim() : 'User';
+    final author = (reply.authorName?.trim().isNotEmpty ?? false)
+        ? reply.authorName!.trim()
+        : 'User';
     final role = reply.authorRole?.trim();
     final created = reply.createdAt?.toLocal();
     final createdText = created == null
@@ -4674,24 +5322,39 @@ class _ReplyTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(author, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(
+                      author,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     if (role != null && role.isNotEmpty)
                       Text(
                         role,
-                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white54,
+                        ),
                       ),
                   ],
                 ),
               ),
               if (createdText.isNotEmpty) ...[
-                Text(createdText, style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54)),
+                Text(
+                  createdText,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white54,
+                  ),
+                ),
                 const SizedBox(width: 8),
               ],
               if (_canDelete && onDelete != null)
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
+                  ),
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline, size: 18),
                   tooltip: 'Delete reply',
@@ -4717,10 +5380,7 @@ class _ReplyTile extends StatelessWidget {
 }
 
 class _LeaderboardCard extends StatelessWidget {
-  const _LeaderboardCard({
-    required this.rank,
-    required this.student,
-  });
+  const _LeaderboardCard({required this.rank, required this.student});
 
   final int rank;
   final LeaderboardItem student;
@@ -4742,13 +5402,22 @@ class _LeaderboardCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(student.name, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  student.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 4),
-                Text(_leaderboardSubtitle(student), style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  _leaderboardSubtitle(student),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
           ),
-          Text('${student.points}', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            '${student.points}',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ],
       ),
     );
@@ -4756,10 +5425,7 @@ class _LeaderboardCard extends StatelessWidget {
 }
 
 class _ContactInfoBlock extends StatelessWidget {
-  const _ContactInfoBlock({
-    required this.title,
-    required this.child,
-  });
+  const _ContactInfoBlock({required this.title, required this.child});
 
   final String title;
   final Widget child;
@@ -4779,9 +5445,9 @@ class _ContactInfoBlock extends StatelessWidget {
           Text(
             title.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 3,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
           ),
           const SizedBox(height: 12),
           child,
@@ -4824,9 +5490,19 @@ class _ContactLine extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white54)),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: Colors.white54),
+              ),
               const SizedBox(height: 4),
-              Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(height: 1.5),
+              ),
             ],
           ),
         ),
@@ -4837,10 +5513,7 @@ class _ContactLine extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: content,
-      ),
+      child: Padding(padding: const EdgeInsets.all(6), child: content),
     );
   }
 }
@@ -4900,9 +5573,9 @@ class _ContactMessageBlock extends StatelessWidget {
           Text(
             'Send a Message'.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 3,
-                  color: Colors.white54,
-                ),
+              letterSpacing: 3,
+              color: Colors.white54,
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -4929,14 +5602,25 @@ class _ContactMessageBlock extends StatelessWidget {
           Row(
             children: [
               ElevatedButton(
-                onPressed: sending || (contactEmail == null || contactEmail!.isEmpty) ? null : onSend,
+                onPressed:
+                    sending || (contactEmail == null || contactEmail!.isEmpty)
+                    ? null
+                    : onSend,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5CC8FF),
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                child: Text(sending ? 'Sending...' : 'Send Message', style: const TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(
+                  sending ? 'Sending...' : 'Send Message',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -4944,7 +5628,9 @@ class _ContactMessageBlock extends StatelessWidget {
                   contactEmail == null || contactEmail!.isEmpty
                       ? 'No contact email is configured.'
                       : 'This opens your email app with the message prefilled.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white38),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white38),
                 ),
               ),
             ],
@@ -4956,20 +5642,14 @@ class _ContactMessageBlock extends StatelessWidget {
 }
 
 class _ContactSocialLink {
-  const _ContactSocialLink({
-    required this.label,
-    required this.url,
-  });
+  const _ContactSocialLink({required this.label, required this.url});
 
   final String label;
   final String url;
 }
 
 class _LinkBadge extends StatelessWidget {
-  const _LinkBadge({
-    required this.label,
-    required this.url,
-  });
+  const _LinkBadge({required this.label, required this.url});
 
   final String label;
   final String url;
@@ -5005,12 +5685,16 @@ class _LinkBadge extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF5CC8FF),
-                    letterSpacing: 1,
-                  ),
+                color: const Color(0xFF5CC8FF),
+                letterSpacing: 1,
+              ),
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.open_in_new_rounded, size: 14, color: Color(0xFF5CC8FF)),
+            const Icon(
+              Icons.open_in_new_rounded,
+              size: 14,
+              color: Color(0xFF5CC8FF),
+            ),
           ],
         ),
       ),
@@ -5043,15 +5727,14 @@ String _displayRole(String role) {
     case 'admin':
       return 'Admin';
     default:
-      return role.isEmpty ? 'Member' : role[0].toUpperCase() + role.substring(1);
+      return role.isEmpty
+          ? 'Member'
+          : role[0].toUpperCase() + role.substring(1);
   }
 }
 
 class _DirectoryCard extends StatelessWidget {
-  const _DirectoryCard({
-    required this.profile,
-    required this.onTap,
-  });
+  const _DirectoryCard({required this.profile, required this.onTap});
 
   final UserProfile profile;
   final VoidCallback onTap;
@@ -5084,7 +5767,9 @@ class _DirectoryCard extends StatelessWidget {
               alignment: Alignment.center,
               child: Text(
                 initial,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: Colors.black),
               ),
             ),
             const SizedBox(width: 12),
@@ -5095,15 +5780,21 @@ class _DirectoryCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(profile.name, style: Theme.of(context).textTheme.titleMedium),
+                        child: Text(
+                          profile.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                       ),
-                      if (profile.isMentor) const _Badge(text: 'MENTOR', color: Color(0xFF34D399)),
+                      if (profile.isMentor)
+                        const _Badge(text: 'MENTOR', color: Color(0xFF34D399)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _memberSubtitle(profile),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
                   ),
                   if (profile.hasBio) ...[
                     const SizedBox(height: 8),
@@ -5111,7 +5802,9 @@ class _DirectoryCard extends StatelessWidget {
                       profile.bio!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.45),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(height: 1.45),
                     ),
                   ],
                   if (domains.isNotEmpty) ...[
@@ -5119,7 +5812,9 @@ class _DirectoryCard extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: domains.map((domain) => _MiniChip(text: domain)).toList(),
+                      children: domains
+                          .map((domain) => _MiniChip(text: domain))
+                          .toList(),
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -5176,7 +5871,9 @@ class _Badge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, letterSpacing: 1),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: color, letterSpacing: 1),
       ),
     );
   }
@@ -5207,9 +5904,9 @@ class _RankBadge extends StatelessWidget {
       child: Text(
         '$rank',
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -5246,7 +5943,10 @@ class _EmptyBlock extends StatelessWidget {
         border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       padding: const EdgeInsets.all(16),
-      child: Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+      ),
     );
   }
 }
@@ -5269,9 +5969,17 @@ class _ErrorPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Unable to load section', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Unable to load section',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 10),
-          Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
+          Text(
+            message,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
           const SizedBox(height: 14),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
@@ -5282,7 +5990,9 @@ class _ErrorPanel extends StatelessWidget {
 
 String _friendlyError(Object? error) {
   final text = error.toString();
-  if (text.contains('401')) return 'Your session expired. Please sign in again.';
+  if (text.contains('401')) {
+    return 'Your session expired. Please sign in again.';
+  }
   if (text.contains('SocketException') || text.contains('DioException')) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }
@@ -5319,53 +6029,90 @@ class CollaborationsExplorePage extends StatelessWidget {
       _Partner(
         name: 'GeeksforGeeks',
         type: 'CAMPUS PARTNER',
-        description: 'GeeksforGeeks provides resources for computer science students to master data structures, algorithms, and technical interview preparation.',
+        description:
+            'GeeksforGeeks provides resources for computer science students to master data structures, algorithms, and technical interview preparation.',
         website: 'https://geeksforgeeks.org',
         logoText: 'GFG',
         representatives: [
-          _Representative(name: 'Omkar Patil', role: 'GFG Campus Lead', initials: 'OP', color: Color(0xFF10B981)),
+          _Representative(
+            name: 'Omkar Patil',
+            role: 'GFG Campus Lead',
+            initials: 'OP',
+            color: Color(0xFF10B981),
+          ),
         ],
       ),
       _Partner(
         name: 'Algozenith',
         type: 'CLUB PARTNER',
-        description: 'Master competitive programming and DSA. Building problem-solving foundations through structured coding camps and contests.',
+        description:
+            'Master competitive programming and DSA. Building problem-solving foundations through structured coding camps and contests.',
         website: 'https://algozenith.com',
         logoText: 'AZ',
         representatives: [
-          _Representative(name: 'Shivam Giri', role: 'Campus Lead', initials: 'SG', color: Color(0xFF3B82F6)),
-          _Representative(name: 'Shivendra Ghatage', role: 'Tech Lead', initials: 'SG', color: Color(0xFF8B5CF6)),
-          _Representative(name: 'Yash Sagpal', role: 'Content & Design Lead', initials: 'YS', color: Color(0xFFF97316)),
-          _Representative(name: 'Nandan Gaikwad', role: 'Media & Outreach Lead', initials: 'NG', color: Color(0xFF0EA5E9)),
+          _Representative(
+            name: 'Shivam Giri',
+            role: 'Campus Lead',
+            initials: 'SG',
+            color: Color(0xFF3B82F6),
+          ),
+          _Representative(
+            name: 'Shivendra Ghatage',
+            role: 'Tech Lead',
+            initials: 'SG',
+            color: Color(0xFF8B5CF6),
+          ),
+          _Representative(
+            name: 'Yash Sagpal',
+            role: 'Content & Design Lead',
+            initials: 'YS',
+            color: Color(0xFFF97316),
+          ),
+          _Representative(
+            name: 'Nandan Gaikwad',
+            role: 'Media & Outreach Lead',
+            initials: 'NG',
+            color: Color(0xFF0EA5E9),
+          ),
         ],
       ),
       _Partner(
         name: 'LetsUpgrade',
         type: 'EDUCATION PARTNER',
-        description: 'An interactive learning community and upskilling platform providing industry-aligned tech courses and projects for students.',
+        description:
+            'An interactive learning community and upskilling platform providing industry-aligned tech courses and projects for students.',
         website: 'https://letsupgrade.in',
         logoText: 'LU',
         representatives: [
-          _Representative(name: 'Omkar Patil', role: 'LetsUpgrade Lead', initials: 'OP', color: Color(0xFFF59E0B)),
+          _Representative(
+            name: 'Omkar Patil',
+            role: 'LetsUpgrade Lead',
+            initials: 'OP',
+            color: Color(0xFFF59E0B),
+          ),
         ],
       ),
       _Partner(
         name: 'Gemini',
         type: 'AI PARTNER',
-        description: 'Supercharging development with advanced generative AI, assisting students in coding, brainstorming, and software building.',
+        description:
+            'Supercharging development with advanced generative AI, assisting students in coding, brainstorming, and software building.',
         website: 'https://deepmind.google/technologies/gemini/',
         logoText: 'G',
         representatives: [
-          _Representative(name: 'Anish', role: 'Google Ambassador', initials: 'A', color: Color(0xFFEC4899)),
+          _Representative(
+            name: 'Anish',
+            role: 'Google Ambassador',
+            initials: 'A',
+            color: Color(0xFFEC4899),
+          ),
         ],
       ),
     ];
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Collaborations'),
-      ),
+      appBar: AppBar(title: const Text('Collaborations')),
       body: SafeArea(
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -5374,7 +6121,8 @@ class CollaborationsExplorePage extends StatelessWidget {
             const _SectionBlock(
               eyebrow: 'Explore',
               title: 'Our Partners',
-              description: 'Collaborating with industry leaders to bring the best opportunities to our community.',
+              description:
+                  'Collaborating with industry leaders to bring the best opportunities to our community.',
               child: SizedBox.shrink(),
             ),
             const SizedBox(height: 12),
@@ -5487,7 +6235,10 @@ class _PartnerCard extends StatelessWidget {
                   }
                 },
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
                 child: const Text('Website ↗', style: TextStyle(fontSize: 10)),
@@ -5498,9 +6249,9 @@ class _PartnerCard extends StatelessWidget {
           Text(
             partner.description,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  height: 1.45,
-                  color: Colors.white.withAlpha(180),
-                ),
+              height: 1.45,
+              color: Colors.white.withAlpha(180),
+            ),
           ),
           const SizedBox(height: 14),
           const Divider(color: Colors.white12),
@@ -5515,46 +6266,48 @@ class _PartnerCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          ...partner.representatives.map((rep) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundColor: rep.color,
-                      child: Text(
-                        rep.initials,
+          ...partner.representatives.map(
+            (rep) => Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: rep.color,
+                    child: Text(
+                      rep.initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        rep.name,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          rep.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      Text(
+                        rep.role,
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(120),
+                          fontSize: 10,
                         ),
-                        Text(
-                          rep.role,
-                          style: TextStyle(
-                            color: Colors.white.withAlpha(120),
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              )),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

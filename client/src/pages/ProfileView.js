@@ -214,6 +214,24 @@ const ProfileView = () => {
 
         <section className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-6">
+            {(profile.designation || profile.currentCompany || profile.professionalExperience) && (
+              <div className={`${shellCard} p-6 md:p-7`}>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Professional Career</p>
+                <div className="mt-4">
+                  {(profile.designation || profile.currentCompany) && (
+                    <h3 className="text-xl font-bold text-white">
+                      {profile.designation || "Professional"} {profile.currentCompany ? `at ${profile.currentCompany}` : ""}
+                    </h3>
+                  )}
+                  {profile.professionalExperience && (
+                    <p className="mt-4 text-sm leading-7 text-white/65 whitespace-pre-line">
+                      {profile.professionalExperience}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {profile.domain?.length > 0 && (
               <div className={`${shellCard} p-6 md:p-7`}>
                 <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Domains</p>

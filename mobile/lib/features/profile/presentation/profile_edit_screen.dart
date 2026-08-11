@@ -48,6 +48,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late final TextEditingController _leetcodeUsernameController;
   late final TextEditingController _codeforcesHandleController;
   late final TextEditingController _githubUsernameController;
+  late final TextEditingController _designationController;
+  late final TextEditingController _currentCompanyController;
+  late final TextEditingController _professionalExperienceController;
   late List<String> _selectedDomains;
   late bool _isMentor;
   String? _currentImageUrl;
@@ -75,6 +78,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _leetcodeUsernameController = TextEditingController(text: profile.leetcodeUsername ?? '');
     _codeforcesHandleController = TextEditingController(text: profile.codeforcesHandle ?? '');
     _githubUsernameController = TextEditingController(text: profile.githubUsername ?? '');
+    _designationController = TextEditingController(text: profile.designation ?? '');
+    _currentCompanyController = TextEditingController(text: profile.currentCompany ?? '');
+    _professionalExperienceController = TextEditingController(text: profile.professionalExperience ?? '');
     _selectedDomains = List<String>.from(profile.domain);
     _isMentor = profile.isMentor;
     _currentImageUrl = profile.imageUrl;
@@ -93,6 +99,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _leetcodeUsernameController.dispose();
     _codeforcesHandleController.dispose();
     _githubUsernameController.dispose();
+    _designationController.dispose();
+    _currentCompanyController.dispose();
+    _professionalExperienceController.dispose();
     super.dispose();
   }
 
@@ -147,6 +156,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         'name': _nameController.text.trim(),
         'batch': _parseIntOrNull(_batchController.text),
         'bio': _nullIfBlank(_bioController.text),
+        'designation': _nullIfBlank(_designationController.text),
+        'currentCompany': _nullIfBlank(_currentCompanyController.text),
+        'professionalExperience': _nullIfBlank(_professionalExperienceController.text),
         'domain': _selectedDomains.join(', '),
         'isMentor': _isMentor.toString(),
         'github': _nullIfBlank(_githubController.text),
@@ -288,6 +300,33 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       controller: _bioController,
                       maxLines: 4,
                       decoration: const InputDecoration(labelText: 'Bio'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Professional Career',
+                subtitle: 'Share your current company, designation, and professional background.',
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _designationController,
+                      decoration: const InputDecoration(labelText: 'Current designation (e.g. Software Engineer II)'),
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _currentCompanyController,
+                      decoration: const InputDecoration(labelText: 'Current company (e.g. Google)'),
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _professionalExperienceController,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Professional experience summary',
+                        hintText: 'Share a summary of your internships, work history, tech stacks, or guidance topics.',
+                      ),
                     ),
                   ],
                 ),

@@ -17,6 +17,9 @@ class UserProfile {
     this.codeforcesHandle,
     this.githubUsername,
     this.socialLinks = const ProfileSocialLinks(),
+    this.currentCompany,
+    this.designation,
+    this.professionalExperience,
   });
 
   final String id;
@@ -34,6 +37,9 @@ class UserProfile {
   final String? codeforcesHandle;
   final String? githubUsername;
   final ProfileSocialLinks socialLinks;
+  final String? currentCompany;
+  final String? designation;
+  final String? professionalExperience;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -52,6 +58,9 @@ class UserProfile {
       codeforcesHandle: _readNullableText(json['codeforcesHandle']),
       githubUsername: _readNullableText(json['githubUsername']),
       socialLinks: ProfileSocialLinks.fromJson(json),
+      currentCompany: _readNullableText(json['currentCompany']),
+      designation: _readNullableText(json['designation']),
+      professionalExperience: _readNullableText(json['professionalExperience']),
     );
   }
 

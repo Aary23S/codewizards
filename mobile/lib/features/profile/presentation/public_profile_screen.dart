@@ -176,6 +176,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               _MetricCard(label: 'Email', value: profile.email),
                               const SizedBox(height: 12),
                               _InfoBlock(profile: profile),
+                              if ((profile.designation != null && profile.designation!.trim().isNotEmpty) ||
+                                  (profile.currentCompany != null && profile.currentCompany!.trim().isNotEmpty) ||
+                                  (profile.professionalExperience != null && profile.professionalExperience!.trim().isNotEmpty)) ...[
+                                const SizedBox(height: 12),
+                                _ProfessionalCareerCard(profile: profile),
+                              ],
                               const SizedBox(height: 12),
                               if (profile.domain.isNotEmpty)
                                 _DomainsBlock(profile: profile),
@@ -1197,6 +1203,60 @@ class _MyEventsBlock extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfessionalCareerCard extends StatelessWidget {
+  const _ProfessionalCareerCard({required this.profile});
+
+  final UserProfile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        color: Colors.white.withAlpha(8),
+        border: Border.all(color: Colors.white.withAlpha(16)),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Professional Career'.toUpperCase(),
+            style: TextStyle(
+              color: Colors.white.withAlpha(100),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if ((profile.designation != null && profile.designation!.trim().isNotEmpty) || 
+              (profile.currentCompany != null && profile.currentCompany!.trim().isNotEmpty)) ...[
+            Text(
+              '${profile.designation?.trim().isNotEmpty == true ? profile.designation : 'Professional'}${profile.currentCompany?.trim().isNotEmpty == true ? ' @ ${profile.currentCompany}' : ''}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (profile.professionalExperience != null && profile.professionalExperience!.trim().isNotEmpty)
+            Text(
+              profile.professionalExperience!,
+              style: TextStyle(
+                color: Colors.white.withAlpha(160),
+                fontSize: 12,
+                height: 1.5,
               ),
             ),
         ],

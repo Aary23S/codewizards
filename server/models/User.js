@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema(
     imageUrl: String,               // Cloudinary
     isMentor: { type: Boolean, default: false },
 
+    currentCompany: { type: String, default: "" },
+    designation: { type: String, default: "" },
+    professionalExperience: { type: String, default: "" },
+
     // Social / platform links
     linkedin: String,
     github: String,
