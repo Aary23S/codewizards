@@ -11,23 +11,22 @@ const EventRegistrations = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchData = async () => {
-    try {
-      const [eventRes, regRes] = await Promise.all([
-        getEvent(id),
-        getEventRegistrations(id),
-      ]);
-      setEvent(eventRes.data.data);
-      setRegistrations(regRes.data.data || []);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to load registrations or event info.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [eventRes, regRes] = await Promise.all([
+          getEvent(id),
+          getEventRegistrations(id),
+        ]);
+        setEvent(eventRes.data.data);
+        setRegistrations(regRes.data.data || []);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load registrations or event info.");
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchData();
   }, [id]);
 

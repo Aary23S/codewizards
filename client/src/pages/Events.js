@@ -7,7 +7,6 @@ import {
   cancelEventRegistration,
   generateEventOTP,
   verifyEventOTP,
-  getEventRegistrations,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.jpeg";
