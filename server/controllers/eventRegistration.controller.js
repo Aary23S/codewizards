@@ -37,6 +37,9 @@ const registerForEvent = async (req, res) => {
 
     res.status(201).json({ success: true, data: reg });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: "Already registered for this event" });
+    }
     res.status(400).json({ success: false, message: error.message });
   }
 };

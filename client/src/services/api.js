@@ -42,6 +42,7 @@ export const registerForEvent = (eventId) => api.post(`/events/${eventId}/regist
 export const cancelEventRegistration = (eventId) => api.delete(`/events/${eventId}/register`);
 export const generateEventOTP = (eventId) => api.post(`/events/${eventId}/otp`);
 export const verifyEventOTP = (eventId, code) => api.post(`/events/${eventId}/verify`, { code });
+export const getEventRegistrations = (eventId) => api.get(`/events/${eventId}/registrations`);
 
 // --- Timeline ---
 export const getTimeline = () => api.get("/timeline");

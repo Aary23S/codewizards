@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../auth/auth_controller.dart';
 import '../data/event_repository.dart';
 import '../../home/data/event_item.dart';
+import 'event_registrations_screen.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
@@ -664,37 +665,52 @@ class _EventCardState extends State<_EventCard> {
                     const SizedBox(height: 12),
 
                     // Admin flow
-                    if (isAdmin && widget.event.status == 'upcoming') ...[
-                      Row(
+                    if (isAdmin) ...[
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
-                          OutlinedButton(
-                            onPressed: widget.onGenerateOtp,
-                            child: const Text('Generate OTP'),
-                          ),
-                          if (widget.event.otpCode != null) ...[
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                color: const Color(0xFFFBBF24).withAlpha(30),
-                                border: Border.all(
-                                  color: const Color(0xFFFBBF24).withAlpha(60),
-                                ),
-                              ),
-                              child: Text(
-                                'OTP: ${widget.event.otpCode}',
-                                style: const TextStyle(
-                                  color: Color(0xFFFBBF24),
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                          if (widget.event.status == 'upcoming') ...[
+                            OutlinedButton(
+                              onPressed: widget.onGenerateOtp,
+                              child: const Text('Generate OTP'),
                             ),
+                            if (widget.event.otpCode != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: const Color(0xFFFBBF24).withAlpha(30),
+                                  border: Border.all(
+                                    color: const Color(0xFFFBBF24).withAlpha(60),
+                                  ),
+                                ),
+                                child: Text(
+                                  'OTP: ${widget.event.otpCode}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFBBF24),
+                                    fontFamily: 'monospace',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                           ],
+                          OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => EventRegistrationsScreen(
+                                    eventId: widget.event.id,
+                                    eventTitle: widget.event.title,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Text('View Registrations'),
+                          ),
                         ],
                       ),
                     ],

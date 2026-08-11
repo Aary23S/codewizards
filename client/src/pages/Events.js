@@ -1,11 +1,13 @@
 // codewizards/client/src/pages/Events.js
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   getEvents,
   registerForEvent,
   cancelEventRegistration,
   generateEventOTP,
   verifyEventOTP,
+  getEventRegistrations,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.jpeg";
@@ -166,20 +168,28 @@ const EventCard = ({
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-4">
-            {/* Admin OTP Generation Option */}
-            {isAdmin && isUpcoming && (
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => onGenerateOtp(event._id)}
-                  className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-black transition hover:bg-amber-400"
-                >
-                  Generate Attendance OTP
-                </button>
-                {event.otpCode && (
+            {/* Admin Options */}
+            {isAdmin && (
+              <div className="flex flex-wrap items-center gap-3 w-full">
+                {isUpcoming && (
+                  <button
+                    onClick={() => onGenerateOtp(event._id)}
+                    className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-black transition hover:bg-amber-400"
+                  >
+                    Generate Attendance OTP
+                  </button>
+                )}
+                {isUpcoming && event.otpCode && (
                   <span className="rounded-2xl border border-dashed border-amber-500/50 bg-amber-500/10 px-3.5 py-2 text-xs font-mono text-amber-200">
                     OTP: {event.otpCode}
                   </span>
                 )}
+                <Link
+                  to={`/events/${event._id}/registrations`}
+                  className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition hover:border-white/30 hover:bg-white/10"
+                >
+                  View Registrations
+                </Link>
               </div>
             )}
 

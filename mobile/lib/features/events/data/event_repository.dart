@@ -44,6 +44,12 @@ class EventRepository {
     return Map<String, dynamic>.from(res as Map);
   }
 
+  Future<List<Map<String, dynamic>>> fetchEventRegistrations(String eventId) async {
+    final res = await _apiClient.getData('/events/$eventId/registrations');
+    final list = res as List? ?? const [];
+    return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+  }
+
   List<T> _mapList<T>(dynamic data, T Function(Map<String, dynamic>) builder) {
     final list = (data as List? ?? const []);
     return list

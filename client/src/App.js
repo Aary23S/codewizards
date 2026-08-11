@@ -28,6 +28,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Blogs from "./pages/Blogs";
 import BlogPost from "./pages/BlogPost";
 import Collaborations from "./pages/Collaborations";
+import EventRegistrations from "./pages/EventRegistrations";
 
 const DashboardRedirect = () => {
   const { user, loading } = useAuth();
@@ -122,6 +123,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Events />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/:id/registrations"
+            element={
+              <ProtectedRoute>
+                <EventRegistrations />
               </ProtectedRoute>
             }
           />
