@@ -31,8 +31,13 @@ class ContributionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final github = profile.socialLinks.github;
     final linkedin = profile.socialLinks.linkedin;
+    final leetcode = profile.leetcodeUsername;
+    final codeforces = profile.codeforcesHandle;
+
     final hasGithub = github != null && github.isNotEmpty;
     final hasLinkedin = linkedin != null && linkedin.isNotEmpty;
+    final hasLeetcode = leetcode != null && leetcode.isNotEmpty;
+    final hasCodeforces = codeforces != null && codeforces.isNotEmpty;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
@@ -82,15 +87,15 @@ class ContributionsScreen extends StatelessWidget {
                   _LinkRow(
                     icon: Icons.terminal_rounded,
                     label: 'LeetCode',
-                    value: 'leetcode.com/username',
-                    onTap: null,
+                    value: hasLeetcode ? 'leetcode.com/$leetcode' : 'leetcode.com/username',
+                    onTap: hasLeetcode ? () => _openLink(context, 'https://leetcode.com/$leetcode') : null,
                   ),
                   const Divider(color: Colors.white10),
                   _LinkRow(
                     icon: Icons.analytics_outlined,
                     label: 'Codeforces',
-                    value: 'codeforces.com/profile/username',
-                    onTap: null,
+                    value: hasCodeforces ? 'codeforces.com/profile/$codeforces' : 'codeforces.com/profile/username',
+                    onTap: hasCodeforces ? () => _openLink(context, 'https://codeforces.com/profile/$codeforces') : null,
                   ),
                 ],
               ),

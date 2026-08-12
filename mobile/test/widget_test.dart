@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:codewizards_mobile/app.dart';
+import 'package:codewizards/app.dart';
 
 void main() {
   testWidgets('App boots without crashing', (tester) async {
