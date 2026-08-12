@@ -6,8 +6,41 @@ import '../../shell/app_shell.dart';
 import '../../admin/presentation/admin_panel_screen.dart';
 import 'login_screen.dart';
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  AuthController? _authController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = Provider.of<AuthController>(context);
+    if (_authController != auth) {
+      _authController?.removeListener(_onAuthChanged);
+      _authController = auth;
+      _authController?.addListener(_onAuthChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _authController?.removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (_authController?.status == AuthStatus.unauthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
