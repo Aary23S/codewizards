@@ -147,32 +147,45 @@ class ContributionsScreen extends StatelessWidget {
               children: [
                 _StatBlock(
                   color: const Color(0xFF34D399),
-                  value:
-                      codingProfile?.leetcode.totalSolved?.toString() ?? '131',
+                  value: profile.leetcodeUsername != null && profile.leetcodeUsername!.isNotEmpty
+                      ? (codingProfile?.leetcode.totalSolved?.toString() ?? '0')
+                      : 'N/A',
                   label: 'LeetCode Solved',
-                  sub: 'Easy 78 · Med 50 · Hard 3',
+                  sub: profile.leetcodeUsername != null && profile.leetcodeUsername!.isNotEmpty
+                      ? 'Easy ${codingProfile?.leetcode.easySolved ?? 0} · Med ${codingProfile?.leetcode.mediumSolved ?? 0} · Hard ${codingProfile?.leetcode.hardSolved ?? 0}'
+                      : 'Account not linked',
                   icon: Icons.check_circle_outline_rounded,
                 ),
                 _StatBlock(
                   color: const Color(0xFF5CC8FF),
-                  value: codingProfile?.codeforces.rating?.toString() ?? '701',
+                  value: profile.codeforcesHandle != null && profile.codeforcesHandle!.isNotEmpty
+                      ? (codingProfile?.codeforces.rating?.toString() ?? '0')
+                      : 'N/A',
                   label: 'Codeforces Rating',
-                  sub: 'Max 701 · Global 32%',
+                  sub: profile.codeforcesHandle != null && profile.codeforcesHandle!.isNotEmpty
+                      ? 'Max ${codingProfile?.codeforces.maxRating ?? 0} · ${codingProfile?.codeforces.rank ?? "Unrated"}'
+                      : 'Account not linked',
                   icon: Icons.trending_up_rounded,
                 ),
                 _StatBlock(
                   color: const Color(0xFF8B5CF6),
-                  value: '10',
+                  value: profile.githubUsername != null && profile.githubUsername!.isNotEmpty
+                      ? (codingProfile?.github.contributions?.toString() ?? '0')
+                      : 'N/A',
                   label: 'GitHub Contributions',
-                  sub: 'From 24 · To 9 Aug',
+                  sub: profile.githubUsername != null && profile.githubUsername!.isNotEmpty
+                      ? 'Repos: ${codingProfile?.github.publicRepos ?? 0} · Followers: ${codingProfile?.github.followers ?? 0}'
+                      : 'Account not linked',
                   icon: Icons.code_rounded,
                 ),
                 _StatBlock(
                   color: const Color(0xFFFBBF24),
-                  value: '9 days',
-                  label: 'Streak',
-                  sub: 'Current streak · Best 24',
-                  icon: Icons.local_fire_department_rounded,
+                  value: codingProfile != null && codingProfile!.hasAnyData ? 'Active' : 'N/A',
+                  label: 'Profile Sync',
+                  sub: codingProfile != null && codingProfile!.hasAnyData
+                      ? 'Platform Sync Connected'
+                      : 'Sync profiles in Settings',
+                  icon: Icons.sync_rounded,
                 ),
               ],
             ),

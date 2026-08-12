@@ -53,7 +53,13 @@ class _AboutScreenState extends State<AboutScreen> {
                           radius: 54,
                           backgroundImage: widget.profile.imageUrl != null && widget.profile.imageUrl!.isNotEmpty
                               ? NetworkImage(widget.profile.imageUrl!)
-                              : const AssetImage('assets/avatar_placeholder.png') as ImageProvider,
+                              : null,
+                          child: widget.profile.imageUrl != null && widget.profile.imageUrl!.isNotEmpty
+                              ? null
+                              : Text(
+                                  widget.profile.name.isNotEmpty ? widget.profile.name[0].toUpperCase() : 'U',
+                                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white70),
+                                ),
                         ),
                       ),
                       Positioned(

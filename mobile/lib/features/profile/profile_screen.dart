@@ -1365,8 +1365,13 @@ class _WelcomeCard extends StatelessWidget {
               backgroundImage:
                   profile.imageUrl != null && profile.imageUrl!.isNotEmpty
                   ? NetworkImage(profile.imageUrl!)
-                  : const AssetImage('assets/avatar_placeholder.png')
-                        as ImageProvider,
+                  : null,
+              child: profile.imageUrl != null && profile.imageUrl!.isNotEmpty
+                  ? null
+                  : Text(
+                      profile.name.isNotEmpty ? profile.name[0].toUpperCase() : 'U',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white70),
+                    ),
             ),
           ),
           const SizedBox(width: 16),
@@ -1533,8 +1538,13 @@ class _ProfileSnapshotCard extends StatelessWidget {
                 backgroundImage:
                     profile.imageUrl != null && profile.imageUrl!.isNotEmpty
                     ? NetworkImage(profile.imageUrl!)
-                    : const AssetImage('assets/avatar_placeholder.png')
-                          as ImageProvider,
+                    : null,
+                child: profile.imageUrl != null && profile.imageUrl!.isNotEmpty
+                    ? null
+                    : Text(
+                        profile.name.isNotEmpty ? profile.name[0].toUpperCase() : 'U',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(

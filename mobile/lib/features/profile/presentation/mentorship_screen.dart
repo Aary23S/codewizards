@@ -95,9 +95,10 @@ class _MentorshipScreenState extends State<MentorshipScreen> with SingleTickerPr
       itemCount: widget.requests.length,
       itemBuilder: (context, index) {
         final req = widget.requests[index];
-        final student = req.student;
-        final name = student?.name ?? 'Student';
-        final batch = student?.batch?.toString() ?? 'N/A';
+        final isOutgoing = req.student?.id == widget.profile.id;
+        final counterpart = isOutgoing ? req.mentor : req.student;
+        final name = counterpart?.name ?? (isOutgoing ? 'Mentor' : 'Student');
+        final batch = counterpart?.batch?.toString() ?? 'N/A';
         final isPending = req.status == 'pending';
 
         return Container(
@@ -122,10 +123,37 @@ class _MentorshipScreenState extends State<MentorshipScreen> with SingleTickerPr
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(name, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                isOutgoing ? 'To Mentor: $name' : 'From Student: $name',
+                                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isOutgoing ? Colors.blue.withAlpha(40) : Colors.purple.withAlpha(40),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: isOutgoing ? Colors.blue.withAlpha(80) : Colors.purple.withAlpha(80)),
+                              ),
+                              child: Text(
+                                isOutgoing ? 'SENT' : 'INCOMING',
+                                style: TextStyle(
+                                  color: isOutgoing ? Colors.blueAccent : Colors.purpleAccent,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 2),
                         Text(
-                          'B.Tech CSE · Batch $batch',
+                          isOutgoing ? 'Mentor Account' : 'Student · Batch $batch',
                           style: TextStyle(color: Colors.white.withAlpha(120), fontSize: 11),
                         ),
                       ],
@@ -147,7 +175,7 @@ class _MentorshipScreenState extends State<MentorshipScreen> with SingleTickerPr
                     '12 Aug 2026',
                     style: TextStyle(color: Colors.white.withAlpha(80), fontSize: 10),
                   ),
-                  if (isPending)
+                  if (isPending && !isOutgoing)
                     Row(
                       children: [
                         TextButton(

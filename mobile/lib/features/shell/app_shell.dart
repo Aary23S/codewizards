@@ -63,6 +63,14 @@ class AppShellState extends State<AppShell> {
                 ),
               ),
             ),
+          IconButton(
+            onPressed: () async {
+              await context.read<AuthController>().logout();
+            },
+            icon: const Icon(Icons.logout_rounded, size: 20),
+            tooltip: 'Logout',
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: IndexedStack(index: _index, children: _pages),
