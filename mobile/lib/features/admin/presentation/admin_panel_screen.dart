@@ -223,6 +223,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       case AdminSection.points:
         page = const AdminPointsPage();
         break;
+      case AdminSection.collaborations:
+        page = _collaborationsCrudPage();
+        break;
     }
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
@@ -918,6 +921,68 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       ),
     );
   }
+  Widget _collaborationsCrudPage() {
+    final repo = context.read<AdminRepository>();
+    return AdminCrudPage(
+      config: AdminCrudConfig(
+        title: 'Collaborations',
+        eyebrow: 'Partners',
+        description: 'Manage campus, club, and education partners.',
+        createButtonLabel: 'Add Partner',
+        formTitle: 'Add collaboration partner',
+        loader: () async {
+          final rawList = await repo.fetchList('/collaborations');
+          return rawList.map((item) {
+            final copy = Map<String, dynamic>.from(item);
+            final repsVal = copy['representatives'];
+            if (repsVal is List) {
+              copy['representatives'] = repsVal.map((r) {
+                if (r is Map) {
+                  final name = r['name']?.toString() ?? '';
+                  final role = r['role']?.toString() ?? '';
+                  return '$name ($role)';
+                }
+                return r.toString();
+              }).join(', ');
+            }
+            return copy;
+          }).toList();
+        },
+        create: (payload) => repo.createObject('/collaborations', _normalizeCollaborationPayload(payload)),
+        update: (id, payload) => repo.updateObject('/collaborations/$id', _normalizeCollaborationPayload(payload)),
+        delete: (id) => repo.deleteObject('/collaborations/$id'),
+        fields: const [
+          AdminFieldSpec(key: 'name', label: 'Partner Name'),
+          AdminFieldSpec(key: 'type', label: 'Partner Type', hintText: 'e.g. Campus Partner'),
+          AdminFieldSpec(key: 'logoText', label: 'Logo Initials', hintText: 'e.g. GFG'),
+          AdminFieldSpec(key: 'website', label: 'Website Link'),
+          AdminFieldSpec(
+            key: 'representatives',
+            label: 'Student Representatives',
+            hintText: 'e.g. Omkar Patil (GFG Lead), Shivam Giri (Campus Lead)',
+            required: false,
+          ),
+          AdminFieldSpec(key: 'description', label: 'Partner Description', type: AdminFieldType.multiline),
+        ],
+        cardData: (item) {
+          final repsVal = item['representatives'];
+          int repsCount = 0;
+          if (repsVal is List) {
+            repsCount = repsVal.length;
+          } else if (repsVal is String && repsVal.isNotEmpty) {
+            repsCount = repsVal.split(',').length;
+          }
+          return AdminRecordCardData(
+            title: _string(item['name'], fallback: 'Unnamed Partner'),
+            subtitle: '${_string(item['type'], fallback: 'Partner')} · ${_string(item['website'], fallback: 'No website')}',
+            badges: [
+              if (repsCount > 0) '$repsCount Reps',
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _HeroPanel extends StatelessWidget {
@@ -1156,8 +1221,9 @@ String _displayRole(String role) {
 
 String _friendlyError(Object? error) {
   final text = error.toString();
-  if (text.contains('401'))
+  if (text.contains('401')) {
     return 'Your session expired. Please sign in again.';
+  }
   if (text.contains('SocketException') || text.contains('DioException')) {
     return 'Cannot reach the backend. Check the API URL and network.';
   }
@@ -1188,6 +1254,7 @@ enum AdminSection {
   team,
   contact,
   points,
+  collaborations,
 }
 
 class _AdminSectionItem {
@@ -1312,6 +1379,12 @@ class _AdminSectionsBlock extends StatelessWidget {
             title: 'Point Scoring Rules',
             subtitle: 'Adjust game rules & leaderboard metrics',
             icon: Icons.stars_rounded,
+          ),
+          _AdminSectionItem(
+            section: AdminSection.collaborations,
+            title: 'Collaborations',
+            subtitle: 'Manage campus & educational partners',
+            icon: Icons.business_rounded,
           ),
         ],
       ),
@@ -2087,6 +2160,43 @@ Map<String, dynamic> _normalizeEventPayload(Map<String, dynamic> payload) {
   }
   if (_string(data['imageUrl']).isEmpty) {
     data.remove('imageUrl');
+  }
+  return data;
+}
+
+Map<String, dynamic> _normalizeCollaborationPayload(Map<String, dynamic> payload) {
+  final data = Map<String, dynamic>.from(payload);
+  final repsStr = _string(data['representatives']);
+  
+  if (repsStr.isNotEmpty) {
+    final List<Map<String, dynamic>> reps = [];
+    final items = repsStr.split(',');
+    for (final item in items) {
+      final part = item.trim();
+      if (part.isEmpty) continue;
+      final match = RegExp(r'^([^(]+)\(([^)]+)\)$').firstMatch(part);
+      if (match != null) {
+        final name = match.group(1)!.trim();
+        final role = match.group(2)!.trim();
+        reps.add({
+          'name': name,
+          'role': role,
+          'avatar': name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').join('').toUpperCase().substring(0, 2),
+          'avatarColor': 'from-blue-400 to-indigo-600',
+        });
+      } else {
+        final name = part;
+        reps.add({
+          'name': name,
+          'role': 'Representative',
+          'avatar': name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').join('').toUpperCase().substring(0, 2),
+          'avatarColor': 'from-blue-400 to-indigo-600',
+        });
+      }
+    }
+    data['representatives'] = reps;
+  } else {
+    data['representatives'] = [];
   }
   return data;
 }

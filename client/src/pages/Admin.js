@@ -30,6 +30,10 @@ import api, {
   deleteTeamMember,
   getContact,
   updateContact,
+  getCollaborations,
+  createCollaboration,
+  updateCollaboration,
+  deleteCollaboration,
 } from "../services/api";
 
 const shellCard =
@@ -51,6 +55,7 @@ const TABS = [
   "resources",
   "team",
   "contact",
+  "collaborations",
   "points",
 ];
 
@@ -100,6 +105,17 @@ const Admin = () => {
   const [pointRules, setPointRules] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [contactInfo, setContactInfo] = useState({});
+  const [collaborations, setCollaborations] = useState([]);
+
+  const [newCollaboration, setNewCollaboration] = useState({
+    name: "",
+    type: "Campus Partner",
+    description: "",
+    website: "",
+    logoText: "",
+    representatives: "",
+  });
+  const [editingCollaboration, setEditingCollaboration] = useState(null);
 
   const [newProject, setNewProject] = useState({
     title: "",
@@ -165,35 +181,43 @@ const Admin = () => {
   const [suspendModal, setSuspendModal] = useState(null);
 
   useEffect(() => {
+    const handleSafe = (promise, fallbackValue = []) =>
+      promise.catch((err) => {
+        console.error("Endpoint fetch error:", err);
+        return { data: { data: fallbackValue } };
+      });
+
     Promise.all([
-      getUsers(),
-      getProjects(),
-      getEvents(),
-      getAnnouncements(),
-      getTimeline(),
-      getGallery(),
-      getDoubts(),
-      getBlogs(),
-      getOpportunities(),
-      getResources(),
-      getPointRules(),
-      getTeam(),
-      getContact(),
+      handleSafe(getUsers()),
+      handleSafe(getProjects()),
+      handleSafe(getEvents()),
+      handleSafe(getAnnouncements()),
+      handleSafe(getTimeline()),
+      handleSafe(getGallery()),
+      handleSafe(getDoubts()),
+      handleSafe(getBlogs()),
+      handleSafe(getOpportunities()),
+      handleSafe(getResources()),
+      handleSafe(getPointRules()),
+      handleSafe(getTeam()),
+      handleSafe(getContact(), {}),
+      handleSafe(getCollaborations()),
     ])
-      .then(([u, p, e, a, tl, g, d, bl, op, r, pr, tm, ct]) => {
-        setUsers(u.data.data);
-        setProjects(p.data.data);
-        setEvents(e.data.data);
-        setAnnouncements(a.data.data);
-        setTimeline(tl.data.data);
-        setGallery(g.data.data);
-        setDoubts(d.data.data);
-        setBlogs(bl.data.data);
-        setOpportunities(op.data.data);
-        setResources(r.data.data);
-        setPointRules(pr.data.data);
-        setTeamMembers(tm.data.data);
+      .then(([u, p, e, a, tl, g, d, bl, op, r, pr, tm, ct, cl]) => {
+        setUsers(u.data.data || []);
+        setProjects(p.data.data || []);
+        setEvents(e.data.data || []);
+        setAnnouncements(a.data.data || []);
+        setTimeline(tl.data.data || []);
+        setGallery(g.data.data || []);
+        setDoubts(d.data.data || []);
+        setBlogs(bl.data.data || []);
+        setOpportunities(op.data.data || []);
+        setResources(r.data.data || []);
+        setPointRules(pr.data.data || []);
+        setTeamMembers(tm.data.data || []);
         setContactInfo(ct.data.data || {});
+        setCollaborations(cl.data.data || []);
       })
       .catch(console.error);
   }, []);
@@ -476,6 +500,68 @@ const Admin = () => {
   const saveContact = async () => {
     const res = await updateContact(contactInfo);
     setContactInfo(res.data.data);
+  };
+
+  const handleParseReps = (str) => {
+    if (!str) return [];
+    if (Array.isArray(str)) return str;
+    return str.split(",").map(part => {
+      const match = part.trim().match(/([^(]+)\(([^)]+)\)/);
+      if (match) {
+        const name = match[1].trim();
+        const role = match[2].trim();
+        return {
+          name,
+          role,
+          avatar: name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2),
+          avatarColor: "from-blue-400 to-indigo-600",
+        };
+      }
+      const name = part.trim();
+      return {
+        name,
+        role: "Representative",
+        avatar: name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2),
+        avatarColor: "from-blue-400 to-indigo-600",
+      };
+    });
+  };
+
+  const handleCreateCollaboration = async () => {
+    const payload = {
+      ...newCollaboration,
+      representatives: handleParseReps(newCollaboration.representatives),
+    };
+    const res = await createCollaboration(payload);
+    setCollaborations([res.data.data, ...collaborations]);
+    setNewCollaboration({
+      name: "",
+      type: "Campus Partner",
+      description: "",
+      website: "",
+      logoText: "",
+      representatives: "",
+    });
+  };
+
+  const handleSaveCollaborationUpdate = async () => {
+    const payload = {
+      ...editingCollaboration,
+      representatives: typeof editingCollaboration.representatives === "string"
+        ? handleParseReps(editingCollaboration.representatives)
+        : editingCollaboration.representatives,
+    };
+    const res = await updateCollaboration(editingCollaboration._id, payload);
+    setCollaborations((prev) =>
+      prev.map((item) => (item._id === editingCollaboration._id ? res.data.data : item))
+    );
+    setEditingCollaboration(null);
+  };
+
+  const handleDeleteCollaboration = async (id) => {
+    if (!window.confirm("Delete this partner/collaboration?")) return;
+    await deleteCollaboration(id);
+    setCollaborations((prev) => prev.filter((item) => item._id !== id));
   };
 
   const saveRule = async (rule) => {
@@ -1130,6 +1216,53 @@ const Admin = () => {
           </section>
         )}
 
+        {tab === "collaborations" && (
+          <section className="mt-6 space-y-6">
+            <Section title="Add Collaboration Partner" description="Register a new sponsor, campus, or education partner.">
+              <div className="grid gap-3 md:grid-cols-2">
+                <input className={fieldClass} placeholder="Partner Name *" value={newCollaboration.name} onChange={(e) => setNewCollaboration({ ...newCollaboration, name: e.target.value })} />
+                <input className={fieldClass} placeholder="Partner Type (e.g. Campus Partner) *" value={newCollaboration.type} onChange={(e) => setNewCollaboration({ ...newCollaboration, type: e.target.value })} />
+                <input className={fieldClass} placeholder="Logo Text (abbreviation, e.g. GFG) *" value={newCollaboration.logoText} onChange={(e) => setNewCollaboration({ ...newCollaboration, logoText: e.target.value })} />
+                <input className={fieldClass} placeholder="Website Link *" value={newCollaboration.website} onChange={(e) => setNewCollaboration({ ...newCollaboration, website: e.target.value })} />
+                <input className={`${fieldClass} md:col-span-2`} placeholder="Representatives (e.g. Omkar Patil (GFG Lead), Shivam Giri (Campus Lead))" value={newCollaboration.representatives} onChange={(e) => setNewCollaboration({ ...newCollaboration, representatives: e.target.value })} />
+                <textarea className={`${fieldClass} md:col-span-2`} placeholder="Partner Description *" rows={3} value={newCollaboration.description} onChange={(e) => setNewCollaboration({ ...newCollaboration, description: e.target.value })} />
+              </div>
+              <button onClick={handleCreateCollaboration} className="mt-4 w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+                Add Partner
+              </button>
+            </Section>
+            <div className="space-y-4">
+              {collaborations.map((item) => (
+                <div key={item._id} className={`${shellCard} flex items-center justify-between gap-4 p-5`}>
+                  <div>
+                    <p className="text-base font-semibold text-white">{item.name}</p>
+                    <p className="mt-1 text-sm text-white/55">
+                      {item.type} · {item.website}
+                    </p>
+                    <p className="mt-1 text-xs text-white/40">
+                      Reps: {item.representatives?.map(r => `${r.name} (${r.role})`).join(", ") || "None"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setEditingCollaboration({
+                        ...item,
+                        representatives: item.representatives?.map(r => `${r.name} (${r.role})`).join(", ") || ""
+                      })}
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                    >
+                      Edit
+                    </button>
+                    <button onClick={() => handleDeleteCollaboration(item._id)} className="rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-rose-200 transition hover:bg-rose-400/20">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {tab === "points" && (
           <section className="mt-6 space-y-4">
             <p className="text-sm text-white/55">Changes apply immediately and retroactively to all past activity.</p>
@@ -1355,6 +1488,29 @@ const Admin = () => {
                 {suspendModal.user.isSuspended ? "Restore Access" : "Confirm Suspend"}
               </button>
               <button onClick={() => setSuspendModal(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {editingCollaboration && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className={`${shellCard} w-full max-w-2xl p-6 md:p-7`}>
+            <h2 className="text-2xl font-semibold text-white">Edit Partner</h2>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <input className={fieldClass} placeholder="Partner Name *" value={editingCollaboration.name || ""} onChange={(e) => setEditingCollaboration({ ...editingCollaboration, name: e.target.value })} />
+              <input className={fieldClass} placeholder="Partner Type *" value={editingCollaboration.type || ""} onChange={(e) => setEditingCollaboration({ ...editingCollaboration, type: e.target.value })} />
+              <input className={fieldClass} placeholder="Logo Text *" value={editingCollaboration.logoText || ""} onChange={(e) => setEditingCollaboration({ ...editingCollaboration, logoText: e.target.value })} />
+              <input className={fieldClass} placeholder="Website Link *" value={editingCollaboration.website || ""} onChange={(e) => setEditingCollaboration({ ...editingCollaboration, website: e.target.value })} />
+              <input className={`${fieldClass} md:col-span-2`} placeholder="Representatives" value={editingCollaboration.representatives || ""} onChange={(e) => setEditingCollaboration({ ...editingCollaboration, representatives: e.target.value })} />
+              <textarea className={`${fieldClass} md:col-span-2`} placeholder="Partner Description *" rows={3} value={editingCollaboration.description || ""} onChange={(e) => setEditingCollaboration({ ...editingCollaboration, description: e.target.value })} />
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button onClick={handleSaveCollaborationUpdate} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+                Save
+              </button>
+              <button onClick={() => setEditingCollaboration(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
                 Cancel
               </button>
             </div>

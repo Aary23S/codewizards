@@ -1,88 +1,24 @@
 // codewizards/client/src/pages/Collaborations.js
-import React from "react";
-
-const partnersData = [
-  {
-    name: "GeeksforGeeks",
-    type: "Campus Partner",
-    description: "GeeksforGeeks provides resources for computer science students to master data structures, algorithms, and technical interview preparation.",
-    website: "https://geeksforgeeks.org",
-    logoText: "GFG",
-    representatives: [
-      {
-        name: "Omkar Patil",
-        role: "GFG Campus Lead",
-        avatar: "OP",
-        avatarColor: "from-emerald-400 to-teal-600",
-      },
-    ],
-  },
-  {
-    name: "Algozenith",
-    type: "Club Partner",
-    description: "Master competitive programming and DSA. Building problem-solving foundations through structured coding camps and contests.",
-    website: "https://algozenith.com",
-    logoText: "AZ",
-    representatives: [
-      {
-        name: "Shivam Giri",
-        role: "Campus Lead",
-        avatar: "SG",
-        avatarColor: "from-blue-400 to-indigo-600",
-      },
-      {
-        name: "Shivendra Ghatage",
-        role: "Tech Lead",
-        avatar: "SG",
-        avatarColor: "from-purple-400 to-pink-600",
-      },
-      {
-        name: "Yash Sagpal",
-        role: "Content & Design Lead",
-        avatar: "YS",
-        avatarColor: "from-orange-400 to-red-600",
-      },
-      {
-        name: "Nandan Gaikwad",
-        role: "Media & Outreach Lead",
-        avatar: "NG",
-        avatarColor: "from-sky-400 to-blue-600",
-      },
-    ],
-  },
-  {
-    name: "LetsUpgrade",
-    type: "Education Partner",
-    description: "An interactive learning community and upskilling platform providing industry-aligned tech courses and projects for students.",
-    website: "https://letsupgrade.in",
-    logoText: "LU",
-    representatives: [
-      {
-        name: "Omkar Patil",
-        role: "LetsUpgrade Lead",
-        avatar: "OP",
-        avatarColor: "from-amber-400 to-orange-600",
-      },
-    ],
-  },
-  {
-    name: "Gemini",
-    type: "AI Partner",
-    description: "Supercharging development with advanced generative AI, assisting students in coding, brainstorming, and software building.",
-    website: "https://deepmind.google/technologies/gemini/",
-    logoText: "G",
-    representatives: [
-      {
-        name: "Anish",
-        role: "Google Ambassador",
-        avatar: "A",
-        avatarColor: "from-blue-500 via-purple-500 to-pink-500",
-      },
-    ],
-  },
-];
+import React, { useEffect, useState } from "react";
+import { getCollaborations } from "../services/api";
 
 const Collaborations = () => {
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCollaborations()
+      .then((res) => {
+        setPartners(res.data.data || []);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch partners:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div className="relative mx-auto max-w-6xl px-4 py-24 text-white">
       {/* Background glow effects */}
@@ -99,71 +35,85 @@ const Collaborations = () => {
         </p>
       </div>
 
-      {/* Grid of Partners */}
-      <div className="grid gap-8 md:grid-cols-2">
-        {partnersData.map((partner, index) => (
-          <div
-            key={partner.name}
-            className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/8"
-          >
-            {/* Soft decorative corner glow */}
-            <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-cyan-500/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent" />
+        </div>
+      ) : partners.length === 0 ? (
+        <div className="text-center py-10 text-white/50">
+          No collaboration partners registered yet.
+        </div>
+      ) : (
+        /* Grid of Partners */
+        <div className="grid gap-8 md:grid-cols-2">
+          {partners.map((partner) => (
+            <div
+              key={partner._id || partner.name}
+              className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/8"
+            >
+              {/* Soft decorative corner glow */}
+              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-cyan-500/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
 
-            <div className="flex flex-col h-full justify-between">
-              <div>
-                {/* Header info */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 border border-white/5 text-lg font-bold text-white tracking-wider group-hover:scale-105 transition-transform">
-                      {partner.logoText}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold group-hover:text-cyan-400 transition-colors">
-                        {partner.name}
-                      </h3>
-                      <span className="text-[10px] uppercase tracking-widest text-cyan-400/80 font-semibold">
-                        {partner.type}
-                      </span>
-                    </div>
-                  </div>
-                  <a
-                    href={partner.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 transition hover:bg-white/15 hover:text-white"
-                  >
-                    Visit Website ↗
-                  </a>
-                </div>
-
-                <p className="text-sm leading-relaxed text-white/70 mb-6">
-                  {partner.description}
-                </p>
-              </div>
-
-              {/* Signatories / Representatives */}
-              <div className="border-t border-white/10 pt-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-3 font-semibold">
-                  Student Representatives
-                </p>
-                <div className="flex flex-col gap-3">
-                  {partner.representatives.map((rep) => (
-                    <div key={rep.name} className="flex items-center gap-3">
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${rep.avatarColor} text-xs font-bold text-white shadow-sm`}>
-                        {rep.avatar}
+              <div className="flex flex-col h-full justify-between">
+                <div>
+                  {/* Header info */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 border border-white/5 text-lg font-bold text-white tracking-wider group-hover:scale-105 transition-transform">
+                        {partner.logoText}
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-white/90">{rep.name}</p>
-                        <p className="text-[10px] text-white/50">{rep.role}</p>
+                        <h3 className="text-xl font-bold group-hover:text-cyan-400 transition-colors">
+                          {partner.name}
+                        </h3>
+                        <span className="text-[10px] uppercase tracking-widest text-cyan-400/80 font-semibold">
+                          {partner.type}
+                        </span>
                       </div>
                     </div>
-                  ))}
+                    {partner.website && (
+                      <a
+                        href={partner.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 transition hover:bg-white/15 hover:text-white"
+                      >
+                        Visit Website ↗
+                      </a>
+                    )}
+                  </div>
+
+                  <p className="text-sm leading-relaxed text-white/70 mb-6">
+                    {partner.description}
+                  </p>
                 </div>
+
+                {/* Signatories / Representatives */}
+                {partner.representatives && partner.representatives.length > 0 && (
+                  <div className="border-t border-white/10 pt-4">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-3 font-semibold">
+                      Student Representatives
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {partner.representatives.map((rep, idx) => (
+                        <div key={rep.name || idx} className="flex items-center gap-3">
+                          <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${rep.avatarColor || "from-blue-400 to-indigo-600"} text-[10px] font-bold text-white shadow-sm`}>
+                            {rep.avatar || rep.name?.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-white/90">{rep.name}</p>
+                            <p className="text-[10px] text-white/50">{rep.role}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Bottom CTA Block */}
       <div className="relative mt-20 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-blue-900/20 via-black/40 to-indigo-900/20 p-8 text-center shadow-xl md:p-12">

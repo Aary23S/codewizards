@@ -145,4 +145,10 @@ export const createMentorshipGoal = (mentorshipId, data) => api.post(`/mentorshi
 export const updateMentorshipGoal = (goalId, data) => api.patch(`/mentorship/goals/${goalId}`, data);
 export const deleteMentorshipGoal = (goalId) => api.delete(`/mentorship/goals/${goalId}`);
 
+// --- Collaborations ---
+export const getCollaborations = () => api.get("/collaborations");
+export const createCollaboration = (data) => api.post("/collaborations", data);
+export const updateCollaboration = (id, data) => api.patch(`/collaborations/${id}`, data);
+export const deleteCollaboration = (id) => api.delete(`/collaborations/${id}`);
+
 export default api;

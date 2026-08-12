@@ -69,6 +69,7 @@ app.use("/api/v1/point-rules", require("./routes/pointRule.routes"));
 app.use("/api/v1/blogs", require("./routes/blog.routes"));
 app.use("/api/v1/team", require("./routes/team.routes"));
 app.use("/api/v1/contact", require("./routes/contact.routes"));
+app.use("/api/v1/collaborations", require("./routes/collaboration.routes"));
 
 // Global error handler
 app.use((err, req, res, next) => {

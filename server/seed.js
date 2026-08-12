@@ -7,6 +7,7 @@ const Timeline = require("./models/Timeline");
 const Gallery = require("./models/Gallery");
 const Announcement = require("./models/Announcement");
 const User = require("./models/User");
+const Collaboration = require("./models/Collaboration");
 
 dotenv.config();
 
@@ -22,12 +23,14 @@ const seed = async () => {
     Gallery.deleteMany(),
     Announcement.deleteMany(),
     User.deleteMany(),
+    Collaboration.deleteMany(),
   ]);
   console.log("Cleared existing data");
 
   // Users
   await User.create([
     {
+      _id: "6a412321777d00b2c8622108",
       name: "Aary Satardekar",
       email: "aary.s@codewizards.com",
       password: "test1234",
@@ -40,6 +43,7 @@ const seed = async () => {
       isMentor: true,
     },
     {
+      _id: "6a4113a5139f424319c27be4",
       name: "Aary Dalal",
       email: "aary.d@codewizards.com",
       password: "test1234",
@@ -51,6 +55,7 @@ const seed = async () => {
       isMentor: true,
     },
     {
+      _id: "6a4113a5139f424319c27be7",
       name: "Riya Patil",
       email: "riya@codewizards.com",
       password: "test1234",
@@ -61,6 +66,7 @@ const seed = async () => {
       isMentor: true,
     },
     {
+      _id: "6a4113a5139f424319c27be6",
       name: "Rohit Desai",
       email: "rohit@codewizards.com",
       password: "test1234",
@@ -71,6 +77,7 @@ const seed = async () => {
       isMentor: true,
     },
     {
+      _id: "6a4113a5139f424319c27be8",
       name: "Sneha More",
       email: "sneha@codewizards.com",
       password: "test1234",
@@ -215,6 +222,77 @@ const seed = async () => {
     },
   ]);
   console.log("Announcements seeded");
+
+  // Collaborations
+  await Collaboration.create([
+    {
+      name: "GeeksforGeeks",
+      type: "Campus Partner",
+      description: "GeeksforGeeks provides resources for computer science students to master data structures, algorithms, and technical interview preparation.",
+      website: "https://geeksforgeeks.org",
+      logoText: "GFG",
+      representatives: [
+        {
+          name: "Omkar Patil",
+          role: "GFG Campus Lead",
+          avatar: "OP",
+          avatarColor: "from-emerald-400 to-teal-600",
+        },
+      ],
+    },
+    {
+      name: "Algozenith",
+      type: "Club Partner",
+      description: "Master competitive programming and DSA. Building problem-solving foundations through structured coding camps and contests.",
+      website: "https://algozenith.com",
+      logoText: "AZ",
+      representatives: [
+        {
+          name: "Shivam Giri",
+          role: "Campus Lead",
+          avatar: "SG",
+          avatarColor: "from-blue-400 to-indigo-600",
+        },
+        {
+          name: "Shivendra Ghatage",
+          role: "Tech Lead",
+          avatar: "SG",
+          avatarColor: "from-purple-400 to-pink-600",
+        },
+      ],
+    },
+    {
+      name: "LetsUpgrade",
+      type: "Education Partner",
+      description: "An interactive learning community and upskilling platform providing industry-aligned tech courses and projects for students.",
+      website: "https://letsupgrade.in",
+      logoText: "LU",
+      representatives: [
+        {
+          name: "Omkar Patil",
+          role: "LetsUpgrade Lead",
+          avatar: "OP",
+          avatarColor: "from-amber-400 to-orange-600",
+        },
+      ],
+    },
+    {
+      name: "Gemini",
+      type: "AI Partner",
+      description: "Supercharging development with advanced generative AI, assisting students in coding, brainstorming, and software building.",
+      website: "https://deepmind.google/technologies/gemini/",
+      logoText: "G",
+      representatives: [
+        {
+          name: "Anish",
+          role: "Google Ambassador",
+          avatar: "A",
+          avatarColor: "from-blue-500 via-purple-500 to-pink-500",
+        },
+      ],
+    },
+  ]);
+  console.log("Collaborations seeded");
 
   console.log("✅ All seed data inserted successfully");
   process.exit();
