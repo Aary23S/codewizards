@@ -68,7 +68,7 @@ const ProfileView = () => {
         setProfile(u);
         setCodingProfile(codingRes.data.data || null);
 
-        if (u && u.role?.toLowerCase() === "student") {
+        if (u) {
           getEvents({ studentId: id })
             .then((res) => {
               const allEvents = res.data.data || [];
@@ -557,8 +557,8 @@ const ProfileView = () => {
               </div>
             )}
 
-            {/* My Events Widget (only for student profiles) */}
-            {profile?.role?.toLowerCase() === "student" && (
+            {/* My Events Widget (for all profiles) */}
+            {profile && (
               <div className={`${shellCard} p-6 md:p-7`}>
                 <div className="flex items-center justify-between gap-4 mb-6">
                   <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">My Events</p>

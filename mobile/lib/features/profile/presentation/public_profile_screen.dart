@@ -41,12 +41,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
     final results = await Future.wait([
       repo.fetchCodingProfilePublic(widget.userId).catchError((_) => null),
-      profile.role.toLowerCase() == 'student'
-          ? context
-                .read<EventRepository>()
-                .fetchEvents(studentId: widget.userId)
-                .catchError((_) => <EventItem>[])
-          : Future.value(<EventItem>[]),
+      context
+          .read<EventRepository>()
+          .fetchEvents(studentId: widget.userId)
+          .catchError((_) => <EventItem>[]),
     ]);
 
     final codingProfile = results[0] as CodingProfileItem?;
@@ -202,10 +200,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                 ),
                               if (data.codingProfile?.hasAnyData ?? false)
                                 const SizedBox(height: 12),
-                              if (profile.role.toLowerCase() == 'student') ...[
-                                _MyEventsBlock(events: data.registeredEvents),
-                                const SizedBox(height: 12),
-                              ],
+                              _MyEventsBlock(events: data.registeredEvents),
+                              const SizedBox(height: 12),
                               if (profile.isMentor &&
                                   currentUser != null &&
                                   currentUser.id != profile.id)
