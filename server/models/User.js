@@ -90,6 +90,9 @@ const userSchema = new mongoose.Schema(
     isSuspended: { type: Boolean, default: false },
     suspendedReason: { type: String, default: "" },
 
+    resetPasswordToken: { type: String, select: false },
+    resetPasswordExpire: { type: Date, select: false },
+
     externalStats: {
       codeforcesRating: { type: Number, default: null },
       leetcodeSolveScore: { type: Number, default: null }, // easy*1 + medium*3 + hard*5

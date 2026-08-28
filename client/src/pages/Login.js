@@ -1,6 +1,6 @@
 // codewizards/client/src/pages/Login.js
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { loginUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import FormInput from "../components/FormInput";
@@ -12,6 +12,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const resetSuccess = location.state?.resetSuccess;
 
   useEffect(() => {
     if (user) {
@@ -82,14 +84,28 @@ const Login = () => {
               onChange={handleChange}
               required
             />
-            <FormInput
-              label="Password"
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
+            <div className="flex flex-col gap-2">
+              <FormInput
+                label="Password"
+                type="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+              <Link
+                className="self-end text-xs font-semibold text-cyan-200 transition hover:text-cyan-100"
+                to="/forgot-password"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            {resetSuccess && (
+              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+                Password reset successful. You can now log in.
+              </div>
+            )}
 
             {error && (
               <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">

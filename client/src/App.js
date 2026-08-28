@@ -15,6 +15,8 @@ import Team from "./pages/Team";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Connect from "./pages/Connect";
 import Dashboard from "./pages/Dashboard";
 import ProfileView from "./pages/ProfileView";
@@ -82,6 +84,22 @@ function App() {
             element={
               <GuestRoute>
                 <Register />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <GuestRoute>
+                <ForgotPassword />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/reset-password/:token"
+            element={
+              <GuestRoute>
+                <ResetPassword />
               </GuestRoute>
             }
           />
