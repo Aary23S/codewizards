@@ -33,7 +33,7 @@ const UserCard = ({ user }) => {
           />
         ) : (
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 via-sky-500 to-indigo-500 text-lg font-semibold text-black shadow-lg shadow-cyan-500/20">
-            {user.name.charAt(0)}
+            {user.name?.charAt(0) || "?"}
           </div>
         )}
 

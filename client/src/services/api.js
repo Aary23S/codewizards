@@ -19,6 +19,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Login/register return 401/400 as part of normal "wrong credentials" flow — only
+// treat a 401 from every other endpoint as an expired/invalid session.
+const AUTH_ENDPOINTS = ["/auth/login", "/auth/register"];
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const url = error.config?.url || "";
+    const isAuthEndpoint = AUTH_ENDPOINTS.some((path) => url.includes(path));
+    if (error.response?.status === 401 && !isAuthEndpoint) {
+      localStorage.removeItem("token");
+      window.dispatchEvent(new Event("auth:session-expired"));
+    }
+    return Promise.reject(error);
+  }
+);
+
 // --- Auth ---
 export const registerUser = (data) => api.post("/auth/register", data);
 export const loginUser = (data) => api.post("/auth/login", data);
@@ -140,6 +156,7 @@ export const deleteTeamMember = (id) => api.delete(`/team/${id}`);
 // Contact
 export const getContact = () => api.get("/contact");
 export const updateContact = (data) => api.put("/contact", data);
+export const sendContactMessage = (data) => api.post("/contact/message", data);
 
 // Mentorship Goals & Action Items
 export const getMentorshipGoals = (mentorshipId) => api.get(`/mentorship/${mentorshipId}/goals`);

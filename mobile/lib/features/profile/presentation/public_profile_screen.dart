@@ -36,26 +36,35 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Future<_PublicProfileSnapshot> _load() async {
+    final auth = context.read<AuthController>();
     final repo = context.read<ProfileRepository>();
-    final profile = await repo.fetchProfile(widget.userId);
+    final eventRepo = context.read<EventRepository>();
 
-    final results = await Future.wait([
-      repo.fetchCodingProfilePublic(widget.userId).catchError((_) => null),
-      context
-          .read<EventRepository>()
-          .fetchEvents(studentId: widget.userId)
-          .catchError((_) => <EventItem>[]),
-    ]);
+    try {
+      final profile = await repo.fetchProfile(widget.userId);
 
-    final codingProfile = results[0] as CodingProfileItem?;
-    final allEvents = results[1] as List<EventItem>;
-    final registered = allEvents.where((e) => e.isRegistered).toList();
+      final results = await Future.wait([
+        repo.fetchCodingProfilePublic(widget.userId).catchError((_) => null),
+        eventRepo
+            .fetchEvents(studentId: widget.userId)
+            .catchError((_) => <EventItem>[]),
+      ]);
 
-    return _PublicProfileSnapshot(
-      profile: profile,
-      codingProfile: codingProfile,
-      registeredEvents: registered,
-    );
+      final codingProfile = results[0] as CodingProfileItem?;
+      final allEvents = results[1] as List<EventItem>;
+      final registered = allEvents.where((e) => e.isRegistered).toList();
+
+      return _PublicProfileSnapshot(
+        profile: profile,
+        codingProfile: codingProfile,
+        registeredEvents: registered,
+      );
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -79,6 +88,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Future<void> _sendRequest(UserProfile profile) async {
+    final auth = context.read<AuthController>();
     final body = _requestController.text.trim();
     if (body.isEmpty || _submittingRequest) return;
 
@@ -98,6 +108,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Mentorship request sent.')));
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,

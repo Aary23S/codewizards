@@ -26,6 +26,10 @@ const register = async (req, res) => {
     const { name, email, password, batch, programName, programDurationYears } = req.body;
     // role is derived from the academic track and never trusted directly from client input
 
+    if (typeof email !== "string" || typeof password !== "string") {
+      return res.status(400).json({ success: false, message: "Email and password are required" });
+    }
+
     const exists = await User.findOne({ email });
     if (exists) {
       return res.status(400).json({ success: false, message: "Email already registered" });
@@ -67,6 +71,9 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (typeof email !== "string" || typeof password !== "string") {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
     const user = await User.findOne({ email });
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
@@ -98,6 +105,9 @@ const forgotPassword = async (req, res) => {
   const genericMessage = "If that email is registered, a reset link has been sent.";
   try {
     const { email } = req.body;
+    if (typeof email !== "string") {
+      return res.json({ success: true, message: genericMessage });
+    }
     const user = await User.findOne({ email });
 
     if (!user) {

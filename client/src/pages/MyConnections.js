@@ -324,7 +324,7 @@ const MyConnections = () => {
                 />
               ) : (
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-500 text-xl font-bold text-black">
-                  {targetUser.name.charAt(0)}
+                  {targetUser.name?.charAt(0) || "?"}
                 </div>
               )}
               <div>

@@ -87,7 +87,7 @@ const BlogPost = () => {
 
       {/* Content */}
       <div className="prose prose-invert max-w-none">
-        {blog.content.split("\n").map((para, i) =>
+        {(blog.content || "").split("\n").map((para, i) =>
           para.trim() ? (
             <p key={i} className="text-gray-300 leading-relaxed mb-4 text-base">
               {para}

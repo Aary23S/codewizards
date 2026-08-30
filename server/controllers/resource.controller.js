@@ -4,8 +4,8 @@ const Resource = require("../models/Resource");
 const getResources = async (req, res) => {
   try {
     const filter = {};
-    if (req.query.category) filter.category = req.query.category;
-    if (req.query.domain) filter.domain = req.query.domain;
+    if (typeof req.query.category === "string" && req.query.category) filter.category = req.query.category;
+    if (typeof req.query.domain === "string" && req.query.domain) filter.domain = req.query.domain;
     const resources = await Resource.find(filter).sort({ createdAt: -1 });
     res.json({ success: true, data: resources });
   } catch (error) {

@@ -1,13 +1,32 @@
 // codewizards/client/src/pages/Contact.js
 import { useEffect, useState } from "react";
-import { getContact } from "../services/api";
+import { getContact, sendContactMessage } from "../services/api";
 
 const Contact = () => {
   const [info, setInfo] = useState(null);
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+  const [error, setError] = useState("");
 
   useEffect(() => {
     getContact().then((res) => setInfo(res.data.data)).catch(console.error);
   }, []);
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setStatus("sending");
+    try {
+      await sendContactMessage(form);
+      setStatus("sent");
+      setForm({ name: "", email: "", message: "" });
+    } catch (err) {
+      setStatus("error");
+      setError(err.response?.data?.message || "Could not send your message. Please try again.");
+    }
+  };
 
   return (
     <div className="relative mx-auto max-w-6xl px-4 py-20">
@@ -77,14 +96,54 @@ const Contact = () => {
 
       <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
         <p className="text-xs uppercase tracking-[0.28em] text-white/45">Send a Message</p>
-        <div className="mt-5 flex flex-col gap-4">
-          <input type="text" placeholder="Your Name" className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none" />
-          <input type="email" placeholder="Your Email" className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none" />
-          <textarea rows={5} placeholder="Your message..." className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none resize-none" />
-          <button className="w-fit rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90">
-            Send Message
+        <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
+          <input
+            type="text"
+            name="name"
+            placeholder="Your Name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Your Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+          />
+          <textarea
+            rows={5}
+            name="message"
+            placeholder="Your message..."
+            value={form.message}
+            onChange={handleChange}
+            required
+            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none resize-none"
+          />
+
+          {status === "sent" && (
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+              Message sent — we'll get back to you soon.
+            </div>
+          )}
+          {status === "error" && (
+            <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={status === "sending"}
+            className="w-fit rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/90 disabled:opacity-50"
+          >
+            {status === "sending" ? "Sending..." : "Send Message"}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

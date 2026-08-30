@@ -12,6 +12,14 @@ const Collaboration = require("./models/Collaboration");
 dotenv.config();
 
 const seed = async () => {
+  if (process.env.NODE_ENV === "production" && !process.env.ALLOW_SEED) {
+    console.error(
+      "Refusing to run seed.js with NODE_ENV=production. This wipes Project/Event/Timeline/Gallery/Announcement/User/Collaboration data.\n" +
+      "Set ALLOW_SEED=true explicitly if you really mean to do this."
+    );
+    process.exit(1);
+  }
+
   await mongoose.connect(process.env.MONGO_URI);
   console.log("DB connected");
 
@@ -33,7 +41,7 @@ const seed = async () => {
       _id: "6a412321777d00b2c8622108",
       name: "Aary Satardekar",
       email: "aary.s@codewizards.com",
-      password: "test1234",
+      password: process.env.SEED_PASSWORD || "test1234",
       role: "admin",
       batch: 2026,
       domain: ["Web", "AI"],
@@ -46,7 +54,7 @@ const seed = async () => {
       _id: "6a4113a5139f424319c27be4",
       name: "Aary Dalal",
       email: "aary.d@codewizards.com",
-      password: "test1234",
+      password: process.env.SEED_PASSWORD || "test1234",
       role: "admin",
       batch: 2026,
       domain: ["Flutter", "Backend"],
@@ -58,7 +66,7 @@ const seed = async () => {
       _id: "6a4113a5139f424319c27be7",
       name: "Riya Patil",
       email: "riya@codewizards.com",
-      password: "test1234",
+      password: process.env.SEED_PASSWORD || "test1234",
       role: "senior",
       batch: 2025,
       domain: ["AI", "Machine Learning"],
@@ -69,7 +77,7 @@ const seed = async () => {
       _id: "6a4113a5139f424319c27be6",
       name: "Rohit Desai",
       email: "rohit@codewizards.com",
-      password: "test1234",
+      password: process.env.SEED_PASSWORD || "test1234",
       role: "senior",
       batch: 2025,
       domain: ["Competitive Programming", "Backend"],
@@ -80,7 +88,7 @@ const seed = async () => {
       _id: "6a4113a5139f424319c27be8",
       name: "Sneha More",
       email: "sneha@codewizards.com",
-      password: "test1234",
+      password: process.env.SEED_PASSWORD || "test1234",
       role: "student",
       batch: 2027,
       domain: ["Web"],

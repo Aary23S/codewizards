@@ -5,8 +5,8 @@ const Opportunity = require("../models/Opportunities");
 const getOpportunities = async (req, res) => {
   try {
     const filter = { isActive: true };
-    if (req.query.type) filter.type = req.query.type;
-    if (req.query.domain) filter.domain = req.query.domain;
+    if (typeof req.query.type === "string" && req.query.type) filter.type = req.query.type;
+    if (typeof req.query.domain === "string" && req.query.domain) filter.domain = req.query.domain;
 
     const opportunities = await Opportunity.find(filter)
       .populate("postedBy", "name role batch")

@@ -26,18 +26,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<_HomeSnapshot> _load() async {
+    final auth = context.read<AuthController>();
     final repo = context.read<HomeRepository>();
-    final results = await Future.wait([
-      repo.fetchAnnouncements(),
-      repo.fetchFeaturedProjects(),
-      repo.fetchEvents(),
-    ]);
 
-    return _HomeSnapshot(
-      announcements: results[0] as List<AnnouncementItem>,
-      projects: results[1] as List<ProjectItem>,
-      events: results[2] as List<EventItem>,
-    );
+    try {
+      final results = await Future.wait([
+        repo.fetchAnnouncements(),
+        repo.fetchFeaturedProjects(),
+        repo.fetchEvents(),
+      ]);
+
+      return _HomeSnapshot(
+        announcements: results[0] as List<AnnouncementItem>,
+        projects: results[1] as List<ProjectItem>,
+        events: results[2] as List<EventItem>,
+      );
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {

@@ -5,7 +5,7 @@ const Blog = require("../models/Blogs");
 const getBlogs = async (req, res) => {
   try {
     const filter = { published: true };
-    if (req.query.tag) filter.tags = req.query.tag;
+    if (typeof req.query.tag === "string" && req.query.tag) filter.tags = req.query.tag;
 
     const blogs = await Blog.find(filter)
       .populate("author", "name role batch")

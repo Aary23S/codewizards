@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/safe_network_image.dart';
+import '../../auth/auth_controller.dart';
 import '../../team/data/team_member_item.dart';
 import '../../team/data/team_repository.dart';
 
@@ -51,13 +52,26 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<TeamRepository>().fetchTeam();
+    _future ??= _load();
+  }
+
+  Future<List<TeamMemberItem>> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<TeamRepository>();
+    try {
+      return await repo.fetchTeam();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<TeamRepository>().fetchTeam();
+      _future = _load();
     });
 
     try {

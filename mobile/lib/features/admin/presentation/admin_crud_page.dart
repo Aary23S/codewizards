@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../shared/widgets/brand_logo.dart';
+import '../../auth/auth_controller.dart';
 
 enum AdminFieldType { text, multiline, number, boolean, dropdown }
 
@@ -98,13 +100,25 @@ class _AdminCrudPageState extends State<AdminCrudPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= widget.config.loader();
+    _future ??= _loadRecords();
+  }
+
+  Future<List<Map<String, dynamic>>> _loadRecords() async {
+    final auth = context.read<AuthController>();
+    try {
+      return await widget.config.loader();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = widget.config.loader();
+      _future = _loadRecords();
     });
     try {
       await _future;
@@ -116,6 +130,7 @@ class _AdminCrudPageState extends State<AdminCrudPage> {
 
   Future<void> _openEditor({Map<String, dynamic>? initial}) async {
     if (_busy) return;
+    final auth = context.read<AuthController>();
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -142,6 +157,9 @@ class _AdminCrudPageState extends State<AdminCrudPage> {
       }
       await _refresh();
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     } finally {
@@ -152,6 +170,7 @@ class _AdminCrudPageState extends State<AdminCrudPage> {
   Future<void> _deleteItem(Map<String, dynamic> item) async {
     final id = _id(item);
     if (id == null || _busy) return;
+    final auth = context.read<AuthController>();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -171,6 +190,9 @@ class _AdminCrudPageState extends State<AdminCrudPage> {
       await widget.config.delete(id);
       await _refresh();
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
     } finally {

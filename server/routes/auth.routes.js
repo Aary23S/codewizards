@@ -5,9 +5,11 @@ const { register, login, getMe, forgotPassword, resetPassword } = require("../co
 const { protect } = require("../middleware/auth");
 
 const forgotPasswordLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 15 });
+const registerLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", registerLimiter, register);
+router.post("/login", loginLimiter, login);
 router.get("/me", protect, getMe);   // protect runs first, then getMe
 router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
 router.post("/reset-password/:token", resetPassword);

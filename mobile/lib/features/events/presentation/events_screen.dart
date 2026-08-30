@@ -27,11 +27,18 @@ class _EventsScreenState extends State<EventsScreen> {
   Future<_EventsSnapshot> _load() async {
     final repo = context.read<EventRepository>();
     final auth = context.read<AuthController>();
-    final events = await repo.fetchEvents();
-    final registrations = auth.user != null && auth.user!.role != 'admin'
-        ? await repo.fetchMyRegistrations()
-        : <String>{};
-    return _EventsSnapshot(events: events, registrations: registrations);
+    try {
+      final events = await repo.fetchEvents();
+      final registrations = auth.user != null && auth.user!.role != 'admin'
+          ? await repo.fetchMyRegistrations()
+          : <String>{};
+      return _EventsSnapshot(events: events, registrations: registrations);
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {

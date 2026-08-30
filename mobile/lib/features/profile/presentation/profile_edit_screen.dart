@@ -265,6 +265,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await authController.logout();
+      }
       if (!mounted) return;
       setState(() {
         _errorMessage = _friendlyError(error);
@@ -279,6 +282,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   }
 
   Future<void> _syncCodingProfiles() async {
+    final authController = context.read<AuthController>();
     setState(() {
       _syncingCoding = true;
       _errorMessage = null;
@@ -295,6 +299,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         const SnackBar(content: Text('Coding profiles synced.')),
       );
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await authController.logout();
+      }
       if (!mounted) return;
       setState(() {
         _errorMessage = _friendlyError(error);

@@ -147,7 +147,7 @@ const Dashboard = () => {
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-700 text-2xl font-semibold text-white">
-                  {user.name.charAt(0)}
+                  {user.name?.charAt(0) || "?"}
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.28em] text-white/45">Profile snapshot</p>

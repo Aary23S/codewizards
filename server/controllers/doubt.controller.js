@@ -6,8 +6,8 @@ const PointLedger = require("../models/PointLedger");
 const getDoubts = async (req, res) => {
     try {
         const filter = {};
-        if (req.query.domain) filter.domain = req.query.domain;
-        if (req.query.resolved) filter.resolved = req.query.resolved === "true";
+        if (typeof req.query.domain === "string" && req.query.domain) filter.domain = req.query.domain;
+        if (typeof req.query.resolved === "string" && req.query.resolved) filter.resolved = req.query.resolved === "true";
 
         const doubts = await Doubt.find(filter)
             .populate("author", "name role batch")
@@ -85,25 +85,25 @@ const toggleResolve = async (req, res) => {
         } catch (e) {
             // Duplicate entry (unique index) — already awarded, ignore silently
         }
+
+        if (doubt.resolved) {
+            const lastReply = doubt.replies[doubt.replies.length - 1];
+            if (lastReply) {
+                try {
+                    await PointLedger.create({
+                        student: lastReply.author,
+                        ruleKey: "doubt_resolved",
+                        sourceType: "in_house",
+                        sourceId: doubt._id,
+                        month,
+                    });
+                } catch (e) { /* already awarded */ }
+            }
+        }
+
         res.json({ success: true, data: doubt });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
-    }
-
-    if (doubt.resolved) {
-        const lastReply = doubt.replies[doubt.replies.length - 1];
-        if (lastReply) {
-            const month = new Date().toISOString().slice(0, 7);
-            try {
-                await PointLedger.create({
-                    student: lastReply.author,
-                    ruleKey: "doubt_resolved",
-                    sourceType: "in_house",
-                    sourceId: doubt._id,
-                    month,
-                });
-            } catch (e) { /* already awarded */ }
-        }
     }
 };
 

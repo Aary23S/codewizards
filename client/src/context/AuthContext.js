@@ -38,13 +38,16 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
       }
     };
+    const handleSessionExpired = () => clearAuth();
 
     window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("auth:session-expired", handleSessionExpired);
 
     return () => {
       window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("auth:session-expired", handleSessionExpired);
     };
-  }, [loadUser]);
+  }, [loadUser, clearAuth]);
 
   const login = (token, userData) => {
     localStorage.setItem("token", token);

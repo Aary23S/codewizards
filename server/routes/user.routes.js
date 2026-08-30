@@ -4,7 +4,7 @@ const { getUsers, getUserById, createUser, updateUser, deleteUser, suspendUser }
 const { protect, requireRole } = require("../middleware/auth");
 const upload = require("../middleware/upload");
 
-router.get("/", getUsers);
+router.get("/", protect, getUsers);
 router.post("/", protect, requireRole("admin"), upload.single("image"), createUser);
 router.patch("/:id/suspend", protect, requireRole("admin"), suspendUser);
 router.get("/:id", getUserById);

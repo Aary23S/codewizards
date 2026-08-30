@@ -104,9 +104,9 @@ const getUserById = async (req, res) => {
 const getUsers = async (req, res) => {
   try {
     const filter = {};
-    if (req.query.role) filter.role = req.query.role;
-    if (req.query.domain) filter.domain = { $in: [req.query.domain] };
-    if (req.query.isMentor) filter.isMentor = req.query.isMentor === "true";
+    if (typeof req.query.role === "string" && req.query.role) filter.role = req.query.role;
+    if (typeof req.query.domain === "string" && req.query.domain) filter.domain = { $in: [req.query.domain] };
+    if (typeof req.query.isMentor === "string" && req.query.isMentor) filter.isMentor = req.query.isMentor === "true";
 
     const users = await User.find(filter).select("-password -email -phone -whatsapp -discord -contactPreferences").sort({ createdAt: -1 });
     res.json({ success: true, data: users });
@@ -127,6 +127,11 @@ const updateUser = async (req, res) => {
 
     const updates = await normalizePayload(req);
     delete updates.password;
+    // externalStats is written only by the coding-sync service; isVerified/isSuspended are admin-only trust flags
+    delete updates.externalStats;
+    delete updates.isVerified;
+    delete updates.isSuspended;
+    delete updates.suspendedReason;
     if (!isAdmin) {
       delete updates.role;
     }

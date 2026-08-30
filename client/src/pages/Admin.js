@@ -91,6 +91,7 @@ const Section = ({ title, description, children, className = "" }) => (
 const Admin = () => {
   const { user: adminUser } = useAuth();
   const [tab, setTab] = useState("overview");
+  const [actionError, setActionError] = useState("");
 
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -224,282 +225,417 @@ const Admin = () => {
 
   const handleSuspend = async () => {
     if (!suspendModal) return;
-    const res = await suspendUser(suspendModal.user._id, {
-      isSuspended: !suspendModal.user.isSuspended,
-      suspendedReason: suspendModal.reason || "",
-    });
-    setUsers((prev) => prev.map((u) => (u._id === res.data.data._id ? res.data.data : u)));
-    setSuspendModal(null);
+    try {
+      setActionError("");
+      const res = await suspendUser(suspendModal.user._id, {
+        isSuspended: !suspendModal.user.isSuspended,
+        suspendedReason: suspendModal.reason || "",
+      });
+      setUsers((prev) => prev.map((u) => (u._id === res.data.data._id ? res.data.data : u)));
+      setSuspendModal(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Permanently delete this user? This cannot be undone.")) return;
-    await deleteUser(id);
-    setUsers((prev) => prev.filter((u) => u._id !== id));
+    try {
+      setActionError("");
+      await deleteUser(id);
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const createProject = async () => {
-    const res = await api.post("/projects", {
-      ...newProject,
-      techStack: newProject.techStack.split(",").map((s) => s.trim()),
-    });
-    setProjects([res.data.data, ...projects]);
-    setNewProject({ title: "", description: "", techStack: "", githubUrl: "", demoUrl: "", featured: false });
+    try {
+      setActionError("");
+      const res = await api.post("/projects", {
+        ...newProject,
+        techStack: newProject.techStack.split(",").map((s) => s.trim()),
+      });
+      setProjects([res.data.data, ...projects]);
+      setNewProject({ title: "", description: "", techStack: "", githubUrl: "", demoUrl: "", featured: false });
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteProject = async (id) => {
-    await api.delete(`/projects/${id}`);
-    setProjects((prev) => prev.filter((p) => p._id !== id));
+    try {
+      setActionError("");
+      await api.delete(`/projects/${id}`);
+      setProjects((prev) => prev.filter((p) => p._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const createEvent = async () => {
-    const formData = new FormData();
-    Object.entries(newEvent).forEach(([key, value]) => {
-      formData.append(key, value ?? "");
-    });
-    if (newEventImageFile) formData.append("image", newEventImageFile);
-    const res = await api.post("/events", formData);
-    setEvents([res.data.data, ...events]);
-    setNewEvent({ title: "", type: "workshop", description: "", date: "", venue: "", status: "upcoming" });
-    setNewEventImageFile(null);
+    try {
+      setActionError("");
+      const formData = new FormData();
+      Object.entries(newEvent).forEach(([key, value]) => {
+        formData.append(key, value ?? "");
+      });
+      if (newEventImageFile) formData.append("image", newEventImageFile);
+      const res = await api.post("/events", formData);
+      setEvents([res.data.data, ...events]);
+      setNewEvent({ title: "", type: "workshop", description: "", date: "", venue: "", status: "upcoming" });
+      setNewEventImageFile(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const saveEventUpdate = async () => {
-    const formData = new FormData();
-    Object.entries(editingEvent || {}).forEach(([key, value]) => {
-      if (["_id", "__v", "createdAt", "updatedAt"].includes(key)) return;
-      formData.append(key, value ?? "");
-    });
-    if (editingEventImageFile) formData.append("image", editingEventImageFile);
-    const res = await api.patch(`/events/${editingEvent._id}`, formData);
-    setEvents((prev) => prev.map((e) => (e._id === editingEvent._id ? res.data.data : e)));
-    setEditingEvent(null);
-    setEditingEventImageFile(null);
+    try {
+      setActionError("");
+      const formData = new FormData();
+      Object.entries(editingEvent || {}).forEach(([key, value]) => {
+        if (["_id", "__v", "createdAt", "updatedAt"].includes(key)) return;
+        formData.append(key, value ?? "");
+      });
+      if (editingEventImageFile) formData.append("image", editingEventImageFile);
+      const res = await api.patch(`/events/${editingEvent._id}`, formData);
+      setEvents((prev) => prev.map((e) => (e._id === editingEvent._id ? res.data.data : e)));
+      setEditingEvent(null);
+      setEditingEventImageFile(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteEvent = async (id) => {
-    await api.delete(`/events/${id}`);
-    setEvents((prev) => prev.filter((e) => e._id !== id));
+    try {
+      setActionError("");
+      await api.delete(`/events/${id}`);
+      setEvents((prev) => prev.filter((e) => e._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const createAnnouncement = async () => {
-    const res = await api.post("/announcements", newAnnouncement);
-    setAnnouncements([res.data.data, ...announcements]);
-    setNewAnnouncement({ title: "", body: "", important: false });
+    try {
+      setActionError("");
+      const res = await api.post("/announcements", newAnnouncement);
+      setAnnouncements([res.data.data, ...announcements]);
+      setNewAnnouncement({ title: "", body: "", important: false });
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteAnnouncement = async (id) => {
-    await api.delete(`/announcements/${id}`);
-    setAnnouncements((prev) => prev.filter((a) => a._id !== id));
+    try {
+      setActionError("");
+      await api.delete(`/announcements/${id}`);
+      setAnnouncements((prev) => prev.filter((a) => a._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const createTimeline = async () => {
-    const res = await api.post("/timeline", { ...newTimeline, year: Number(newTimeline.year) });
-    setTimeline([...timeline, res.data.data].sort((a, b) => a.year - b.year));
-    setNewTimeline({ year: "", month: "", title: "", description: "" });
+    try {
+      setActionError("");
+      const res = await api.post("/timeline", { ...newTimeline, year: Number(newTimeline.year) });
+      setTimeline([...timeline, res.data.data].sort((a, b) => a.year - b.year));
+      setNewTimeline({ year: "", month: "", title: "", description: "" });
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteTimeline = async (id) => {
-    await deleteTimeline(id);
-    setTimeline((prev) => prev.filter((t) => t._id !== id));
+    try {
+      setActionError("");
+      await deleteTimeline(id);
+      setTimeline((prev) => prev.filter((t) => t._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const saveTimelineUpdate = async () => {
-    const res = await updateTimeline(editingTimeline._id, {
-      ...editingTimeline,
-      year: Number(editingTimeline.year),
-    });
-    setTimeline((prev) =>
-      prev
-        .map((item) => (item._id === editingTimeline._id ? res.data.data : item))
-        .sort((a, b) => a.year - b.year)
-    );
-    setEditingTimeline(null);
+    try {
+      setActionError("");
+      const res = await updateTimeline(editingTimeline._id, {
+        ...editingTimeline,
+        year: Number(editingTimeline.year),
+      });
+      setTimeline((prev) =>
+        prev
+          .map((item) => (item._id === editingTimeline._id ? res.data.data : item))
+          .sort((a, b) => a.year - b.year)
+      );
+      setEditingTimeline(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const createGalleryItem = async () => {
-    const formData = new FormData();
-    formData.append("title", newGallery.title);
-    formData.append("category", newGallery.category);
-    formData.append("eventRef", newGallery.eventRef || "");
-    if (newGalleryImageFiles && newGalleryImageFiles.length > 0) {
-      Array.from(newGalleryImageFiles).forEach((file) => {
-        formData.append("images", file);
-      });
-    } else {
-      formData.append("imageUrl", newGallery.imageUrl || "");
+    try {
+      setActionError("");
+      const formData = new FormData();
+      formData.append("title", newGallery.title);
+      formData.append("category", newGallery.category);
+      formData.append("eventRef", newGallery.eventRef || "");
+      if (newGalleryImageFiles && newGalleryImageFiles.length > 0) {
+        Array.from(newGalleryImageFiles).forEach((file) => {
+          formData.append("images", file);
+        });
+      } else {
+        formData.append("imageUrl", newGallery.imageUrl || "");
+      }
+      const res = await api.post("/gallery", formData);
+      setGallery([res.data.data, ...gallery]);
+      setNewGallery({ title: "", imageUrl: "", category: "event", eventRef: "" });
+      setNewGalleryImageFiles([]);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
     }
-    const res = await api.post("/gallery", formData);
-    setGallery([res.data.data, ...gallery]);
-    setNewGallery({ title: "", imageUrl: "", category: "event", eventRef: "" });
-    setNewGalleryImageFiles([]);
   };
 
   const saveGalleryItemUpdate = async () => {
-    const formData = new FormData();
-    formData.append("title", editingGallery.title);
-    formData.append("category", editingGallery.category);
-    formData.append("eventRef", editingGallery.eventRef || "");
+    try {
+      setActionError("");
+      const formData = new FormData();
+      formData.append("title", editingGallery.title);
+      formData.append("category", editingGallery.category);
+      formData.append("eventRef", editingGallery.eventRef || "");
 
-    const currentUrls = editingGallery.imageUrls && editingGallery.imageUrls.length > 0
-      ? editingGallery.imageUrls
-      : editingGallery.imageUrl
-        ? [editingGallery.imageUrl]
-        : [];
+      const currentUrls = editingGallery.imageUrls && editingGallery.imageUrls.length > 0
+        ? editingGallery.imageUrls
+        : editingGallery.imageUrl
+          ? [editingGallery.imageUrl]
+          : [];
 
-    currentUrls.forEach((url) => {
-      formData.append("imageUrls", url);
-    });
-
-    if (editingGalleryImageFiles && editingGalleryImageFiles.length > 0) {
-      Array.from(editingGalleryImageFiles).forEach((file) => {
-        formData.append("images", file);
+      currentUrls.forEach((url) => {
+        formData.append("imageUrls", url);
       });
-    }
 
-    const res = await api.patch(`/gallery/${editingGallery._id}`, formData);
-    setGallery((prev) => prev.map((item) => (item._id === editingGallery._id ? res.data.data : item)));
-    setEditingGallery(null);
-    setEditingGalleryImageFiles([]);
+      if (editingGalleryImageFiles && editingGalleryImageFiles.length > 0) {
+        Array.from(editingGalleryImageFiles).forEach((file) => {
+          formData.append("images", file);
+        });
+      }
+
+      const res = await api.patch(`/gallery/${editingGallery._id}`, formData);
+      setGallery((prev) => prev.map((item) => (item._id === editingGallery._id ? res.data.data : item)));
+      setEditingGallery(null);
+      setEditingGalleryImageFiles([]);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteGallery = async (id) => {
-    await deleteGalleryItem(id);
-    setGallery((prev) => prev.filter((g) => g._id !== id));
+    try {
+      setActionError("");
+      await deleteGalleryItem(id);
+      setGallery((prev) => prev.filter((g) => g._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteDoubt = async (id) => {
-    await deleteDoubt(id);
-    setDoubts((prev) => prev.filter((d) => d._id !== id));
+    try {
+      setActionError("");
+      await deleteDoubt(id);
+      setDoubts((prev) => prev.filter((d) => d._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteBlog = async (id) => {
-    await deleteBlog(id);
-    setBlogs((prev) => prev.filter((b) => b._id !== id));
+    try {
+      setActionError("");
+      await deleteBlog(id);
+      setBlogs((prev) => prev.filter((b) => b._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const saveOpportunityUpdate = async () => {
-    const res = await updateOpportunity(editingOpportunity._id, editingOpportunity);
-    setOpportunities((prev) =>
-      prev.map((item) => (item._id === editingOpportunity._id ? res.data.data : item))
-    );
-    setEditingOpportunity(null);
+    try {
+      setActionError("");
+      const res = await updateOpportunity(editingOpportunity._id, editingOpportunity);
+      setOpportunities((prev) =>
+        prev.map((item) => (item._id === editingOpportunity._id ? res.data.data : item))
+      );
+      setEditingOpportunity(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const createOpportunityHandler = async () => {
-    const payload = { ...newOpportunity };
-    if (!payload.deadline) delete payload.deadline;
-    const res = await createOpportunity(payload);
-    setOpportunities((prev) => [res.data.data, ...prev]);
-    setNewOpportunity({
-      title: "",
-      company: "",
-      type: "internship",
-      domain: "",
-      description: "",
-      applyLink: "",
-      deadline: "",
-    });
+    try {
+      setActionError("");
+      const payload = { ...newOpportunity };
+      if (!payload.deadline) delete payload.deadline;
+      const res = await createOpportunity(payload);
+      setOpportunities((prev) => [res.data.data, ...prev]);
+      setNewOpportunity({
+        title: "",
+        company: "",
+        type: "internship",
+        domain: "",
+        description: "",
+        applyLink: "",
+        deadline: "",
+      });
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteOpportunity = async (id) => {
-    await deleteOpportunity(id);
-    setOpportunities((prev) => prev.filter((o) => o._id !== id));
+    try {
+      setActionError("");
+      await deleteOpportunity(id);
+      setOpportunities((prev) => prev.filter((o) => o._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const createResource = async () => {
-    const payload = {
-      ...newResource,
-      category: newResource.category || "Other",
-    };
-    const res = await api.post("/resources", payload);
-    setResources((prev) => [res.data.data, ...prev]);
-    setNewResource({
-      title: "",
-      url: "",
-      category: "Other",
-      domain: "",
-      description: "",
-    });
+    try {
+      setActionError("");
+      const payload = {
+        ...newResource,
+        category: newResource.category || "Other",
+      };
+      const res = await api.post("/resources", payload);
+      setResources((prev) => [res.data.data, ...prev]);
+      setNewResource({
+        title: "",
+        url: "",
+        category: "Other",
+        domain: "",
+        description: "",
+      });
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const saveResourceUpdate = async () => {
-    const res = await api.patch(`/resources/${editingResource._id}`, editingResource);
-    setResources((prev) => prev.map((item) => (item._id === editingResource._id ? res.data.data : item)));
-    setEditingResource(null);
+    try {
+      setActionError("");
+      const res = await api.patch(`/resources/${editingResource._id}`, editingResource);
+      setResources((prev) => prev.map((item) => (item._id === editingResource._id ? res.data.data : item)));
+      setEditingResource(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteResource = async (id) => {
-    await api.delete(`/resources/${id}`);
-    setResources((prev) => prev.filter((item) => item._id !== id));
+    try {
+      setActionError("");
+      await api.delete(`/resources/${id}`);
+      setResources((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const createTeamMemberHandler = async () => {
-    const formData = new FormData();
-    Object.entries(newTeamMember).forEach(([key, value]) => {
-      if (key === "domain") {
-        formData.append(
-          key,
-          value ? value.split(",").map((d) => d.trim()).filter(Boolean).join(",") : ""
-        );
-        return;
-      }
-      if (key === "batch" || key === "order") {
-        formData.append(key, value === "" ? "" : String(value));
-        return;
-      }
-      formData.append(key, value ?? "");
-    });
-    if (newTeamImageFile) formData.append("image", newTeamImageFile);
-    const res = await createTeamMember(formData);
-    setTeamMembers([...teamMembers, res.data.data]);
-    setNewTeamMember({
-      name: "",
-      role: "",
-      subtitle: "",
-      teamYear: "",
-      category: "core",
-      batch: "",
-      domain: "",
-      imageUrl: "",
-      linkedin: "",
-      github: "",
-      order: 0,
-    });
-    setNewTeamImageFile(null);
+    try {
+      setActionError("");
+      const formData = new FormData();
+      Object.entries(newTeamMember).forEach(([key, value]) => {
+        if (key === "domain") {
+          formData.append(
+            key,
+            value ? value.split(",").map((d) => d.trim()).filter(Boolean).join(",") : ""
+          );
+          return;
+        }
+        if (key === "batch" || key === "order") {
+          formData.append(key, value === "" ? "" : String(value));
+          return;
+        }
+        formData.append(key, value ?? "");
+      });
+      if (newTeamImageFile) formData.append("image", newTeamImageFile);
+      const res = await createTeamMember(formData);
+      setTeamMembers([...teamMembers, res.data.data]);
+      setNewTeamMember({
+        name: "",
+        role: "",
+        subtitle: "",
+        teamYear: "",
+        category: "core",
+        batch: "",
+        domain: "",
+        imageUrl: "",
+        linkedin: "",
+        github: "",
+        order: 0,
+      });
+      setNewTeamImageFile(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const saveTeamMemberUpdate = async () => {
-    const payload = new FormData();
-    Object.entries(editingTeamMember || {}).forEach(([key, value]) => {
-      if (["_id", "__v", "createdAt", "updatedAt"].includes(key)) return;
-      if (key === "domain") {
-        payload.append(key, Array.isArray(value) ? value.join(", ") : value || "");
-        return;
-      }
-      if (key === "batch" || key === "order") {
-        payload.append(key, value === "" || value == null ? "" : String(value));
-        return;
-      }
-      payload.append(key, value ?? "");
-    });
-    if (editingTeamImageFile) payload.append("image", editingTeamImageFile);
-    const res = await updateTeamMember(editingTeamMember._id, payload);
-    setTeamMembers((prev) =>
-      prev.map((member) => (member._id === editingTeamMember._id ? res.data.data : member))
-    );
-    setEditingTeamMember(null);
-    setEditingTeamImageFile(null);
+    try {
+      setActionError("");
+      const payload = new FormData();
+      Object.entries(editingTeamMember || {}).forEach(([key, value]) => {
+        if (["_id", "__v", "createdAt", "updatedAt"].includes(key)) return;
+        if (key === "domain") {
+          payload.append(key, Array.isArray(value) ? value.join(", ") : value || "");
+          return;
+        }
+        if (key === "batch" || key === "order") {
+          payload.append(key, value === "" || value == null ? "" : String(value));
+          return;
+        }
+        payload.append(key, value ?? "");
+      });
+      if (editingTeamImageFile) payload.append("image", editingTeamImageFile);
+      const res = await updateTeamMember(editingTeamMember._id, payload);
+      setTeamMembers((prev) =>
+        prev.map((member) => (member._id === editingTeamMember._id ? res.data.data : member))
+      );
+      setEditingTeamMember(null);
+      setEditingTeamImageFile(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteTeamMember = async (id) => {
-    await deleteTeamMember(id);
-    setTeamMembers((prev) => prev.filter((member) => member._id !== id));
+    try {
+      setActionError("");
+      await deleteTeamMember(id);
+      setTeamMembers((prev) => prev.filter((member) => member._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const saveContact = async () => {
-    const res = await updateContact(contactInfo);
-    setContactInfo(res.data.data);
+    try {
+      setActionError("");
+      const res = await updateContact(contactInfo);
+      setContactInfo(res.data.data);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleParseReps = (str) => {
@@ -528,46 +664,66 @@ const Admin = () => {
   };
 
   const handleCreateCollaboration = async () => {
-    const payload = {
-      ...newCollaboration,
-      representatives: handleParseReps(newCollaboration.representatives),
-    };
-    const res = await createCollaboration(payload);
-    setCollaborations([res.data.data, ...collaborations]);
-    setNewCollaboration({
-      name: "",
-      type: "Campus Partner",
-      description: "",
-      website: "",
-      logoText: "",
-      representatives: "",
-    });
+    try {
+      setActionError("");
+      const payload = {
+        ...newCollaboration,
+        representatives: handleParseReps(newCollaboration.representatives),
+      };
+      const res = await createCollaboration(payload);
+      setCollaborations([res.data.data, ...collaborations]);
+      setNewCollaboration({
+        name: "",
+        type: "Campus Partner",
+        description: "",
+        website: "",
+        logoText: "",
+        representatives: "",
+      });
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleSaveCollaborationUpdate = async () => {
-    const payload = {
-      ...editingCollaboration,
-      representatives: typeof editingCollaboration.representatives === "string"
-        ? handleParseReps(editingCollaboration.representatives)
-        : editingCollaboration.representatives,
-    };
-    const res = await updateCollaboration(editingCollaboration._id, payload);
-    setCollaborations((prev) =>
-      prev.map((item) => (item._id === editingCollaboration._id ? res.data.data : item))
-    );
-    setEditingCollaboration(null);
+    try {
+      setActionError("");
+      const payload = {
+        ...editingCollaboration,
+        representatives: typeof editingCollaboration.representatives === "string"
+          ? handleParseReps(editingCollaboration.representatives)
+          : editingCollaboration.representatives,
+      };
+      const res = await updateCollaboration(editingCollaboration._id, payload);
+      setCollaborations((prev) =>
+        prev.map((item) => (item._id === editingCollaboration._id ? res.data.data : item))
+      );
+      setEditingCollaboration(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const handleDeleteCollaboration = async (id) => {
     if (!window.confirm("Delete this partner/collaboration?")) return;
-    await deleteCollaboration(id);
-    setCollaborations((prev) => prev.filter((item) => item._id !== id));
+    try {
+      setActionError("");
+      await deleteCollaboration(id);
+      setCollaborations((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   const saveRule = async (rule) => {
-    const res = await updatePointRule(rule._id, { flatPoints: rule.flatPoints, tiers: rule.tiers });
-    setPointRules((prev) => prev.map((item) => (item._id === rule._id ? res.data.data : item)));
-    setEditingRule(null);
+    try {
+      setActionError("");
+      const res = await updatePointRule(rule._id, { flatPoints: rule.flatPoints, tiers: rule.tiers });
+      setPointRules((prev) => prev.map((item) => (item._id === rule._id ? res.data.data : item)));
+      setEditingRule(null);
+    } catch (err) {
+      setActionError(err.response?.data?.message || "Action failed — please try again.");
+    }
   };
 
   return (
@@ -616,6 +772,13 @@ const Admin = () => {
             ))}
           </div>
         </section>
+
+        {actionError && (
+          <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+            <span>{actionError}</span>
+            <button onClick={() => setActionError("")} className="text-rose-200/70 hover:text-rose-100">✕</button>
+          </div>
+        )}
 
         {tab === "overview" && (
           <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

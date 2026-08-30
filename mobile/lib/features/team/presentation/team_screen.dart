@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/widgets/safe_network_image.dart';
+import '../../auth/auth_controller.dart';
 import '../data/team_member_item.dart';
 import '../data/team_repository.dart';
 
@@ -20,13 +21,26 @@ class _TeamScreenState extends State<TeamScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<TeamRepository>().fetchTeam();
+    _future ??= _load();
+  }
+
+  Future<List<TeamMemberItem>> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<TeamRepository>();
+    try {
+      return await repo.fetchTeam();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<TeamRepository>().fetchTeam();
+      _future = _load();
     });
 
     try {

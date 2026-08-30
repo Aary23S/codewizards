@@ -65,7 +65,7 @@ const Leaderboard = () => {
             <Link key={student._id} to={`/profile/${student._id}`} className="group flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
               <RankBadge rank={index + 1} />
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white">
-                {student.name.charAt(0)}
+                {student.name?.charAt(0) || "?"}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-white">{student.name}</p>

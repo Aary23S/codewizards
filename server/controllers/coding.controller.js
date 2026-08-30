@@ -7,6 +7,7 @@ const {
   syncCurrentUserCodingProfile,
   sanitizeHandle,
   cooldownRemainingMs,
+  checkSyncCooldown,
   DEFAULT_COOLDOWN_MS,
 } = require("../services/coding/coding.service");
 
@@ -33,6 +34,15 @@ async function connectCoding(req, res) {
       return res.status(400).json({
         success: false,
         message: "Provide at least one username or handle.",
+      });
+    }
+
+    const { remaining, cooldownMs } = await checkSyncCooldown(req.user._id);
+    if (remaining > 0) {
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${Math.ceil(remaining / 1000)}s before syncing again.`,
+        meta: { cooldownRemainingMs: remaining, cooldownMs },
       });
     }
 

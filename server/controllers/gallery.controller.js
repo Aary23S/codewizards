@@ -29,7 +29,7 @@ const uploadImage = (fileBuffer, originalName) =>
 const getGallery = async (req, res) => {
   try {
     const filter = {};
-    if (req.query.category) filter.category = req.query.category;
+    if (typeof req.query.category === "string" && req.query.category) filter.category = req.query.category;
     const items = await Gallery.find(filter).sort({ createdAt: -1 });
     res.json({ success: true, data: items });
   } catch (error) {

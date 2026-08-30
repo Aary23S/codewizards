@@ -29,13 +29,25 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<AdminRepository>().fetchOverview();
+    _future ??= _loadOverview();
+  }
+
+  Future<AdminOverview> _loadOverview() async {
+    final auth = context.read<AuthController>();
+    try {
+      return await context.read<AdminRepository>().fetchOverview();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<AdminRepository>().fetchOverview();
+      _future = _loadOverview();
     });
 
     try {
@@ -1531,13 +1543,25 @@ class _AdminListPageState extends State<AdminListPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= widget.loader();
+    _future ??= _loadItems();
+  }
+
+  Future<List<Map<String, dynamic>>> _loadItems() async {
+    final auth = context.read<AuthController>();
+    try {
+      return await widget.loader();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = widget.loader();
+      _future = _loadItems();
     });
 
     try {
@@ -1708,7 +1732,19 @@ class _AdminContactPageState extends State<AdminContactPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<AdminRepository>().fetchContact();
+    _future ??= _loadContact();
+  }
+
+  Future<Map<String, dynamic>> _loadContact() async {
+    final auth = context.read<AuthController>();
+    try {
+      return await context.read<AdminRepository>().fetchContact();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -1726,7 +1762,7 @@ class _AdminContactPageState extends State<AdminContactPage> {
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<AdminRepository>().fetchContact();
+      _future = _loadContact();
     });
     try {
       await _future;
@@ -1738,6 +1774,7 @@ class _AdminContactPageState extends State<AdminContactPage> {
 
   Future<void> _save() async {
     if (_saving) return;
+    final auth = context.read<AuthController>();
     setState(() => _saving = true);
     try {
       final payload =
@@ -1760,6 +1797,9 @@ class _AdminContactPageState extends State<AdminContactPage> {
       ).showSnackBar(const SnackBar(content: Text('Contact updated.')));
       await _refresh();
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -1888,13 +1928,25 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<AdminRepository>().fetchPointRules();
+    _future ??= _loadPointRules();
+  }
+
+  Future<List<Map<String, dynamic>>> _loadPointRules() async {
+    final auth = context.read<AuthController>();
+    try {
+      return await context.read<AdminRepository>().fetchPointRules();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<AdminRepository>().fetchPointRules();
+      _future = _loadPointRules();
     });
     try {
       await _future;

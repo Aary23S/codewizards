@@ -33,7 +33,7 @@ const BlogCard = ({ blog, user, onDelete, index }) => (
         </h3>
       </Link>
       <p className="line-clamp-3 text-sm leading-7 text-white/60">
-        {blog.content.replace(/<[^>]+>/g, "").slice(0, 160)}...
+        {(blog.content || "").replace(/<[^>]+>/g, "").slice(0, 160)}...
       </p>
       <div className="mt-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">

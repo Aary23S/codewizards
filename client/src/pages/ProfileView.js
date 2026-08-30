@@ -169,7 +169,7 @@ const ProfileView = () => {
                   />
                 ) : (
                   <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-400 via-sky-500 to-indigo-500 text-3xl font-semibold text-black shadow-lg shadow-cyan-500/20">
-                    {profile.name.charAt(0)}
+                    {profile.name?.charAt(0) || "?"}
                   </div>
                 )}
 

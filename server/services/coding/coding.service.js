@@ -85,6 +85,15 @@ function cooldownRemainingMs(lastSyncedAt) {
   return Math.max(0, DEFAULT_COOLDOWN_MS - delta);
 }
 
+// Shared by every entry point that triggers a forced external-API sync
+async function checkSyncCooldown(userId) {
+  const existing = await CodingProfile.findOne({ userId });
+  return {
+    remaining: cooldownRemainingMs(existing?.lastManualSyncAt),
+    cooldownMs: DEFAULT_COOLDOWN_MS,
+  };
+}
+
 function hasHandleChange(current, next) {
   return trimText(current) !== trimText(next);
 }
@@ -373,4 +382,5 @@ module.exports = {
   syncLegacyPlatform,
   sanitizeHandle,
   cooldownRemainingMs,
+  checkSyncCooldown,
 };

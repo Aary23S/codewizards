@@ -107,13 +107,26 @@ class _GalleryExplorePageState extends State<GalleryExplorePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<ExploreRepository>().fetchGallery();
+    _future ??= _load();
+  }
+
+  Future<List<GalleryItem>> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await repo.fetchGallery();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<ExploreRepository>().fetchGallery();
+      _future = _load();
     });
 
     try {
@@ -304,13 +317,26 @@ class _OpportunitiesExplorePageState extends State<OpportunitiesExplorePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<ExploreRepository>().fetchOpportunities();
+    _future ??= _load();
+  }
+
+  Future<List<OpportunityItem>> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await repo.fetchOpportunities();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<ExploreRepository>().fetchOpportunities();
+      _future = _load();
     });
 
     try {
@@ -516,13 +542,26 @@ class _LegacyExplorePageState extends State<LegacyExplorePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<ExploreRepository>().fetchLegacy();
+    _future ??= _load();
+  }
+
+  Future<List<TimelineItem>> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await repo.fetchLegacy();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<ExploreRepository>().fetchLegacy();
+      _future = _load();
     });
 
     try {
@@ -629,13 +668,21 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
   }
 
   Future<List<DoubtItem>> _load() async {
+    final auth = context.read<AuthController>();
     final repo = context.read<ExploreRepository>();
     final resolved = switch (_statusFilter) {
       'open' => false,
       'resolved' => true,
       _ => null,
     };
-    return repo.fetchForum(domain: _domainFilter, resolved: resolved);
+    try {
+      return await repo.fetchForum(domain: _domainFilter, resolved: resolved);
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
@@ -669,6 +716,7 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
     );
     if (draft == null || !mounted) return;
 
+    final auth = context.read<AuthController>();
     final repo = context.read<ExploreRepository>();
     try {
       await repo.createForumQuestion(
@@ -678,6 +726,9 @@ class _ForumExplorePageState extends State<ForumExplorePage> {
       );
       await _reload();
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -1264,7 +1315,16 @@ class _ContributionsExplorePageState extends State<ContributionsExplorePage> {
   }
 
   Future<CodingProfileItem?> _load() async {
-    return context.read<ProfileRepository>().fetchMyCodingProfile();
+    final auth = context.read<AuthController>();
+    final repo = context.read<ProfileRepository>();
+    try {
+      return await repo.fetchMyCodingProfile();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
@@ -1283,6 +1343,7 @@ class _ContributionsExplorePageState extends State<ContributionsExplorePage> {
 
   Future<void> _syncNow() async {
     setState(() => _errorMessage = null);
+    final auth = context.read<AuthController>();
     final messenger = ScaffoldMessenger.of(context);
     try {
       await context.read<ProfileRepository>().syncCodingProfile();
@@ -1295,6 +1356,9 @@ class _ContributionsExplorePageState extends State<ContributionsExplorePage> {
         const SnackBar(content: Text('Coding contributions synced.')),
       );
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       setState(() => _errorMessage = _friendlyError(error));
     }
@@ -1386,13 +1450,26 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<ExploreRepository>().fetchBlogs();
+    _future ??= _load();
+  }
+
+  Future<List<BlogItem>> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await repo.fetchBlogs();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<ExploreRepository>().fetchBlogs();
+      _future = _load();
     });
 
     try {
@@ -1421,6 +1498,7 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
     );
     if (draft == null || !mounted) return;
 
+    final auth = context.read<AuthController>();
     try {
       await context.read<ExploreRepository>().createBlog(
         title: draft.title,
@@ -1430,6 +1508,9 @@ class _BlogExplorePageState extends State<BlogExplorePage> {
       );
       await _refresh();
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -1600,7 +1681,7 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<ExploreRepository>().fetchContact();
+    _future ??= _load();
 
     final currentUser = context.read<AuthController>().user;
     if (_nameController.text.isEmpty && currentUser != null) {
@@ -1608,6 +1689,19 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
     }
     if (_emailController.text.isEmpty && currentUser != null) {
       _emailController.text = currentUser.email;
+    }
+  }
+
+  Future<ContactInfoItem> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await repo.fetchContact();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
     }
   }
 
@@ -1622,7 +1716,7 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<ExploreRepository>().fetchContact();
+      _future = _load();
     });
 
     try {
@@ -1646,6 +1740,7 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
     }
 
     setState(() => _sending = true);
+    final auth = context.read<AuthController>();
     try {
       final subject = Uri.encodeComponent(
         'CodeWizards contact from ${name.isEmpty ? 'mobile app' : name}',
@@ -1670,6 +1765,9 @@ class _ContactExplorePageState extends State<ContactExplorePage> {
         ),
       );
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -1846,8 +1944,17 @@ class _ResourcesExplorePageState extends State<ResourcesExplorePage> {
     _future ??= _load();
   }
 
-  Future<List<ResourceItem>> _load() {
-    return context.read<ExploreRepository>().fetchResources();
+  Future<List<ResourceItem>> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await repo.fetchResources();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
@@ -2253,13 +2360,26 @@ class _ConnectExplorePageState extends State<ConnectExplorePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<ProfileRepository>().fetchUsers();
+    _future ??= _load();
+  }
+
+  Future<List<UserProfile>> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ProfileRepository>();
+    try {
+      return await repo.fetchUsers();
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<ProfileRepository>().fetchUsers();
+      _future = _load();
     });
 
     try {
@@ -2809,7 +2929,16 @@ class _SectionDataPageState<T> extends State<_SectionDataPage<T>> {
   }
 
   Future<List<T>> _load() async {
-    return widget.loader(context.read<ExploreRepository>());
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await widget.loader(repo);
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
@@ -2919,13 +3048,26 @@ class _SectionSinglePageState<T> extends State<_SectionSinglePage<T>> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= widget.loader(context.read<ExploreRepository>());
+    _future ??= _load();
+  }
+
+  Future<T> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await widget.loader(repo);
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = widget.loader(context.read<ExploreRepository>());
+      _future = _load();
     });
 
     try {
@@ -4010,13 +4152,26 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= context.read<ExploreRepository>().fetchBlog(widget.blogId);
+    _future ??= _load();
+  }
+
+  Future<BlogItem> _load() async {
+    final auth = context.read<AuthController>();
+    final repo = context.read<ExploreRepository>();
+    try {
+      return await repo.fetchBlog(widget.blogId);
+    } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
+      rethrow;
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
       _errorMessage = null;
-      _future = context.read<ExploreRepository>().fetchBlog(widget.blogId);
+      _future = _load();
     });
 
     try {
@@ -4028,11 +4183,15 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
   }
 
   Future<void> _deleteBlog(BlogItem blog) async {
+    final auth = context.read<AuthController>();
     try {
       await context.read<ExploreRepository>().deleteBlog(blog.id);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (error) {
+      if (error.toString().contains('401')) {
+        await auth.logout();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
