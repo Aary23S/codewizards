@@ -3,6 +3,7 @@ const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const Project = require("../models/Project");
 const PointLedger = require("../models/PointLedger");
 const { parsePagination } = require("../utils/paginate");
+const logger = require("../utils/logger");
 
 // GET /api/v1/projects
 // Returns all projects; ?featured=true filters to featured only
@@ -50,7 +51,7 @@ const createProject = async (req, res) => {
           month: new Date().toISOString().slice(0, 7),
         });
       } catch (ledgerErr) {
-        console.warn("project_posted ledger entry failed:", ledgerErr.message);
+        logger.warn({ err: ledgerErr }, "project_posted ledger entry failed");
       }
     }
 

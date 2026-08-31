@@ -1,5 +1,6 @@
 // codewizards/server/services/coding/adapters/leetcode.adapter.js
 const axios = require("axios");
+const logger = require("../../../utils/logger");
 
 async function fetchLeetcode(username) {
   const safeUsername = username?.trim();
@@ -36,7 +37,7 @@ async function fetchLeetcode(username) {
       };
     }
   } catch (error) {
-    console.warn(`Primary LeetCode API failed for ${safeUsername}, trying backup...`, error.message);
+    logger.warn({ err: error, username: safeUsername }, "Primary LeetCode API failed, trying backup...");
   }
 
   try {
@@ -68,7 +69,7 @@ async function fetchLeetcode(username) {
       };
     }
   } catch (error) {
-    console.error(`Backup LeetCode API failed for ${safeUsername}`, error.message);
+    logger.error({ err: error, username: safeUsername }, "Backup LeetCode API failed");
   }
 
   throw new Error("Unable to fetch LeetCode profile statistics");

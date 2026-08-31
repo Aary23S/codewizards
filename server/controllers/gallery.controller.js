@@ -3,11 +3,12 @@ const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const Gallery = require("../models/Gallery");
 const cloudinary = require("../config/cloudinary");
 const { parsePagination } = require("../utils/paginate");
+const logger = require("../utils/logger");
 
 const uploadImage = (fileBuffer, originalName) =>
   new Promise((resolve, reject) => {
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      console.error("Cloudinary credentials are not configured on the server.");
+      logger.error("Cloudinary credentials are not configured on the server.");
       return reject(new Error("Cloudinary credentials are not configured on the server. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."));
     }
     const stream = cloudinary.uploader.upload_stream(
@@ -18,7 +19,7 @@ const uploadImage = (fileBuffer, originalName) =>
       },
       (error, result) => {
         if (error) {
-          console.error("Cloudinary gallery upload failed:", error);
+          logger.error({ err: error }, "Cloudinary gallery upload failed");
           return reject(error);
         }
         resolve(result.secure_url);
@@ -64,7 +65,7 @@ const createGalleryItem = async (req, res) => {
     const item = await Gallery.create(payload);
     res.status(201).json({ success: true, data: item });
   } catch (error) {
-    console.error("Create gallery item failed:", error);
+    logger.error({ err: error }, "Create gallery item failed");
     res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
@@ -126,7 +127,7 @@ const updateGalleryItem = async (req, res) => {
 
     res.json({ success: true, data: item });
   } catch (error) {
-    console.error("Update gallery item failed:", error);
+    logger.error({ err: error }, "Update gallery item failed");
     res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };

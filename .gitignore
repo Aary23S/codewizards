@@ -2,8 +2,6 @@ docs/CodeWizards_Flutter_Backend_Handoff.docx
 docs/rendered/page-1.png
 docs/rendered/page-3.png
 docs/rendered/page-2.png
-docs/FLUTTER_BACKEND_CONTRACT.md
-mobile/lib/features/explore/data/doubt_item.dart
 
 mobile/linux/flutter/generated_plugin_registrant.cc
 # Inside mobile/.gitignore
@@ -11,6 +9,5 @@ mobile/linux/flutter/generated_plugin_registrant.cc
 /linux/flutter/
 /windows/flutter/
 /macos/Flutter/
-docs/CodeWizards_Architecture.md
 node_modules/
 .env

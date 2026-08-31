@@ -4,6 +4,7 @@ const User = require("../../models/User");
 const { fetchCodeforces } = require("./adapters/codeforces.adapter");
 const { fetchLeetcode } = require("./adapters/leetcode.adapter");
 const { fetchGithub } = require("./adapters/github.adapter");
+const logger = require("../../utils/logger");
 
 const DEFAULT_COOLDOWN_MS = Number(process.env.CODING_SYNC_COOLDOWN_MS || 5 * 60 * 1000);
 
@@ -192,7 +193,7 @@ async function syncPlatform(profile, userId, platform, handle, force = false) {
       data: profile[platform],
     };
   } catch (error) {
-    console.warn(`[coding] ${platform} sync failed for user ${userId}:`, error?.message || error);
+    logger.warn({ err: error, platform, userId }, "[coding] sync failed");
     profile.set(platform, {
       ...platformState,
       error: safeErrorMessage(error, `Unable to sync ${platform}`),

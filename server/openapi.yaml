@@ -1,0 +1,3895 @@
+openapi: 3.0.3
+info:
+  title: CodeWizards API
+  version: "1.0.0"
+  description: >
+    Backend API for CodeWizards, a student tech-club platform (projects, events,
+    mentorship, doubts, blogs, coding-profile tracking, gamified leaderboard, and
+    club administration). All endpoints are prefixed with /api/v1 except the root
+    health check.
+servers:
+  - url: http://localhost:5000
+    description: Local development
+  - url: /
+    description: >
+      Production — the deployed base URL is read at runtime from the
+      RENDER_EXTERNAL_URL environment variable (Render.com deployment); no fixed
+      production hostname is hard-coded in the app.
+
+tags:
+  - name: Health
+    description: Service/DB liveness check (no /api/v1 prefix)
+  - name: Auth
+    description: Registration, login, session, and password-reset flows
+  - name: Projects
+    description: Club project showcase
+  - name: Events
+    description: Events, registrations, attendance OTP verification
+  - name: Timeline
+    description: Club history milestones
+  - name: Gallery
+    description: Photo gallery
+  - name: Announcements
+    description: Club announcements/notices
+  - name: Users
+    description: User profiles and admin user management
+  - name: Mentorship
+    description: Mentor/mentee requests, connections, and shared goals
+  - name: Resources
+    description: Curated learning resources
+  - name: Opportunities
+    description: Internship/job/freelance/open-source postings
+  - name: Doubts
+    description: Q&A / doubt-solving board
+  - name: Sync
+    description: Legacy single-platform coding-stat sync endpoints
+  - name: Coding
+    description: Coding-profile connect/sync (LeetCode, Codeforces, GitHub)
+  - name: Leaderboard
+    description: Points-based student leaderboard
+  - name: Point Rules
+    description: Admin configuration of the points-engine rules
+  - name: Blogs
+    description: Member-authored blog posts
+  - name: Team
+    description: Public team/leadership roster
+  - name: Contact
+    description: Club contact info and public contact form
+  - name: Collaborations
+    description: Partner organizations / collaborations showcase
+
+security: []
+
+paths:
+  /:
+    get:
+      tags: [Health]
+      summary: Health check (API + DB connectivity)
+      description: >
+        Not under /api/v1. Reports 200 when the process is up and Mongoose's
+        connection state is "connected"; otherwise 503 with the same shape.
+      security: []
+      responses:
+        "200":
+          description: API is running and the database is connected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "CodeWizards API running" }
+                  db: { type: string, example: "connected" }
+        "503":
+          description: API is running but the database is unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: "API running, database unavailable" }
+                  db: { type: string, example: "disconnected" }
+
+  # ---------------------------------------------------------------- Auth
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user (role is derived from batch, never client-supplied)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6 }
+                batch:
+                  type: integer
+                  description: Graduation year, e.g. 2026. Used to derive role (student/senior/alumni).
+                programName: { type: string }
+                programDurationYears: { type: integer, minimum: 1, maximum: 10, default: 4 }
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/AuthUser" }
+        "400":
+          description: Validation error, or email already registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Too many registration attempts (rate limited — 10 per 15 minutes)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/AuthUser" }
+        "400":
+          description: Validation error (missing/invalid email or password)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Too many login attempts (rate limited — 15 per 15 minutes)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the currently authenticated user
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/User" }
+        "401":
+          description: Not authorized / invalid or stale token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Account suspended
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out (invalidates every JWT issued to this user, on every device)
+      description: Increments tokenVersion server-side so all previously issued tokens fail future auth checks.
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request a password-reset email
+      description: >
+        Always responds 200 with a generic message whether or not the email is
+        registered, to avoid leaking which emails exist.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: Generic acknowledgement (email sent if the account exists)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "400":
+          description: Validation error (invalid email format)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Too many requests (rate limited — 5 per 15 minutes)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/auth/reset-password/{token}:
+    post:
+      tags: [Auth]
+      summary: Reset password using the raw token emailed to the user
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+          description: Raw reset token from the emailed link (hashed and matched server-side)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, minLength: 6 }
+      responses:
+        "200":
+          description: Password reset successful
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "400":
+          description: Invalid/expired reset link, or validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Projects
+  /api/v1/projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/FeaturedFilter"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of projects (flat array, or paginated if page+limit are both sent)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectListResponse" }
+    post:
+      tags: [Projects]
+      summary: Create a project (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Project" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get a project by id
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Project" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    patch:
+      tags: [Projects]
+      summary: Update a project (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Project" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Projects]
+      summary: Delete a project (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Events
+  /api/v1/events:
+    get:
+      tags: [Events]
+      summary: List events (with computed status and the caller's registration info)
+      description: >
+        Auth is optional (optionalProtect). If a valid bearer token is sent, or a
+        studentId query param, each event's `registration` block reflects that
+        user's registration state.
+      security: []
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [upcoming, completed] }
+        - name: featured
+          in: query
+          schema: { type: string, enum: ["true"] }
+        - name: studentId
+          in: query
+          schema: { type: string }
+          description: Optional — used instead of the bearer token's user id to compute registration status
+      responses:
+        "200":
+          description: List of events with registration info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/EventWithRegistration" }
+    post:
+      tags: [Events]
+      summary: Create an event (admin only)
+      description: status is auto-derived from the supplied date (past date => completed).
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/EventInputForm" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Event" }
+        "400":
+          description: Validation error / bad image upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/events/my-registrations:
+    get:
+      tags: [Events]
+      summary: List event ids the current user is actively registered for
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Array of event id strings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { type: string }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/events/{id}:
+    get:
+      tags: [Events]
+      summary: Get a single event (with computed status and registration info)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+        - name: studentId
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/EventWithRegistration" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    patch:
+      tags: [Events]
+      summary: Update an event (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/EventInputForm" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Event" }
+        "400":
+          description: Validation error / bad image upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Events]
+      summary: Delete an event (admin only) — also removes its registrations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /api/v1/events/{id}/registrations:
+    get:
+      tags: [Events]
+      summary: List all registrations for an event (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Registrations (studentId populated with name/email/batch)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/EventRegistration" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/events/{id}/register:
+    post:
+      tags: [Events]
+      summary: Register the current user for an event
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: A previously cancelled registration was reactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Registration reactivated" }
+                  data: { $ref: "#/components/schemas/EventRegistration" }
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/EventRegistration" }
+        "400":
+          description: Already registered/attended for this event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Event not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Events]
+      summary: Cancel the current user's registration for an event
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Registration cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Registration cancelled successfully" }
+                  data: { $ref: "#/components/schemas/EventRegistration" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: No registration found to cancel
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/events/{id}/otp:
+    post:
+      tags: [Events]
+      summary: Generate a 6-digit attendance-verification OTP for an event (admin only)
+      description: OTP is valid for 30 minutes.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OTP generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: object
+                    properties:
+                      otpCode: { type: string, example: "482913" }
+                      expiresAt: { type: string, format: date-time }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Event not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/events/{id}/verify:
+    post:
+      tags: [Events]
+      summary: Verify an attendance OTP and mark the current user's registration as attended
+      description: On success, awards a PointLedger entry for the event's type (hackathon/contest/seminar).
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, example: "482913" }
+      responses:
+        "200":
+          description: Attendance verified (or already checked in)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Attendance verified successfully" }
+                  data: { $ref: "#/components/schemas/EventRegistration" }
+        "400":
+          description: Missing/invalid/expired code, not registered, or registration cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Event not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Timeline
+  /api/v1/timeline:
+    get:
+      tags: [Timeline]
+      summary: List timeline milestones (oldest first)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of milestones
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TimelineListResponse" }
+    post:
+      tags: [Timeline]
+      summary: Create a milestone (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TimelineInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Timeline" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/timeline/{id}:
+    patch:
+      tags: [Timeline]
+      summary: Update a milestone (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TimelineInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Timeline" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Timeline]
+      summary: Delete a milestone (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Gallery
+  /api/v1/gallery:
+    get:
+      tags: [Gallery]
+      summary: List gallery items
+      security: []
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string, enum: [event, poster, team, other] }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of gallery items
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GalleryListResponse" }
+    post:
+      tags: [Gallery]
+      summary: Create a gallery item with up to 10 images (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                category: { type: string, enum: [event, poster, team, other] }
+                eventRef: { type: string }
+                images:
+                  type: array
+                  items: { type: string, format: binary }
+                  description: Up to 10 image files (field name "images")
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Gallery" }
+        "400":
+          description: Validation error / bad image upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/gallery/{id}:
+    patch:
+      tags: [Gallery]
+      summary: Update a gallery item; existing images can be retained via imageUrls, new ones appended (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                category: { type: string, enum: [event, poster, team, other] }
+                eventRef: { type: string }
+                imageUrls:
+                  type: array
+                  items: { type: string }
+                  description: Existing image URLs to retain
+                images:
+                  type: array
+                  items: { type: string, format: binary }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Gallery" }
+        "400":
+          description: Validation error / bad image upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Gallery]
+      summary: Delete a gallery item (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Announcements
+  /api/v1/announcements:
+    get:
+      tags: [Announcements]
+      summary: List announcements (newest first)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of announcements
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnnouncementListResponse" }
+    post:
+      tags: [Announcements]
+      summary: Create an announcement (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnouncementInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Announcement" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/announcements/{id}:
+    patch:
+      tags: [Announcements]
+      summary: Update an announcement (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnouncementInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Announcement" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Announcements]
+      summary: Delete an announcement (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Users
+  /api/v1/users:
+    get:
+      tags: [Users]
+      summary: List users (email/phone/whatsapp/discord/contactPreferences omitted)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: role
+          in: query
+          schema: { type: string, enum: [student, senior, alumni, admin] }
+        - name: domain
+          in: query
+          schema: { type: string }
+        - name: isMentor
+          in: query
+          schema: { type: string, enum: ["true", "false"] }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserListResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    post:
+      tags: [Users]
+      summary: Create a user (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/UserCreateForm" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/User" }
+        "400":
+          description: Validation error, or email already registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/users/{id}:
+    get:
+      tags: [Users]
+      summary: Get a user's public profile (password/email/phone/whatsapp/discord/contactPreferences omitted)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/User" }
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    patch:
+      tags: [Users]
+      summary: Update a user (self or admin only)
+      description: >
+        role, externalStats, isVerified, isSuspended, and suspendedReason cannot
+        be set by non-admins even if included in the request body.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/UserUpdateForm" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/User" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not self and not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Users]
+      summary: Delete a user (admin only) — cascades to their mentorships, doubts, blogs, registrations, opportunities, ledger entries, and coding profile
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/users/{id}/suspend:
+    patch:
+      tags: [Users]
+      summary: Suspend or unsuspend a user (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isSuspended: { type: boolean }
+                suspendedReason: { type: string }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/User" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Mentorship
+  /api/v1/mentorship/request:
+    post:
+      tags: [Mentorship]
+      summary: Send a mentorship request to a mentor
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mentorId, message]
+              properties:
+                mentorId: { type: string }
+                message: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/MentorshipRequest" }
+        "400":
+          description: A pending request to this mentor already exists, or validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/mentorship/my-requests:
+    get:
+      tags: [Mentorship]
+      summary: List mentorship requests where the current user is student or mentor
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Requests (studentId/mentorId populated)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/MentorshipRequest" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/mentorship/{id}/status:
+    patch:
+      tags: [Mentorship]
+      summary: Accept or reject a mentorship request (mentor only)
+      description: Accepting atomically creates (or reuses) an active Mentorship connection.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [accepted, rejected] }
+      responses:
+        "200":
+          description: Request updated (and connection created if accepted)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: object
+                    properties:
+                      request: { $ref: "#/components/schemas/MentorshipRequest" }
+                      connection:
+                        type: object
+                        description: "null when the request was rejected"
+                        nullable: true
+                        allOf:
+                          - { $ref: "#/components/schemas/Mentorship" }
+        "400":
+          description: Already processed, or invalid status value
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not the target mentor)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/mentorship/my-mentors:
+    get:
+      tags: [Mentorship]
+      summary: List the current user's active mentors
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Active mentor connections (mentorId populated)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Mentorship" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/mentorship/my-mentees:
+    get:
+      tags: [Mentorship]
+      summary: List the current user's active mentees
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Active mentee connections (studentId populated)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Mentorship" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/mentorship/{id}/contact:
+    get:
+      tags: [Mentorship]
+      summary: Get the counterpart's contact details for an active mentorship connection
+      description: Only fields the counterpart opted into (contactPreferences) are included.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Contact details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: object
+                    properties:
+                      email: { type: string }
+                      phone: { type: string }
+                      whatsapp: { type: string }
+                      discord: { type: string }
+        "400":
+          description: Connection is inactive
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not a party to this connection)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Connection or user not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/mentorship/{mentorshipId}/goals:
+    post:
+      tags: [Mentorship]
+      summary: Create a goal on a mentorship connection (mentor only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: mentorshipId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string }
+                description: { type: string }
+                tasks:
+                  type: array
+                  items: { $ref: "#/components/schemas/GoalTask" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/MentorshipGoal" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Only mentors can create goals
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Mentorship connection not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    get:
+      tags: [Mentorship]
+      summary: List goals on a mentorship connection (student or mentor)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: mentorshipId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Goals (oldest first)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/MentorshipGoal" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not a party to this connection)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Mentorship connection not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/mentorship/goals/{goalId}:
+    patch:
+      tags: [Mentorship]
+      summary: Update a goal
+      description: >
+        Mentors can edit title/description/tasks; students may only toggle
+        isCompleted on existing tasks.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                tasks:
+                  type: array
+                  items: { $ref: "#/components/schemas/GoalTask" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/MentorshipGoal" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not a party to this connection)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Goal or connection not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Mentorship]
+      summary: Delete a goal (mentor only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Only mentors can delete goals
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Goal or connection not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Resources
+  /api/v1/resources:
+    get:
+      tags: [Resources]
+      summary: List learning resources
+      security: []
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string, enum: [PDF, GitHub, YouTube, Docs, Other] }
+        - name: domain
+          in: query
+          schema: { type: string }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of resources
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourceListResponse" }
+    post:
+      tags: [Resources]
+      summary: Create a resource (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResourceInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Resource" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/resources/{id}:
+    patch:
+      tags: [Resources]
+      summary: Update a resource (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResourceInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Resource" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Resource not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Resources]
+      summary: Delete a resource (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Opportunities
+  /api/v1/opportunities:
+    get:
+      tags: [Opportunities]
+      summary: List active opportunities
+      security: []
+      parameters:
+        - name: type
+          in: query
+          schema: { type: string, enum: [internship, job, freelance, open_source] }
+        - name: domain
+          in: query
+          schema: { type: string }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of opportunities (postedBy populated)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OpportunityListResponse" }
+    post:
+      tags: [Opportunities]
+      summary: Post an opportunity (senior, alumni, or admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OpportunityInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Opportunity" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (role not senior/alumni/admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/opportunities/{id}:
+    patch:
+      tags: [Opportunities]
+      summary: Update an opportunity (poster or admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OpportunityInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Opportunity" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not the poster and not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Opportunities]
+      summary: Delete an opportunity (poster or admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not the poster and not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Doubts
+  /api/v1/doubts:
+    get:
+      tags: [Doubts]
+      summary: List doubts
+      security: []
+      parameters:
+        - name: domain
+          in: query
+          schema: { type: string }
+        - name: resolved
+          in: query
+          schema: { type: string, enum: ["true", "false"] }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of doubts (author and replies.author populated)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DoubtListResponse" }
+    post:
+      tags: [Doubts]
+      summary: Post a new doubt
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, body]
+              properties:
+                title: { type: string }
+                body: { type: string }
+                domain: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Doubt" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/doubts/{id}:
+    get:
+      tags: [Doubts]
+      summary: Get a doubt by id
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Doubt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Doubt" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Doubts]
+      summary: Delete a doubt (author or admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not the author and not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/doubts/{id}/reply:
+    post:
+      tags: [Doubts]
+      summary: Add a reply to a doubt
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+      responses:
+        "201":
+          description: Reply added (returns the whole doubt)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Doubt" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/doubts/{id}/resolve:
+    patch:
+      tags: [Doubts]
+      summary: Toggle a doubt's resolved status (author only)
+      description: >
+        Marking resolved awards a doubt_answered PointLedger entry to the author
+        and a doubt_resolved entry to the last reply's author (each awarded only once).
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Toggled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Doubt" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Only the author can mark as resolved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/doubts/{id}/upvote:
+    patch:
+      tags: [Doubts]
+      summary: Toggle the current user's upvote on a doubt
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Toggled — returns the new upvote count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: object
+                    properties:
+                      upvotes: { type: integer, example: 4 }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/doubts/{id}/replies/{replyId}:
+    delete:
+      tags: [Doubts]
+      summary: Delete a reply (reply author or admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+        - name: replyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Reply deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not the reply author and not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Doubt or reply not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Sync (legacy single-platform)
+  /api/v1/sync/codeforces:
+    post:
+      tags: [Sync]
+      summary: Sync the current user's Codeforces stats (legacy single-platform endpoint)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [handle]
+              properties:
+                handle: { type: string }
+      responses:
+        "200":
+          description: Synced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CodingSyncResponse" }
+        "400":
+          description: Handle required, invalid handle, or upstream fetch failed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Sync cooldown still active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CooldownResponse" }
+
+  /api/v1/sync/leetcode:
+    post:
+      tags: [Sync]
+      summary: Sync the current user's LeetCode stats (legacy single-platform endpoint)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username: { type: string }
+      responses:
+        "200":
+          description: Synced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CodingSyncResponse" }
+        "400":
+          description: Username required, invalid handle, or upstream fetch failed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Sync cooldown still active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CooldownResponse" }
+
+  /api/v1/sync/github:
+    post:
+      tags: [Sync]
+      summary: Sync the current user's GitHub stats (legacy single-platform endpoint)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username: { type: string }
+      responses:
+        "200":
+          description: Synced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CodingSyncResponse" }
+        "400":
+          description: Username required, invalid handle, or upstream fetch failed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Sync cooldown still active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CooldownResponse" }
+
+  # ---------------------------------------------------------------- Coding
+  /api/v1/coding/connect:
+    post:
+      tags: [Coding]
+      summary: Connect/update one or more coding-platform handles and immediately sync them
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: At least one of the three (any accepted alias) is required.
+              properties:
+                leetcodeUsername: { type: string }
+                leetcode: { type: string, description: "Alias for leetcodeUsername" }
+                leetcodeHandle: { type: string, description: "Alias for leetcodeUsername" }
+                codeforcesHandle: { type: string }
+                codeforces: { type: string, description: "Alias for codeforcesHandle" }
+                codeforcesUsername: { type: string, description: "Alias for codeforcesHandle" }
+                githubUsername: { type: string }
+                github: { type: string, description: "Alias for githubUsername" }
+                githubHandle: { type: string, description: "Alias for githubUsername" }
+      responses:
+        "200":
+          description: Connected and synced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/CodingProfile" }
+                  meta:
+                    type: object
+                    properties:
+                      results:
+                        type: array
+                        items: { $ref: "#/components/schemas/CodingSyncResult" }
+                      user: { $ref: "#/components/schemas/User" }
+        "400":
+          description: No handle provided, or invalid handle format
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Sync cooldown still active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CooldownResponse" }
+
+  /api/v1/coding/profile/me:
+    get:
+      tags: [Coding]
+      summary: Get the current user's coding profile
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Coding profile (null data if never connected)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: object
+                    description: "null if this user has never connected a coding profile"
+                    nullable: true
+                    allOf:
+                      - { $ref: "#/components/schemas/CodingProfile" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/coding/sync:
+    post:
+      tags: [Coding]
+      summary: Re-sync all three platforms using the handles already stored on the current user
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Synced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/CodingProfile" }
+                  meta:
+                    type: object
+                    properties:
+                      results:
+                        type: array
+                        items: { $ref: "#/components/schemas/CodingSyncResult" }
+                      cooldownRemainingMs: { type: integer, example: 0 }
+                      user: { $ref: "#/components/schemas/User" }
+        "400":
+          description: Sync failed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Sync cooldown still active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CooldownResponse" }
+
+  /api/v1/coding/public/{id}:
+    get:
+      tags: [Coding]
+      summary: Get a user's public coding profile by user id
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: Target user's id
+      responses:
+        "200":
+          description: Public coding profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/CodingProfile" }
+        "404":
+          description: Coding profile not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Leaderboard
+  /api/v1/leaderboard:
+    get:
+      tags: [Leaderboard]
+      summary: Get the points-based student leaderboard
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: period
+          in: query
+          schema: { type: string, enum: [all, month], default: all }
+      responses:
+        "200":
+          description: Ranked list of students (highest points first)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/LeaderboardEntry" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Point Rules
+  /api/v1/point-rules:
+    get:
+      tags: [Point Rules]
+      summary: List all point rules (admin only)
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Point rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/PointRule" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/point-rules/{id}:
+    patch:
+      tags: [Point Rules]
+      summary: Update a point rule's flatPoints/tiers (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                flatPoints: { type: number }
+                tiers:
+                  type: array
+                  items: { $ref: "#/components/schemas/PointTier" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/PointRule" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Blogs
+  /api/v1/blogs:
+    get:
+      tags: [Blogs]
+      summary: List published blog posts
+      security: []
+      parameters:
+        - name: tag
+          in: query
+          schema: { type: string }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of blogs (author populated)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BlogListResponse" }
+    post:
+      tags: [Blogs]
+      summary: Create a blog post (authenticated members)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BlogInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Blog" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/blogs/{id}:
+    get:
+      tags: [Blogs]
+      summary: Get a blog post by id
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Blog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Blog" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    patch:
+      tags: [Blogs]
+      summary: Update a blog post (author or admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BlogInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Blog" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not the author and not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Blogs]
+      summary: Delete a blog post (author or admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Not allowed (not the author and not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Team
+  /api/v1/team:
+    get:
+      tags: [Team]
+      summary: List team members
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of team members (sorted by teamYear desc, order asc)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeamMemberListResponse" }
+    post:
+      tags: [Team]
+      summary: Add a team member (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/TeamMemberForm" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/TeamMember" }
+        "400":
+          description: Validation error / bad image upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/team/{id}:
+    patch:
+      tags: [Team]
+      summary: Update a team member (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/TeamMemberForm" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/TeamMember" }
+        "400":
+          description: Validation error / bad image upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Team]
+      summary: Remove a team member (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Contact
+  /api/v1/contact:
+    get:
+      tags: [Contact]
+      summary: Get club contact info (returns sensible defaults if never set)
+      security: []
+      responses:
+        "200":
+          description: Contact info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/ContactInfo" }
+    put:
+      tags: [Contact]
+      summary: Create or replace the club contact info (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContactInfoInput" }
+      responses:
+        "200":
+          description: Upserted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/ContactInfo" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/contact/message:
+    post:
+      tags: [Contact]
+      summary: Send a public "contact us" message (emailed to the club inbox)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, message]
+              properties:
+                name: { type: string, maxLength: 200 }
+                email: { type: string, format: email, maxLength: 200 }
+                message: { type: string, maxLength: 5000 }
+      responses:
+        "200":
+          description: Message sent
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "400":
+          description: Missing/invalid field, or a field is too long
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "429":
+          description: Too many messages (rate limited — 10 per 15 minutes)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "500":
+          description: Could not send the message (email delivery failure)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  # ---------------------------------------------------------------- Collaborations
+  /api/v1/collaborations:
+    get:
+      tags: [Collaborations]
+      summary: List partner collaborations
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: List of collaborations
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CollaborationListResponse" }
+    post:
+      tags: [Collaborations]
+      summary: Create a collaboration (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CollaborationInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Collaboration" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /api/v1/collaborations/{id}:
+    patch:
+      tags: [Collaborations]
+      summary: Update a collaboration (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CollaborationInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { $ref: "#/components/schemas/Collaboration" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Collaborations]
+      summary: Delete a collaboration (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessMessage" }
+        "401":
+          description: Not authorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: Access denied (not an admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Send as `Authorization: Bearer <token>`. Tokens are issued by
+        /api/v1/auth/register and /api/v1/auth/login, and are invalidated
+        (all of them, across devices) by /api/v1/auth/logout or a password reset.
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+      description: MongoDB ObjectId
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1 }
+      description: 1-based page number. Pagination only activates when both page and limit are sent.
+    LimitParam:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100 }
+      description: Page size (server caps at 100). Pagination only activates when both page and limit are sent.
+    FeaturedFilter:
+      name: featured
+      in: query
+      schema: { type: string, enum: ["true"] }
+      description: Pass "true" to return only featured projects
+
+  schemas:
+    # ---------- shared envelopes ----------
+    ErrorResponse:
+      type: object
+      required: [success, message]
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string, example: "Something went wrong. Please try again." }
+
+    SuccessMessage:
+      type: object
+      required: [success, message]
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Deleted" }
+
+    PaginationMeta:
+      type: object
+      description: Present in the response only when both `page` and `limit` query params were sent.
+      properties:
+        page: { type: integer, example: 1 }
+        limit: { type: integer, example: 20 }
+        total: { type: integer, example: 57 }
+
+    CooldownResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string, example: "Please wait 173s before syncing again." }
+        meta:
+          type: object
+          properties:
+            cooldownRemainingMs: { type: integer }
+            cooldownMs: { type: integer }
+
+    # ---------- Auth ----------
+    AuthUser:
+      type: object
+      description: Subset of User returned by register/login, plus a signed JWT.
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [student, senior, alumni, admin] }
+        batch: { type: integer }
+        programName: { type: string }
+        programDurationYears: { type: integer }
+        token: { type: string, description: "Signed JWT" }
+
+    # ---------- User ----------
+    ContactPreferences:
+      type: object
+      properties:
+        email: { type: boolean, default: true }
+        phone: { type: boolean, default: false }
+        whatsapp: { type: boolean, default: false }
+        discord: { type: boolean, default: false }
+
+    ExperienceEntry:
+      type: object
+      properties:
+        title: { type: string }
+        company: { type: string }
+        location: { type: string }
+        startDate: { type: string }
+        endDate: { type: string }
+        description: { type: string }
+
+    EducationEntry:
+      type: object
+      properties:
+        school: { type: string }
+        degree: { type: string }
+        fieldOfStudy: { type: string }
+        startDate: { type: string }
+        endDate: { type: string }
+
+    CertificationEntry:
+      type: object
+      properties:
+        name: { type: string }
+        issuer: { type: string }
+        issueDate: { type: string }
+        credentialUrl: { type: string }
+
+    ExternalStats:
+      type: object
+      properties:
+        codeforcesRating: { type: integer, nullable: true }
+        leetcodeSolveScore: { type: integer, nullable: true }
+        githubContributions: { type: integer, nullable: true }
+        lastSynced: { type: string, format: date-time, nullable: true }
+
+    User:
+      type: object
+      description: >
+        password, resetPasswordToken, resetPasswordExpire, and tokenVersion are
+        `select:false` on the model and are never returned by the API.
+        The public-listing endpoints (GET /users, GET /users/{id}) additionally
+        omit email, phone, whatsapp, discord, and contactPreferences.
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [student, senior, alumni, admin] }
+        batch: { type: integer }
+        programName: { type: string }
+        programDurationYears: { type: integer }
+        domain: { type: array, items: { type: string } }
+        bio: { type: string }
+        imageUrl: { type: string }
+        isMentor: { type: boolean }
+        currentCompany: { type: string }
+        designation: { type: string }
+        professionalExperience: { type: string }
+        location: { type: string }
+        headline: { type: string }
+        isVerified: { type: boolean }
+        employmentType: { type: string }
+        workMode: { type: string }
+        startDateText: { type: string }
+        canHelpWith: { type: array, items: { type: string } }
+        mentorshipAvailability: { type: string, enum: [open, limited, unavailable] }
+        maxActiveStudents: { type: integer }
+        typicalResponseTime: { type: string }
+        preferredContactMethod: { type: string }
+        experiences: { type: array, items: { $ref: "#/components/schemas/ExperienceEntry" } }
+        education: { type: array, items: { $ref: "#/components/schemas/EducationEntry" } }
+        certifications: { type: array, items: { $ref: "#/components/schemas/CertificationEntry" } }
+        linkedin: { type: string }
+        github: { type: string }
+        leetcode: { type: string }
+        codeforces: { type: string }
+        portfolio: { type: string }
+        codeforcesHandle: { type: string }
+        leetcodeUsername: { type: string }
+        githubUsername: { type: string }
+        phone: { type: string }
+        whatsapp: { type: string }
+        discord: { type: string }
+        contactPreferences: { $ref: "#/components/schemas/ContactPreferences" }
+        isSuspended: { type: boolean }
+        suspendedReason: { type: string }
+        externalStats: { $ref: "#/components/schemas/ExternalStats" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    UserListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/User" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    UserCreateForm:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 6 }
+        role: { type: string, enum: [student, senior, alumni, admin], default: student }
+        batch: { type: integer }
+        programName: { type: string, default: "" }
+        programDurationYears: { type: integer, default: 4 }
+        domain: { type: string, description: "Comma-separated list, e.g. \"Web,AI\"" }
+        bio: { type: string }
+        imageUrl: { type: string, description: "Ignored if an image file is uploaded" }
+        isMentor: { type: string, enum: ["true", "false"] }
+        github: { type: string }
+        linkedin: { type: string }
+        leetcode: { type: string }
+        codeforces: { type: string }
+        portfolio: { type: string }
+        image: { type: string, format: binary }
+
+    UserUpdateForm:
+      type: object
+      description: >
+        Any User field may be sent; role/externalStats/isVerified/isSuspended/suspendedReason
+        are stripped server-side unless the caller is an admin. experiences/education/certifications
+        accept a JSON-encoded string when sent as multipart form fields.
+      properties:
+        name: { type: string }
+        bio: { type: string }
+        domain: { type: string, description: "Comma-separated list" }
+        canHelpWith: { type: string, description: "Comma-separated list" }
+        isMentor: { type: string, enum: ["true", "false"] }
+        contactPreferences: { type: string, description: "JSON-encoded ContactPreferences object" }
+        experiences: { type: string, description: "JSON-encoded array of ExperienceEntry" }
+        education: { type: string, description: "JSON-encoded array of EducationEntry" }
+        certifications: { type: string, description: "JSON-encoded array of CertificationEntry" }
+        linkedin: { type: string }
+        github: { type: string }
+        leetcode: { type: string }
+        codeforces: { type: string }
+        portfolio: { type: string }
+        phone: { type: string }
+        whatsapp: { type: string }
+        discord: { type: string }
+        image: { type: string, format: binary }
+
+    # ---------- Project ----------
+    Project:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        techStack: { type: array, items: { type: string } }
+        contributors: { type: array, items: { type: string } }
+        postedBy: { type: string, nullable: true }
+        githubUrl: { type: string }
+        demoUrl: { type: string }
+        imageUrl: { type: string }
+        featured: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ProjectInput:
+      type: object
+      required: [title, description]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        techStack: { type: array, items: { type: string } }
+        contributors: { type: array, items: { type: string } }
+        postedBy: { type: string, description: "User id credited for project_posted points" }
+        githubUrl: { type: string }
+        demoUrl: { type: string }
+        imageUrl: { type: string }
+        featured: { type: boolean }
+
+    ProjectListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Project" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Event ----------
+    Event:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        type: { type: string, enum: [workshop, hackathon, contest, seminar, other] }
+        description: { type: string }
+        date: { type: string, format: date-time }
+        venue: { type: string }
+        imageUrl: { type: string }
+        registrationLink: { type: string }
+        status: { type: string, enum: [upcoming, completed] }
+        featured: { type: boolean }
+        otpCode: { type: string, nullable: true }
+        otpExpiresAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    EventWithRegistration:
+      allOf:
+        - { $ref: "#/components/schemas/Event" }
+        - type: object
+          properties:
+            registration:
+              type: object
+              description: Computed per-request based on the caller's identity (or ?studentId).
+              properties:
+                isRegistered: { type: boolean }
+                status: { type: string, enum: [registered, cancelled, attended], nullable: true }
+                certificateHash: { type: string, nullable: true }
+                attendedAt: { type: string, format: date-time, nullable: true }
+                registeredCount: { type: integer }
+
+    EventInputForm:
+      type: object
+      required: [title, date]
+      properties:
+        title: { type: string }
+        type: { type: string, enum: [workshop, hackathon, contest, seminar, other] }
+        description: { type: string }
+        date: { type: string, format: date-time, description: "status is auto-derived from this date" }
+        venue: { type: string }
+        registrationLink: { type: string }
+        featured: { type: string, enum: ["true", "false"] }
+        image: { type: string, format: binary }
+
+    EventRegistration:
+      type: object
+      properties:
+        _id: { type: string }
+        eventId: { type: string }
+        studentId: { type: string }
+        status: { type: string, enum: [registered, cancelled, attended] }
+        certificateHash: { type: string, nullable: true }
+        attendedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    # ---------- Timeline ----------
+    Timeline:
+      type: object
+      properties:
+        _id: { type: string }
+        year: { type: integer }
+        month: { type: string }
+        title: { type: string }
+        description: { type: string }
+        imageUrl: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    TimelineInput:
+      type: object
+      required: [year, title]
+      properties:
+        year: { type: integer }
+        month: { type: string }
+        title: { type: string }
+        description: { type: string }
+        imageUrl: { type: string }
+
+    TimelineListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Timeline" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Gallery ----------
+    Gallery:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        imageUrl: { type: string }
+        imageUrls: { type: array, items: { type: string } }
+        category: { type: string, enum: [event, poster, team, other] }
+        eventRef: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    GalleryListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Gallery" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Announcement ----------
+    Announcement:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        body: { type: string }
+        important: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    AnnouncementInput:
+      type: object
+      required: [title, body]
+      properties:
+        title: { type: string }
+        body: { type: string }
+        important: { type: boolean }
+
+    AnnouncementListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Announcement" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Doubt ----------
+    DoubtReply:
+      type: object
+      properties:
+        _id: { type: string }
+        body: { type: string }
+        author: { type: string, description: "User id, or populated User object" }
+        upvotes: { type: array, items: { type: string } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Doubt:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        body: { type: string }
+        domain: { type: string }
+        author: { type: string, description: "User id, or populated User object" }
+        replies: { type: array, items: { $ref: "#/components/schemas/DoubtReply" } }
+        resolved: { type: boolean }
+        upvotes: { type: array, items: { type: string } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    DoubtListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Doubt" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Blog ----------
+    Blog:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        content: { type: string }
+        coverImage: { type: string }
+        tags: { type: array, items: { type: string } }
+        author: { type: string, description: "User id, or populated User object" }
+        published: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    BlogInput:
+      type: object
+      required: [title, content]
+      properties:
+        title: { type: string }
+        content: { type: string }
+        coverImage: { type: string }
+        tags: { type: array, items: { type: string } }
+        published: { type: boolean, default: true }
+
+    BlogListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Blog" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Opportunity ----------
+    Opportunity:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        company: { type: string }
+        type: { type: string, enum: [internship, job, freelance, open_source] }
+        domain: { type: string }
+        description: { type: string }
+        applyLink: { type: string }
+        deadline: { type: string, format: date-time }
+        postedBy: { type: string, description: "User id, or populated User object" }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    OpportunityInput:
+      type: object
+      required: [title, company, applyLink]
+      properties:
+        title: { type: string }
+        company: { type: string }
+        type: { type: string, enum: [internship, job, freelance, open_source], default: internship }
+        domain: { type: string }
+        description: { type: string }
+        applyLink: { type: string }
+        deadline: { type: string, format: date-time }
+        isActive: { type: boolean }
+
+    OpportunityListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Opportunity" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Resource ----------
+    Resource:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        url: { type: string }
+        category: { type: string, enum: [PDF, GitHub, YouTube, Docs, Other] }
+        domain: { type: string }
+        description: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ResourceInput:
+      type: object
+      required: [title, url]
+      properties:
+        title: { type: string }
+        url: { type: string }
+        category: { type: string, enum: [PDF, GitHub, YouTube, Docs, Other], default: Other }
+        domain: { type: string }
+        description: { type: string }
+
+    ResourceListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Resource" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Team ----------
+    TeamMember:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        role: { type: string }
+        subtitle: { type: string }
+        category: { type: string, enum: [founder, faculty, core, mentor] }
+        teamYear: { type: integer, nullable: true }
+        batch: { type: integer }
+        domain: { type: array, items: { type: string } }
+        imageUrl: { type: string }
+        linkedin: { type: string }
+        github: { type: string }
+        order: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    TeamMemberForm:
+      type: object
+      required: [name, role]
+      properties:
+        name: { type: string }
+        role: { type: string }
+        subtitle: { type: string }
+        category: { type: string, enum: [founder, faculty, core, mentor] }
+        teamYear: { type: integer }
+        batch: { type: integer }
+        domain: { type: string, description: "Comma-separated list" }
+        linkedin: { type: string }
+        github: { type: string }
+        order: { type: integer }
+        image: { type: string, format: binary }
+
+    TeamMemberListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/TeamMember" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Contact ----------
+    ContactInfo:
+      type: object
+      properties:
+        _id: { type: string }
+        email: { type: string }
+        location: { type: string }
+        department: { type: string }
+        github: { type: string }
+        linkedin: { type: string }
+        instagram: { type: string }
+        twitter: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ContactInfoInput:
+      type: object
+      properties:
+        email: { type: string }
+        location: { type: string }
+        department: { type: string }
+        github: { type: string }
+        linkedin: { type: string }
+        instagram: { type: string }
+        twitter: { type: string }
+
+    # ---------- Collaboration ----------
+    Representative:
+      type: object
+      required: [name, role]
+      properties:
+        name: { type: string }
+        role: { type: string }
+        avatar: { type: string }
+        avatarColor: { type: string, default: "from-blue-400 to-indigo-600" }
+
+    Collaboration:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        description: { type: string }
+        website: { type: string }
+        logoText: { type: string }
+        representatives: { type: array, items: { $ref: "#/components/schemas/Representative" } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    CollaborationInput:
+      type: object
+      required: [name, type, description, website, logoText]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        description: { type: string }
+        website: { type: string }
+        logoText: { type: string }
+        representatives: { type: array, items: { $ref: "#/components/schemas/Representative" } }
+
+    CollaborationListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { $ref: "#/components/schemas/Collaboration" } }
+        meta: { $ref: "#/components/schemas/PaginationMeta" }
+
+    # ---------- Mentorship ----------
+    Mentorship:
+      type: object
+      properties:
+        _id: { type: string }
+        studentId: { type: string, description: "User id, or populated User object" }
+        mentorId: { type: string, description: "User id, or populated User object" }
+        requestId: { type: string }
+        status: { type: string, enum: [active, ended] }
+        startedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    MentorshipRequest:
+      type: object
+      properties:
+        _id: { type: string }
+        studentId: { type: string, description: "User id, or populated User object" }
+        mentorId: { type: string, description: "User id, or populated User object" }
+        message: { type: string }
+        status: { type: string, enum: [pending, accepted, rejected, completed] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    GoalTask:
+      type: object
+      required: [title]
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        isCompleted: { type: boolean, default: false }
+        completedAt: { type: string, format: date-time, nullable: true }
+
+    MentorshipGoal:
+      type: object
+      properties:
+        _id: { type: string }
+        mentorshipId: { type: string }
+        title: { type: string }
+        description: { type: string }
+        tasks: { type: array, items: { $ref: "#/components/schemas/GoalTask" } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    # ---------- Point Rule / Ledger ----------
+    PointTier:
+      type: object
+      required: [label, min, points]
+      properties:
+        label: { type: string, example: "Specialist" }
+        min: { type: number, example: 1400 }
+        max: { type: number, nullable: true, example: 1599 }
+        points: { type: number, example: 50 }
+
+    PointRule:
+      type: object
+      properties:
+        _id: { type: string }
+        key:
+          type: string
+          enum:
+            - doubt_answered
+            - doubt_resolved
+            - event_attended
+            - project_posted
+            - seminar_attended
+            - hackathon_participation
+            - contest_participation
+            - codeforces_rating
+            - leetcode_solve_score
+            - github_contributions
+        label: { type: string }
+        type: { type: string, enum: [flat, tiered] }
+        flatPoints: { type: number }
+        tiers: { type: array, items: { $ref: "#/components/schemas/PointTier" } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    PointLedger:
+      type: object
+      description: Internal audit trail of every point award; not directly exposed by its own endpoint but referenced by the leaderboard.
+      properties:
+        _id: { type: string }
+        student: { type: string }
+        ruleKey: { type: string }
+        sourceType: { type: string, enum: [in_house, external] }
+        sourceId: { type: string, nullable: true }
+        rawValue: { type: number, nullable: true }
+        month: { type: string, example: "2026-06" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        batch: { type: integer }
+        domain: { type: array, items: { type: string } }
+        points: { type: number }
+        breakdown:
+          type: object
+          description: Points broken down per rule key
+          additionalProperties: { type: number }
+
+    # ---------- Coding ----------
+    CodingSubmission:
+      type: object
+      properties:
+        title: { type: string }
+        titleSlug: { type: string }
+        problem: { type: string }
+        contestName: { type: string }
+        verdict: { type: string }
+        language: { type: string }
+        url: { type: string }
+        solvedAt: { type: string, format: date-time, nullable: true }
+
+    CodingContest:
+      type: object
+      properties:
+        contestId: { type: integer, nullable: true }
+        contestName: { type: string }
+        oldRating: { type: integer, nullable: true }
+        newRating: { type: integer, nullable: true }
+        rank: { type: integer, nullable: true }
+        ratingUpdateTimeSeconds: { type: integer, nullable: true }
+
+    CodingProfile:
+      type: object
+      description: Normalized, public-safe view of a user's connected coding platforms.
+      properties:
+        userId: { type: string }
+        leetcodeUsername: { type: string }
+        codeforcesHandle: { type: string }
+        githubUsername: { type: string }
+        leetcode:
+          type: object
+          properties:
+            totalSolved: { type: integer, nullable: true }
+            easySolved: { type: integer, nullable: true }
+            mediumSolved: { type: integer, nullable: true }
+            hardSolved: { type: integer, nullable: true }
+            ranking: { type: integer, nullable: true }
+            recentSubmissions: { type: array, items: { $ref: "#/components/schemas/CodingSubmission" } }
+            lastSyncedAt: { type: string, format: date-time, nullable: true }
+            verified: { type: boolean }
+        codeforces:
+          type: object
+          properties:
+            handle: { type: string }
+            rating: { type: integer, nullable: true }
+            maxRating: { type: integer, nullable: true }
+            rank: { type: string }
+            maxRank: { type: string }
+            solvedCount: { type: integer, nullable: true }
+            recentSubmissions: { type: array, items: { $ref: "#/components/schemas/CodingSubmission" } }
+            contestHistory: { type: array, items: { $ref: "#/components/schemas/CodingContest" } }
+            lastSyncedAt: { type: string, format: date-time, nullable: true }
+            verified: { type: boolean }
+        github:
+          type: object
+          properties:
+            username: { type: string }
+            contributions: { type: integer, nullable: true }
+            projects: { type: integer, nullable: true }
+            followers: { type: integer, nullable: true }
+            following: { type: integer, nullable: true }
+            publicRepos: { type: integer, nullable: true }
+            recentActivity: { type: array, items: { $ref: "#/components/schemas/CodingSubmission" } }
+            lastSyncedAt: { type: string, format: date-time, nullable: true }
+            verified: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+
+    CodingSyncResult:
+      type: object
+      properties:
+        platform: { type: string, enum: [leetcode, codeforces, github] }
+        status: { type: string, enum: [synced, cached, cleared, failed] }
+        cooldownRemainingMs: { type: integer }
+        error: { type: string }
+        data: { type: object, description: "The platform-specific sub-object of CodingProfile" }
+
+    CodingSyncResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: "#/components/schemas/CodingProfile" }
+        meta: { type: object, description: "The single-platform sync result for this call" }
