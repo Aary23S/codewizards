@@ -7,16 +7,22 @@ const Collaborations = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     getCollaborations()
       .then((res) => {
+        if (cancelled) return;
         setPartners(res.data.data || []);
       })
       .catch((err) => {
         console.error("Failed to fetch partners:", err);
       })
       .finally(() => {
+        if (cancelled) return;
         setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

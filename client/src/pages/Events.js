@@ -289,19 +289,24 @@ const Events = () => {
   const { user } = useAuth();
   const [activeCertEvent, setActiveCertEvent] = useState(null);
 
-  const fetchAllEvents = async () => {
+  const fetchAllEvents = async (isCancelled = () => false) => {
     try {
       const evtRes = await getEvents();
+      if (isCancelled()) return;
       setEvents(evtRes.data.data);
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!isCancelled()) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAllEvents();
+    let cancelled = false;
+    fetchAllEvents(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const handleRegister = async (eventId) => {

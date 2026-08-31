@@ -1,6 +1,17 @@
 //user.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
+const MentorshipRequest = require("../models/MentorshipRequest");
+const Mentorship = require("../models/Mentorship");
+const MentorshipGoal = require("../models/MentorshipGoal");
+const Doubt = require("../models/Doubt");
+const Blog = require("../models/Blogs");
+const EventRegistration = require("../models/EventRegistration");
+const Opportunity = require("../models/Opportunities");
+const PointLedger = require("../models/PointLedger");
+const CodingProfile = require("../models/CodingProfile");
+const { parsePagination } = require("../utils/paginate");
 
 const uploadImage = (fileBuffer, originalName) =>
   new Promise((resolve, reject) => {
@@ -96,7 +107,7 @@ const getUserById = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
     res.json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -108,10 +119,16 @@ const getUsers = async (req, res) => {
     if (typeof req.query.domain === "string" && req.query.domain) filter.domain = { $in: [req.query.domain] };
     if (typeof req.query.isMentor === "string" && req.query.isMentor) filter.isMentor = req.query.isMentor === "true";
 
-    const users = await User.find(filter).select("-password -email -phone -whatsapp -discord -contactPreferences").sort({ createdAt: -1 });
-    res.json({ success: true, data: users });
+    const { active, limit, skip, page } = parsePagination(req.query);
+    let query = User.find(filter).select("-password -email -phone -whatsapp -discord -contactPreferences").sort({ createdAt: -1 });
+    if (active) query = query.skip(skip).limit(limit);
+
+    const users = await query;
+    const response = { success: true, data: users };
+    if (active) response.meta = { page, limit, total: await User.countDocuments(filter) };
+    res.json(response);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -145,7 +162,7 @@ const updateUser = async (req, res) => {
     res.json({ success: true, data: user });
   } catch (error) {
     console.error("Update user failed:", error);
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -200,7 +217,7 @@ const createUser = async (req, res) => {
 
     res.status(201).json({ success: true, data: await User.findById(user._id).select("-password") });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -215,9 +232,29 @@ const deleteUser = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    const userId = user._id;
+
+    // Clean up everything that referenced this user so populate()/count queries
+    // never trip over a dangling reference to a deleted account.
+    const ownedMentorships = await Mentorship.find({ $or: [{ studentId: userId }, { mentorId: userId }] }).select("_id");
+    const ownedMentorshipIds = ownedMentorships.map((m) => m._id);
+
+    await Promise.all([
+      MentorshipRequest.deleteMany({ $or: [{ studentId: userId }, { mentorId: userId }] }),
+      Mentorship.deleteMany({ _id: { $in: ownedMentorshipIds } }),
+      MentorshipGoal.deleteMany({ mentorshipId: { $in: ownedMentorshipIds } }),
+      Doubt.deleteMany({ author: userId }), // their own questions, replies included
+      Doubt.updateMany({ "replies.author": userId }, { $pull: { replies: { author: userId } } }), // just their replies on others' questions
+      Blog.deleteMany({ author: userId }),
+      EventRegistration.deleteMany({ studentId: userId }),
+      Opportunity.deleteMany({ postedBy: userId }),
+      PointLedger.deleteMany({ student: userId }),
+      CodingProfile.deleteOne({ userId }),
+    ]);
+
     res.json({ success: true, message: "Deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -233,7 +270,7 @@ const suspendUser = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
     res.json({ success: true, data: user });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

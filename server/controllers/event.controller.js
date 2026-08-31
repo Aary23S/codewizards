@@ -1,6 +1,7 @@
 const Event = require("../models/Event");
 const cloudinary = require("../config/cloudinary");
 const EventRegistration = require("../models/EventRegistration");
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 
 const uploadImage = (fileBuffer, originalName) =>
   new Promise((resolve, reject) => {
@@ -69,7 +70,7 @@ const getEvents = async (req, res) => {
 
     res.json({ success: true, data: mapped });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -99,7 +100,7 @@ const getEvent = async (req, res) => {
 
     res.json({ success: true, data: obj });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -121,7 +122,7 @@ const createEvent = async (req, res) => {
     res.status(201).json({ success: true, data: event });
   } catch (error) {
     console.error("Create event failed:", error);
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -151,7 +152,7 @@ const updateEvent = async (req, res) => {
     res.json({ success: true, data: event });
   } catch (error) {
     console.error("Update event failed:", error);
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -162,9 +163,10 @@ const deleteEvent = async (req, res) => {
     if (!event) {
       return res.status(404).json({ success: false, message: "Not found" });
     }
+    await EventRegistration.deleteMany({ eventId: event._id });
     res.json({ success: true, message: "Deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

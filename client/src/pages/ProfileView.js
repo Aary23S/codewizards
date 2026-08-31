@@ -59,11 +59,14 @@ const ProfileView = () => {
   };
 
   useEffect(() => {
+    let cancelled = false;
+
     Promise.all([
       getUserById(id),
       getPublicCodingProfile(id).catch(() => ({ data: { data: null } })),
     ])
       .then(([userRes, codingRes]) => {
+        if (cancelled) return;
         const u = userRes.data.data;
         setProfile(u);
         setCodingProfile(codingRes.data.data || null);
@@ -71,6 +74,7 @@ const ProfileView = () => {
         if (u) {
           getEvents({ studentId: id })
             .then((res) => {
+              if (cancelled) return;
               const allEvents = res.data.data || [];
               const registered = allEvents.filter((e) => e.registration?.isRegistered === true);
               setRegisteredEvents(registered);
@@ -78,14 +82,27 @@ const ProfileView = () => {
             .catch(console.error);
         }
       })
-      .catch(() => navigate("/"))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (cancelled) return;
+        navigate("/");
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
 
     if (isOwnProfile) {
       getMyMentorshipRequests()
-        .then((res) => setRequests(res.data.data || []))
+        .then((res) => {
+          if (cancelled) return;
+          setRequests(res.data.data || []);
+        })
         .catch(console.error);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [id, navigate, isOwnProfile]);
 
   if (loading) {

@@ -41,21 +41,16 @@ export const loginUser = (data) => api.post("/auth/login", data);
 export const getMe = () => api.get("/auth/me");
 export const forgotPassword = (email) => api.post("/auth/forgot-password", { email });
 export const resetPassword = (token, password) => api.post(`/auth/reset-password/${token}`, { password });
-export const getMyRegistrations = () => api.get("/events/my-registrations");
+export const logoutUser = () => api.post("/auth/logout");
 
 // --- Projects ---
 export const getProjects = (params) => api.get("/projects", { params });
-export const getProject = (id) => api.get(`/projects/${id}`);
 export const createProject = (data) => api.post("/projects", data);
-export const updateProject = (id, data) => api.patch(`/projects/${id}`, data);
-export const deleteProject = (id) => api.delete(`/projects/${id}`);
 
 // --- Events ---
 export const getEvents = (params) => api.get("/events", { params });
 export const getEvent = (id) => api.get(`/events/${id}`);
 export const createEvent = (data) => api.post("/events", data);
-export const updateEvent = (id, data) => api.patch(`/events/${id}`, data);
-export const deleteEvent = (id) => api.delete(`/events/${id}`);
 export const registerForEvent = (eventId) => api.post(`/events/${eventId}/register`);
 export const cancelEventRegistration = (eventId) => api.delete(`/events/${eventId}/register`);
 export const generateEventOTP = (eventId) => api.post(`/events/${eventId}/otp`);
@@ -71,19 +66,15 @@ export const getGallery = (params) => api.get("/gallery", { params });
 // --- Announcements ---
 export const getAnnouncements = () => api.get("/announcements");
 export const createAnnouncement = (data) => api.post("/announcements", data);
-export const updateAnnouncement = (id, data) => api.patch(`/announcements/${id}`, data);
-export const deleteAnnouncement = (id) => api.delete(`/announcements/${id}`);
 
 // --- Users ---
 export const getUsers = (params) => api.get("/users", { params });
 export const getUserById = (id) => api.get(`/users/${id}`);
-export const createUser = (data) => api.post("/users", data);
 export const updateUser = (id, data) => api.patch(`/users/${id}`, data);
 export const deleteUser = (id) => api.delete(`/users/${id}`);
 
 // --- Coding contributions ---
 export const connectCodingProfile = (data) => api.post("/coding/connect", data);
-export const getMyCodingProfile = () => api.get("/coding/profile/me");
 export const syncCodingProfile = () => api.post("/coding/sync");
 export const getPublicCodingProfile = (id) => api.get(`/coding/public/${id}`);
 

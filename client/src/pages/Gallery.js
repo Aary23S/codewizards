@@ -131,10 +131,20 @@ const Gallery = () => {
   const [activeItem, setActiveItem] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     getGallery()
-      .then((res) => setItems(res.data.data))
+      .then((res) => {
+        if (cancelled) return;
+        setItems(res.data.data);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = filter === "all" ? items : items.filter((item) => item.category === filter);

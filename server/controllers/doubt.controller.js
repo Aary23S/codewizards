@@ -1,6 +1,8 @@
 //doubt.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const Doubt = require("../models/Doubt");
 const PointLedger = require("../models/PointLedger");
+const { parsePagination } = require("../utils/paginate");
 
 // GET /api/v1/doubts
 const getDoubts = async (req, res) => {
@@ -9,14 +11,19 @@ const getDoubts = async (req, res) => {
         if (typeof req.query.domain === "string" && req.query.domain) filter.domain = req.query.domain;
         if (typeof req.query.resolved === "string" && req.query.resolved) filter.resolved = req.query.resolved === "true";
 
-        const doubts = await Doubt.find(filter)
+        const { active, limit, skip, page } = parsePagination(req.query);
+        let query = Doubt.find(filter)
             .populate("author", "name role batch")
             .populate("replies.author", "name role")
             .sort({ createdAt: -1 });
+        if (active) query = query.skip(skip).limit(limit);
 
-        res.json({ success: true, data: doubts });
+        const doubts = await query;
+        const response = { success: true, data: doubts };
+        if (active) response.meta = { page, limit, total: await Doubt.countDocuments(filter) };
+        res.json(response);
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
@@ -30,7 +37,7 @@ const getDoubt = async (req, res) => {
         if (!doubt) return res.status(404).json({ success: false, message: "Not found" });
         res.json({ success: true, data: doubt });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
@@ -41,7 +48,7 @@ const createDoubt = async (req, res) => {
         await doubt.populate("author", "name role batch");
         res.status(201).json({ success: true, data: doubt });
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        res.status(400).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
@@ -57,7 +64,7 @@ const addReply = async (req, res) => {
 
         res.status(201).json({ success: true, data: doubt });
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        res.status(400).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
@@ -103,29 +110,30 @@ const toggleResolve = async (req, res) => {
 
         res.json({ success: true, data: doubt });
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        res.status(400).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
 // PATCH /api/v1/doubts/:id/upvote
 const upvoteDoubt = async (req, res) => {
     try {
-        const doubt = await Doubt.findById(req.params.id);
-        if (!doubt) return res.status(404).json({ success: false, message: "Not found" });
+        const existing = await Doubt.findById(req.params.id).select("upvotes");
+        if (!existing) return res.status(404).json({ success: false, message: "Not found" });
 
-        const userId = req.user._id.toString();
-        const alreadyUpvoted = doubt.upvotes.map((id) => id.toString()).includes(userId);
+        const userId = req.user._id;
+        const alreadyUpvoted = existing.upvotes.some((id) => id.toString() === userId.toString());
 
-        if (alreadyUpvoted) {
-            doubt.upvotes = doubt.upvotes.filter((id) => id.toString() !== userId);
-        } else {
-            doubt.upvotes.push(req.user._id);
-        }
+        // $addToSet/$pull are atomic at the database level — two concurrent requests from
+        // different users can no longer stomp on each other's upvote the way a read-then-save could.
+        const updated = await Doubt.findByIdAndUpdate(
+            req.params.id,
+            alreadyUpvoted ? { $pull: { upvotes: userId } } : { $addToSet: { upvotes: userId } },
+            { new: true }
+        ).select("upvotes");
 
-        await doubt.save();
-        res.json({ success: true, data: { upvotes: doubt.upvotes.length } });
+        res.json({ success: true, data: { upvotes: updated.upvotes.length } });
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        res.status(400).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
@@ -142,7 +150,7 @@ const deleteDoubt = async (req, res) => {
     await doubt.deleteOne();
     res.json({ success: true, message: "Deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -163,7 +171,7 @@ const deleteReply = async (req, res) => {
     await doubt.save();
     res.json({ success: true, message: "Reply deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

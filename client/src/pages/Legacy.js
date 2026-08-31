@@ -23,10 +23,20 @@ const Legacy = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     getTimeline()
-      .then((res) => setMilestones(res.data.data))
+      .then((res) => {
+        if (cancelled) return;
+        setMilestones(res.data.data);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

@@ -1,4 +1,6 @@
 //mentorship.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
+const mongoose = require("mongoose");
 const MentorshipRequest = require("../models/MentorshipRequest");
 const Mentorship = require("../models/Mentorship");
 const User = require("../models/User");
@@ -18,7 +20,7 @@ const createRequest = async (req, res) => {
     });
     res.status(201).json({ success: true, data: request });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -37,54 +39,67 @@ const getMyRequests = async (req, res) => {
 
     res.json({ success: true, data: requests });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
 // PATCH /api/v1/mentorship/:id/status
 const updateStatus = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
-    const request = await MentorshipRequest.findById(req.params.id);
-    if (!request) return res.status(404).json({ success: false, message: "Not found" });
-    if (request.mentorId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: "Not allowed" });
-    }
+    let result;
 
-    if (request.status !== "pending") {
-      return res.status(400).json({ success: false, message: "Request is already processed" });
-    }
+    // Marking the request accepted and creating its Mentorship connection must succeed or
+    // fail together — otherwise a crash between the two steps leaves an "accepted" request
+    // with no actual mentor/student connection.
+    await session.withTransaction(async () => {
+      const request = await MentorshipRequest.findById(req.params.id).session(session);
+      if (!request) {
+        throw Object.assign(new Error("Not found"), { status: 404 });
+      }
+      if (request.mentorId.toString() !== req.user._id.toString()) {
+        throw Object.assign(new Error("Not allowed"), { status: 403 });
+      }
+      if (request.status !== "pending") {
+        throw Object.assign(new Error("Request is already processed"), { status: 400 });
+      }
 
-    const { status } = req.body;
-    if (!["accepted", "rejected"].includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status value" });
-    }
+      const { status } = req.body;
+      if (!["accepted", "rejected"].includes(status)) {
+        throw Object.assign(new Error("Invalid status value"), { status: 400 });
+      }
 
-    request.status = status;
-    await request.save();
+      request.status = status;
+      await request.save({ session });
 
-    let connection = null;
-    if (status === "accepted") {
-      // Prevent duplicate active connections
-      const existing = await Mentorship.findOne({
-        studentId: request.studentId,
-        mentorId: request.mentorId,
-        status: "active",
-      });
-
-      if (!existing) {
-        connection = await Mentorship.create({
+      let connection = null;
+      if (status === "accepted") {
+        // Prevent duplicate active connections
+        const existing = await Mentorship.findOne({
           studentId: request.studentId,
           mentorId: request.mentorId,
-          requestId: request._id,
-        });
-      } else {
-        connection = existing;
-      }
-    }
+          status: "active",
+        }).session(session);
 
-    res.json({ success: true, data: { request, connection } });
+        if (!existing) {
+          const [created] = await Mentorship.create(
+            [{ studentId: request.studentId, mentorId: request.mentorId, requestId: request._id }],
+            { session }
+          );
+          connection = created;
+        } else {
+          connection = existing;
+        }
+      }
+
+      result = { request, connection };
+    });
+
+    res.json({ success: true, data: result });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(error.status || 400).json({ success: false, message: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -97,7 +112,7 @@ const getMyMentors = async (req, res) => {
 
     res.json({ success: true, data: connections });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -110,7 +125,7 @@ const getMyMentees = async (req, res) => {
 
     res.json({ success: true, data: connections });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -147,7 +162,7 @@ const getMentorshipContact = async (req, res) => {
 
     res.json({ success: true, data: contacts });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -173,7 +188,7 @@ const createGoal = async (req, res) => {
 
     res.status(201).json({ success: true, data: goal });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -194,7 +209,7 @@ const getGoals = async (req, res) => {
     const goals = await MentorshipGoal.find({ mentorshipId }).sort({ createdAt: 1 });
     res.json({ success: true, data: goals });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -242,7 +257,7 @@ const updateGoal = async (req, res) => {
     await goal.save();
     res.json({ success: true, data: goal });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -264,7 +279,7 @@ const deleteGoal = async (req, res) => {
     await MentorshipGoal.findByIdAndDelete(goalId);
     res.json({ success: true, message: "Goal deleted successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

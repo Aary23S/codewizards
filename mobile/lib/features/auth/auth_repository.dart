@@ -48,6 +48,14 @@ class AuthRepository {
     return UserProfile.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
+  Future<void> logout() async {
+    await _apiClient.postData('/auth/logout');
+  }
+
+  Future<void> forgotPassword(String email) async {
+    await _apiClient.postData('/auth/forgot-password', data: {'email': email});
+  }
+
   AuthSession _parseSession(dynamic data) {
     final map = Map<String, dynamic>.from(data as Map);
     final token = map['token']?.toString() ?? '';

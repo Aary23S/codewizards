@@ -1,4 +1,5 @@
 //pointRule.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const PointRule = require("../models/PointRule");
 
 // GET /api/v1/point-rules
@@ -7,7 +8,7 @@ const getPointRules = async (req, res) => {
     const rules = await PointRule.find().sort({ key: 1 });
     res.json({ success: true, data: rules });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -25,7 +26,7 @@ const updatePointRule = async (req, res) => {
     });
     res.json({ success: true, data: rule });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

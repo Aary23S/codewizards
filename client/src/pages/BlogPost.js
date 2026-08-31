@@ -12,10 +12,23 @@ const BlogPost = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     getBlog(id)
-      .then((res) => setBlog(res.data.data))
-      .catch(() => navigate("/blogs"))
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (cancelled) return;
+        setBlog(res.data.data);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        navigate("/blogs");
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id, navigate]);
 
   const handleDelete = async () => {

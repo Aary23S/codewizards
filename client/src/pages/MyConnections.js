@@ -241,10 +241,12 @@ const MyConnections = () => {
   const [loadingGoals, setLoadingGoals] = useState({});
 
   useEffect(() => {
+    let cancelled = false;
     const fetchConnections = async () => {
       try {
         if (user?.role === "student") {
           const res = await getMyMentors();
+          if (cancelled) return;
           setMentors(res.data.data || []);
         } else {
           // Fetch both since seniors/alumni/admins can be both mentors and mentees
@@ -252,16 +254,21 @@ const MyConnections = () => {
             getMyMentors().catch(() => ({ data: { data: [] } })),
             getMyMentees().catch(() => ({ data: { data: [] } })),
           ]);
+          if (cancelled) return;
           setMentors(mentorsRes.data.data || []);
           setMentees(menteesRes.data.data || []);
         }
       } catch (err) {
+        if (cancelled) return;
         setError(err.response?.data?.message || "Failed to load connections");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchConnections();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const handleToggleExpand = async (connId) => {

@@ -1,4 +1,5 @@
 //eventRegistration.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const EventRegistration = require("../models/EventRegistration");
 const Event = require("../models/Event");
 const PointLedger = require("../models/PointLedger");
@@ -40,7 +41,7 @@ const registerForEvent = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({ success: false, message: "Already registered for this event" });
     }
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -61,7 +62,7 @@ const cancelEventRegistration = async (req, res) => {
 
     res.json({ success: true, message: "Registration cancelled successfully", data: existing });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -72,7 +73,7 @@ const getRegistrations = async (req, res) => {
       .populate("studentId", "name email batch");
     res.json({ success: true, data: regs });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -83,7 +84,7 @@ const getMyRegistrations = async (req, res) => {
     const eventIds = regs.map((r) => r.eventId.toString());
     res.json({ success: true, data: eventIds });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -102,7 +103,7 @@ const generateEventOTP = async (req, res) => {
 
     res.json({ success: true, data: { otpCode: otp, expiresAt: event.otpExpiresAt } });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -182,7 +183,7 @@ const verifyEventOTP = async (req, res) => {
 
     res.json({ success: true, message: "Attendance verified successfully", data: reg });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

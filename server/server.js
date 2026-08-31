@@ -7,6 +7,12 @@ const cron = require("node-cron");
 const axios = require("axios");
 
 dotenv.config();
+
+if (!process.env.JWT_SECRET) {
+  console.error("Missing required env var JWT_SECRET — refusing to start with broken auth.");
+  process.exit(1);
+}
+
 connectDB();
 
 const app = express();
@@ -74,6 +80,13 @@ app.use("/api/v1/collaborations", require("./routes/collaboration.routes"));
 // Global error handler
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
+
+  // A response already went out (e.g. a bug elsewhere threw after res.json()) —
+  // writing again would throw ERR_HTTP_HEADERS_SENT, so just let Express close the request.
+  if (res.headersSent) {
+    return next(err);
+  }
+
   const isMulterError = err && err.code && err.message && err.stack && err.stack.includes("multer");
   if (isMulterError || (err && err.name === "MulterError")) {
     return res.status(400).json({ success: false, message: `Upload error: ${err.message}` });

@@ -12,22 +12,27 @@ const EventRegistrations = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       try {
         const [eventRes, regRes] = await Promise.all([
           getEvent(id),
           getEventRegistrations(id),
         ]);
+        if (cancelled) return;
         setEvent(eventRes.data.data);
         setRegistrations(regRes.data.data || []);
       } catch (err) {
         console.error(err);
-        alert("Failed to load registrations or event info.");
+        if (!cancelled) alert("Failed to load registrations or event info.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const handleExportCSV = () => {

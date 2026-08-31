@@ -22,11 +22,21 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     getLeaderboard({ period })
-      .then((res) => setStudents(res.data.data))
+      .then((res) => {
+        if (cancelled) return;
+        setStudents(res.data.data);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [period]);
 
   return (

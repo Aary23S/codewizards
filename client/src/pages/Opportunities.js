@@ -58,15 +58,25 @@ const Opportunities = () => {
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     const params = {};
     if (typeFilter !== "all") params.type = typeFilter;
     if (domainFilter !== "All") params.domain = domainFilter;
 
     setLoading(true);
     getOpportunities(params)
-      .then((res) => setItems(res.data.data || []))
+      .then((res) => {
+        if (cancelled) return;
+        setItems(res.data.data || []);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [typeFilter, domainFilter]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });

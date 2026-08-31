@@ -1,6 +1,8 @@
 //gallery.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const Gallery = require("../models/Gallery");
 const cloudinary = require("../config/cloudinary");
+const { parsePagination } = require("../utils/paginate");
 
 const uploadImage = (fileBuffer, originalName) =>
   new Promise((resolve, reject) => {
@@ -30,10 +32,17 @@ const getGallery = async (req, res) => {
   try {
     const filter = {};
     if (typeof req.query.category === "string" && req.query.category) filter.category = req.query.category;
-    const items = await Gallery.find(filter).sort({ createdAt: -1 });
-    res.json({ success: true, data: items });
+
+    const { active, limit, skip, page } = parsePagination(req.query);
+    let query = Gallery.find(filter).sort({ createdAt: -1 });
+    if (active) query = query.skip(skip).limit(limit);
+
+    const items = await query;
+    const response = { success: true, data: items };
+    if (active) response.meta = { page, limit, total: await Gallery.countDocuments(filter) };
+    res.json(response);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -56,7 +65,7 @@ const createGalleryItem = async (req, res) => {
     res.status(201).json({ success: true, data: item });
   } catch (error) {
     console.error("Create gallery item failed:", error);
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -67,7 +76,7 @@ const deleteGalleryItem = async (req, res) => {
     if (!item) return res.status(404).json({ success: false, message: "Not found" });
     res.json({ success: true, message: "Deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -118,7 +127,7 @@ const updateGalleryItem = async (req, res) => {
     res.json({ success: true, data: item });
   } catch (error) {
     console.error("Update gallery item failed:", error);
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

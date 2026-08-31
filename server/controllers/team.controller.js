@@ -1,6 +1,8 @@
 //team.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const TeamMember = require("../models/TeamMember");
 const cloudinary = require("../config/cloudinary");
+const { parsePagination } = require("../utils/paginate");
 
 const uploadImage = (fileBuffer, originalName) =>
     new Promise((resolve, reject) => {
@@ -63,10 +65,16 @@ const normalizePayload = async (req) => {
 
 const getTeam = async (req, res) => {
     try {
-        const members = await TeamMember.find().sort({ teamYear: -1, order: 1, createdAt: 1 });
-        res.json({ success: true, data: members });
+        const { active, limit, skip, page } = parsePagination(req.query);
+        let query = TeamMember.find().sort({ teamYear: -1, order: 1, createdAt: 1 });
+        if (active) query = query.skip(skip).limit(limit);
+
+        const members = await query;
+        const response = { success: true, data: members };
+        if (active) response.meta = { page, limit, total: await TeamMember.countDocuments() };
+        res.json(response);
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
@@ -75,7 +83,7 @@ const createMember = async (req, res) => {
         const member = await TeamMember.create(await normalizePayload(req));
         res.status(201).json({ success: true, data: member });
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        res.status(400).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
@@ -87,7 +95,7 @@ const updateMember = async (req, res) => {
         if (!member) return res.status(404).json({ success: false, message: "Not found" });
         res.json({ success: true, data: member });
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        res.status(400).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 
@@ -96,7 +104,7 @@ const deleteMember = async (req, res) => {
         await TeamMember.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: "Deleted" });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: safeErrorMessage(error) });
     }
 };
 

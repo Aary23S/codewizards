@@ -177,19 +177,29 @@ const Doubts = () => {
   const [form, setForm] = useState({ title: "", body: "", domain: "" });
   const [posting, setPosting] = useState(false);
 
-  const fetchDoubts = () => {
+  const fetchDoubts = (isCancelled = () => false) => {
     const params = {};
     if (domain !== "All") params.domain = domain;
     if (resolvedFilter !== "all") params.resolved = resolvedFilter === "resolved";
     setLoading(true);
     getDoubts(params)
-      .then((res) => setDoubts(res.data.data))
+      .then((res) => {
+        if (isCancelled()) return;
+        setDoubts(res.data.data);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isCancelled()) return;
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    fetchDoubts();
+    let cancelled = false;
+    fetchDoubts(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domain, resolvedFilter]);
 

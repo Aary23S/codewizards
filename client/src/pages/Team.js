@@ -133,10 +133,20 @@ const Team = () => {
   const hasInitializedExpandedYear = useRef(false);
 
   useEffect(() => {
+    let cancelled = false;
     getTeam()
-      .then((res) => setMembers(res.data.data || []))
+      .then((res) => {
+        if (cancelled) return;
+        setMembers(res.data.data || []);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const yearlyGroups = useMemo(() => {

@@ -92,6 +92,8 @@ const userSchema = new mongoose.Schema(
 
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpire: { type: Date, select: false },
+    // Bumped on password reset / logout-everywhere so previously issued JWTs stop working
+    tokenVersion: { type: Number, default: 0, select: false },
 
     externalStats: {
       codeforcesRating: { type: Number, default: null },

@@ -1,4 +1,5 @@
 //contact.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const ContactInfo = require("../models/ContactInfo");
 const sendEmail = require("../utils/sendEmail");
 
@@ -19,7 +20,7 @@ const getContact = async (req, res) => {
     }
     res.json({ success: true, data: info });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -33,7 +34,7 @@ const upsertContact = async (req, res) => {
     }
     res.json({ success: true, data: info });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

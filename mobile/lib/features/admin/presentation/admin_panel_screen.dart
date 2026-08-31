@@ -297,7 +297,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             key: 'role',
             label: 'Role',
             type: AdminFieldType.dropdown,
-            options: ['student', 'mentor', 'senior', 'alumni', 'admin'],
+            options: ['student', 'senior', 'alumni', 'admin'],
           ),
           AdminFieldSpec(
             key: 'batch',
@@ -324,27 +324,27 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             required: false,
           ),
           AdminFieldSpec(
-            key: 'githubUrl',
+            key: 'github',
             label: 'GitHub URL',
             required: false,
           ),
           AdminFieldSpec(
-            key: 'linkedinUrl',
+            key: 'linkedin',
             label: 'LinkedIn URL',
             required: false,
           ),
           AdminFieldSpec(
-            key: 'leetcodeUrl',
+            key: 'leetcode',
             label: 'LeetCode URL',
             required: false,
           ),
           AdminFieldSpec(
-            key: 'codeforcesUrl',
+            key: 'codeforces',
             label: 'Codeforces URL',
             required: false,
           ),
           AdminFieldSpec(
-            key: 'portfolioUrl',
+            key: 'portfolio',
             label: 'Portfolio URL',
             required: false,
           ),
@@ -897,12 +897,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           ),
           AdminFieldSpec(key: 'imageUrl', label: 'Image URL', required: false),
           AdminFieldSpec(
-            key: 'linkedinUrl',
+            key: 'linkedin',
             label: 'LinkedIn URL',
             required: false,
           ),
           AdminFieldSpec(
-            key: 'githubUrl',
+            key: 'github',
             label: 'GitHub URL',
             required: false,
           ),

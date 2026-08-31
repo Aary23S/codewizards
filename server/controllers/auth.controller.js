@@ -1,4 +1,5 @@
 //auth.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const crypto = require("crypto");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
@@ -59,11 +60,11 @@ const register = async (req, res) => {
         batch: user.batch,
         programName: user.programName,
         programDurationYears: user.programDurationYears,
-        token: generateToken(user._id),
+        token: generateToken(user._id, user.tokenVersion),
       },
     });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -74,7 +75,7 @@ const login = async (req, res) => {
     if (typeof email !== "string" || typeof password !== "string") {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+tokenVersion");
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
@@ -88,11 +89,11 @@ const login = async (req, res) => {
         batch: user.batch,
         programName: user.programName,
         programDurationYears: user.programDurationYears,
-        token: generateToken(user._id),
+        token: generateToken(user._id, user.tokenVersion),
       },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -141,7 +142,7 @@ const forgotPassword = async (req, res) => {
 
     res.json({ success: true, message: genericMessage });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -164,12 +165,23 @@ const resetPassword = async (req, res) => {
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
+    user.tokenVersion = (user.tokenVersion || 0) + 1; // invalidate every token issued before this reset
     await user.save();
 
     res.json({ success: true, message: "Password reset successful. You can now log in." });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
-module.exports = { register, login, getMe, forgotPassword, resetPassword };
+// POST /api/v1/auth/logout — invalidates every token issued to this user, on every device
+const logout = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
+    res.json({ success: true, message: "Logged out" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
+  }
+};
+
+module.exports = { register, login, getMe, forgotPassword, resetPassword, logout };

@@ -1,6 +1,6 @@
 // codewizards/client/src/context/AuthContext.js
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { getMe } from "../services/api";
+import { getMe, logoutUser } from "../services/api";
 
 const AuthContext = createContext();
 
@@ -55,6 +55,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Best-effort — invalidates this user's token server-side, but local logout
+    // must succeed even if the request fails (e.g. offline).
+    logoutUser().catch(() => {});
     clearAuth();
   };
 

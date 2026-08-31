@@ -47,10 +47,20 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     getProjects()
-      .then((res) => setProjects(res.data.data))
+      .then((res) => {
+        if (cancelled) return;
+        setProjects(res.data.data);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

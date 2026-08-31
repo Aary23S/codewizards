@@ -1,5 +1,7 @@
 //opportunities.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const Opportunity = require("../models/Opportunities");
+const { parsePagination } = require("../utils/paginate");
 
 // GET /api/v1/opportunities
 const getOpportunities = async (req, res) => {
@@ -8,13 +10,18 @@ const getOpportunities = async (req, res) => {
     if (typeof req.query.type === "string" && req.query.type) filter.type = req.query.type;
     if (typeof req.query.domain === "string" && req.query.domain) filter.domain = req.query.domain;
 
-    const opportunities = await Opportunity.find(filter)
+    const { active, limit, skip, page } = parsePagination(req.query);
+    let query = Opportunity.find(filter)
       .populate("postedBy", "name role batch")
       .sort({ createdAt: -1 });
+    if (active) query = query.skip(skip).limit(limit);
 
-    res.json({ success: true, data: opportunities });
+    const opportunities = await query;
+    const response = { success: true, data: opportunities };
+    if (active) response.meta = { page, limit, total: await Opportunity.countDocuments(filter) };
+    res.json(response);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -27,7 +34,7 @@ const createOpportunity = async (req, res) => {
     });
     res.status(201).json({ success: true, data: opportunity });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -45,7 +52,7 @@ const deleteOpportunity = async (req, res) => {
     await opp.deleteOne();
     res.json({ success: true, message: "Deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -65,7 +72,7 @@ const updateOpportunity = async (req, res) => {
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

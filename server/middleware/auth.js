@@ -12,16 +12,22 @@ const protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id).select("-password +tokenVersion");
+
+    if (!user || (decoded.tokenVersion || 0) !== (user.tokenVersion || 0)) {
+      return res.status(401).json({ success: false, message: "Token invalid" });
+    }
 
     // Block suspended users from all protected routes
-    if (req.user?.isSuspended) {
+    if (user.isSuspended) {
       return res.status(403).json({
         success: false,
         message: "Your account has been suspended. Contact admin.",
       });
     }
 
+    user.tokenVersion = undefined; // internal only — never surface it in API responses
+    req.user = user;
     next();
   } catch (error) {
     res.status(401).json({ success: false, message: "Token invalid" });

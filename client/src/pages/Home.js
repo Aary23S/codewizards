@@ -277,6 +277,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       try {
         const [projRes, evtRes, annRes] = await Promise.all([
@@ -284,16 +285,20 @@ const Home = () => {
           getEvents(),
           getAnnouncements(),
         ]);
+        if (cancelled) return;
         setProjects(projRes.data.data);
         setEvents(evtRes.data.data.slice(0, 3));
         setAnnouncements(annRes.data.data);
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

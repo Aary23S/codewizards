@@ -88,6 +88,7 @@ const Connect = () => {
   const [mentorOnly, setMentorOnly] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const params = {};
     if (roleFilter !== "all") params.role = roleFilter;
     if (domain !== "All") params.domain = domain;
@@ -95,9 +96,18 @@ const Connect = () => {
 
     setLoading(true);
     getUsers(params)
-      .then((res) => setUsers(res.data.data))
+      .then((res) => {
+        if (cancelled) return;
+        setUsers(res.data.data);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [domain, roleFilter, mentorOnly]);
 
   return (

@@ -9,6 +9,9 @@ class ProjectItem {
     this.techStack = const [],
     this.contributors = const [],
     this.createdAt,
+    this.githubUrl,
+    this.demoUrl,
+    this.imageUrl,
   });
 
   final String id;
@@ -18,6 +21,9 @@ class ProjectItem {
   final List<String> techStack;
   final List<String> contributors;
   final DateTime? createdAt;
+  final String? githubUrl;
+  final String? demoUrl;
+  final String? imageUrl;
 
   factory ProjectItem.fromJson(Map<String, dynamic> json) {
     return ProjectItem(
@@ -28,6 +34,9 @@ class ProjectItem {
       techStack: readStringList(json['techStack']),
       contributors: readStringList(json['contributors']),
       createdAt: readDateTime(json['createdAt']),
+      githubUrl: readHttpUrl(json['githubUrl']),
+      demoUrl: readHttpUrl(json['demoUrl']),
+      imageUrl: readHttpUrl(json['imageUrl']),
     );
   }
 }

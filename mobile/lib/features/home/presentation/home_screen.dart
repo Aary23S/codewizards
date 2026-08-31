@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../shell/app_shell.dart';
@@ -563,6 +564,19 @@ class _ProjectCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (project.imageUrl != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                project.imageUrl!,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (project.featured) const _StatusPill(label: 'Featured', accent: Color(0xFFF5B14C)),
           if (project.featured) const SizedBox(height: 10),
           Text(project.title, style: Theme.of(context).textTheme.titleMedium),
@@ -576,7 +590,73 @@ class _ProjectCard extends StatelessWidget {
               children: project.techStack.take(4).map((tech) => _MiniChip(text: tech)).toList(),
             ),
           ],
+          if (project.githubUrl != null || project.demoUrl != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (project.githubUrl != null) _ProjectLinkPill(label: 'GitHub', url: project.githubUrl!),
+                if (project.demoUrl != null) _ProjectLinkPill(label: 'Demo', url: project.demoUrl!),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _ProjectLinkPill extends StatelessWidget {
+  const _ProjectLinkPill({required this.label, required this.url});
+
+  final String label;
+  final String url;
+
+  Future<void> _openLink(BuildContext context) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open the link right now.')),
+        );
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the link right now.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => _openLink(context),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: Colors.white.withAlpha(8),
+          border: Border.all(color: Colors.white.withAlpha(20)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.open_in_new_rounded, size: 14, color: Colors.white.withAlpha(170)),
+          ],
+        ),
       ),
     );
   }

@@ -10,17 +10,23 @@ const resolveTierPoints = (rule, rawValue) => {
   return tier ? tier.points : 0;
 };
 
-// Compute total points for one student across all ledger entries + current external stats
-const computeStudentPoints = async (student, ledgerEntries) => {
+// Fetch once and reuse across every student, instead of re-querying per student
+const buildRuleMap = async () => {
   const rules = await PointRule.find();
-  const ruleMap = Object.fromEntries(rules.map((r) => [r.key, r]));
+  return Object.fromEntries(rules.map((r) => [r.key, r]));
+};
+
+// Compute total points for one student across all ledger entries + current external stats.
+// Pass a pre-built map (via buildRuleMap) when scoring many students at once to avoid N+1 queries.
+const computeStudentPoints = async (student, ledgerEntries, ruleMap) => {
+  const map = ruleMap || (await buildRuleMap());
 
   let total = 0;
   const breakdown = {};
 
   // In-house actions from the ledger — flat points, current weight applied live
   for (const entry of ledgerEntries) {
-    const rule = ruleMap[entry.ruleKey];
+    const rule = map[entry.ruleKey];
     if (!rule) continue;
     const pts = rule.type === "flat" ? rule.flatPoints : resolveTierPoints(rule, entry.rawValue);
     total += pts;
@@ -28,18 +34,18 @@ const computeStudentPoints = async (student, ledgerEntries) => {
   }
 
   // External stats — always computed live from cached rawValue, not from ledger
-  if (student.externalStats?.codeforcesRating != null && ruleMap.codeforces_rating) {
-    const pts = resolveTierPoints(ruleMap.codeforces_rating, student.externalStats.codeforcesRating);
+  if (student.externalStats?.codeforcesRating != null && map.codeforces_rating) {
+    const pts = resolveTierPoints(map.codeforces_rating, student.externalStats.codeforcesRating);
     total += pts;
     breakdown.codeforces_rating = pts;
   }
-  if (student.externalStats?.leetcodeSolveScore != null && ruleMap.leetcode_solve_score) {
-    const pts = resolveTierPoints(ruleMap.leetcode_solve_score, student.externalStats.leetcodeSolveScore);
+  if (student.externalStats?.leetcodeSolveScore != null && map.leetcode_solve_score) {
+    const pts = resolveTierPoints(map.leetcode_solve_score, student.externalStats.leetcodeSolveScore);
     total += pts;
     breakdown.leetcode_solve_score = pts;
   }
-  if (student.externalStats?.githubContributions != null && ruleMap.github_contributions) {
-    const pts = resolveTierPoints(ruleMap.github_contributions, student.externalStats.githubContributions);
+  if (student.externalStats?.githubContributions != null && map.github_contributions) {
+    const pts = resolveTierPoints(map.github_contributions, student.externalStats.githubContributions);
     total += pts;
     breakdown.github_contributions = pts;
   }
@@ -47,4 +53,4 @@ const computeStudentPoints = async (student, ledgerEntries) => {
   return { total, breakdown };
 };
 
-module.exports = { computeStudentPoints, resolveTierPoints };
+module.exports = { computeStudentPoints, resolveTierPoints, buildRuleMap };

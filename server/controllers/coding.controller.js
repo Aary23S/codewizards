@@ -1,4 +1,5 @@
 //coding.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const CodingProfile = require("../models/CodingProfile");
 const {
   connectCodingProfile,
@@ -56,7 +57,7 @@ async function connectCoding(req, res) {
       },
     });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message || "Unable to connect coding profiles" });
+    return res.status(400).json({ success: false, message: safeErrorMessage(error) || "Unable to connect coding profiles" });
   }
 }
 
@@ -65,7 +66,7 @@ async function getMyCodingProfileController(req, res) {
     const profile = await getMyCodingProfile(req.user._id);
     return res.json({ success: true, data: profile });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 }
 
@@ -96,7 +97,7 @@ async function syncCoding(req, res) {
       },
     });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message || "Unable to sync coding profile" });
+    return res.status(400).json({ success: false, message: safeErrorMessage(error) || "Unable to sync coding profile" });
   }
 }
 
@@ -108,7 +109,7 @@ async function getPublicCodingProfileController(req, res) {
     }
     return res.json({ success: true, data: profile });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 }
 

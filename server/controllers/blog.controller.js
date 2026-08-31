@@ -1,5 +1,7 @@
 //blog.controller.js
+const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const Blog = require("../models/Blogs");
+const { parsePagination } = require("../utils/paginate");
 
 // GET /api/v1/blogs
 const getBlogs = async (req, res) => {
@@ -7,13 +9,18 @@ const getBlogs = async (req, res) => {
     const filter = { published: true };
     if (typeof req.query.tag === "string" && req.query.tag) filter.tags = req.query.tag;
 
-    const blogs = await Blog.find(filter)
+    const { active, limit, skip, page } = parsePagination(req.query);
+    let query = Blog.find(filter)
       .populate("author", "name role batch")
       .sort({ createdAt: -1 });
+    if (active) query = query.skip(skip).limit(limit);
 
-    res.json({ success: true, data: blogs });
+    const blogs = await query;
+    const response = { success: true, data: blogs };
+    if (active) response.meta = { page, limit, total: await Blog.countDocuments(filter) };
+    res.json(response);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -25,7 +32,7 @@ const getBlog = async (req, res) => {
     if (!blog) return res.status(404).json({ success: false, message: "Not found" });
     res.json({ success: true, data: blog });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -36,7 +43,7 @@ const createBlog = async (req, res) => {
     await blog.populate("author", "name role batch");
     res.status(201).json({ success: true, data: blog });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -56,7 +63,7 @@ const updateBlog = async (req, res) => {
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 
@@ -73,7 +80,7 @@ const deleteBlog = async (req, res) => {
     await blog.deleteOne();
     res.json({ success: true, message: "Deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: safeErrorMessage(error) });
   }
 };
 

@@ -35,11 +35,21 @@ const Resources = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     getResources()
-      .then((res) => setResources(res.data.data))
+      .then((res) => {
+        if (cancelled) return;
+        setResources(res.data.data);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const categories = ["all", ...new Set(resources.map((item) => item.category).filter(Boolean))].sort((a, b) => {

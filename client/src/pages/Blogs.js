@@ -70,14 +70,24 @@ const Blogs = () => {
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     const params = {};
     if (tagFilter) params.tag = tagFilter;
 
     setLoading(true);
     getBlogs(params)
-      .then((res) => setBlogs(res.data.data || []))
+      .then((res) => {
+        if (cancelled) return;
+        setBlogs(res.data.data || []);
+      })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [tagFilter]);
 
   const handleSubmit = async () => {

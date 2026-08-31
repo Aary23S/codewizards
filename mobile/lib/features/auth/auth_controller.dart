@@ -111,6 +111,11 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    // Best-effort — invalidates this user's token server-side, but local logout
+    // must succeed even if the request fails (e.g. offline, or token already expired).
+    try {
+      await _repository.logout();
+    } catch (_) {}
     await _tokenStorage.clearToken();
     user = null;
     errorMessage = null;
