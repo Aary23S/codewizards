@@ -219,7 +219,7 @@ const ProfileView = () => {
                       <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em] font-semibold ${
                         profile.mentorshipAvailability === "open" ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" :
                         profile.mentorshipAvailability === "limited" ? "bg-amber-500/10 text-amber-300 border-amber-500/20" :
-                        "bg-white/5 text-white/40 border-white/10"
+                        "bg-white/5 text-white/50 border-white/10"
                       }`}>
                         <span className={`h-2 w-2 rounded-full ${
                           profile.mentorshipAvailability === "open" ? "bg-emerald-400" :
@@ -265,7 +265,7 @@ const ProfileView = () => {
           <div className="space-y-6">
             {(profile.designation || profile.currentCompany || profile.professionalExperience || profile.canHelpWith?.length > 0) && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Professional Career</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Professional Career</p>
                 <div className="mt-4">
                   {(profile.designation || profile.currentCompany) && (
                     <h3 className="text-xl font-bold text-white">
@@ -288,7 +288,7 @@ const ProfileView = () => {
                   )}
                   {profile.canHelpWith?.length > 0 && (
                     <div className="mt-6 border-t border-white/5 pt-5">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-3">I Can Help With</p>
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 mb-3">I Can Help With</p>
                       <div className="flex flex-wrap gap-2">
                         {profile.canHelpWith.map((topic) => (
                           <span
@@ -307,7 +307,7 @@ const ProfileView = () => {
 
             {profile.domain?.length > 0 && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Domains</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Domains</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {profile.domain.map((domain) => (
                     <span
@@ -324,7 +324,7 @@ const ProfileView = () => {
             {/* Experience Section */}
             {profile.experiences?.length > 0 && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Experience</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Experience</p>
                 <div className="mt-6 space-y-6">
                   {profile.experiences.map((exp, idx) => (
                     <div key={idx} className="flex gap-4 border-l border-white/10 pl-5 relative before:content-[''] before:absolute before:left-[-5px] before:top-1.5 before:w-[9px] before:h-[9px] before:rounded-full before:bg-cyan-400">
@@ -349,7 +349,7 @@ const ProfileView = () => {
             {/* Education Section */}
             {profile.education?.length > 0 && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Education</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Education</p>
                 <div className="mt-6 space-y-6">
                   {profile.education.map((edu, idx) => (
                     <div key={idx} className="flex gap-4 border-l border-white/10 pl-5 relative before:content-[''] before:absolute before:left-[-5px] before:top-1.5 before:w-[9px] before:h-[9px] before:rounded-full before:bg-indigo-400">
@@ -371,14 +371,14 @@ const ProfileView = () => {
             {/* Certifications Section */}
             {profile.certifications?.length > 0 && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Licenses & Certifications</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Licenses & Certifications</p>
                 <div className="mt-6 space-y-4">
                   {profile.certifications.map((cert, idx) => (
                     <div key={idx} className="flex items-start justify-between gap-4 rounded-2xl border border-white/5 bg-black/10 p-4">
                       <div className="space-y-1">
                         <h4 className="text-sm font-bold text-white">{cert.name}</h4>
                         <p className="text-xs text-white/70">{cert.issuer}</p>
-                        <p className="text-[10px] text-white/45">Issued {cert.issueDate}</p>
+                        <p className="text-[10px] text-white/50">Issued {cert.issueDate}</p>
                       </div>
                       {cert.credentialUrl && (
                         <a
@@ -398,7 +398,7 @@ const ProfileView = () => {
 
             {platformLinks.length > 0 && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Links</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Links</p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {platformLinks.map((item) => (
                     <a
@@ -422,7 +422,7 @@ const ProfileView = () => {
               <div className={`${shellCard} p-6 md:p-7`}>
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Coding tracker</p>
+                    <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Coding tracker</p>
                     <h3 className="mt-2 text-2xl font-semibold text-white">One analytics card, switchable by platform.</h3>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
                       The web view now mirrors mobile: no noisy activity feed, just compact platform analytics with a cleaner desktop hierarchy.
@@ -516,10 +516,10 @@ const ProfileView = () => {
               <div className={`${shellCard} p-6 md:p-7`}>
                 <div className="mb-6 flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-white/45">Mentorship</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-white/50">Mentorship</p>
                     <h2 className="mt-2 text-2xl font-semibold text-white">Mentorship requests</h2>
                   </div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-white/35">{requests.length} items</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/50">{requests.length} items</p>
                 </div>
 
                 <div className="space-y-3">
@@ -578,7 +578,7 @@ const ProfileView = () => {
             {profile && (
               <div className={`${shellCard} p-6 md:p-7`}>
                 <div className="flex items-center justify-between gap-4 mb-6">
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">My Events</p>
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">My Events</p>
                   <Link to="/events" className="text-xs text-cyan-300 hover:underline">Explore Events</Link>
                 </div>
 
@@ -587,14 +587,14 @@ const ProfileView = () => {
                   <div>
                     <h4 className="text-sm font-semibold text-white mb-3">Upcoming ({upcomingEvents.length})</h4>
                     {upcomingEvents.length === 0 ? (
-                      <p className="text-xs text-white/40 bg-white/5 rounded-2xl p-4">No upcoming events registered.</p>
+                      <p className="text-xs text-white/50 bg-white/5 rounded-2xl p-4">No upcoming events registered.</p>
                     ) : (
                       <div className="space-y-3">
                         {upcomingEvents.map((event) => (
                           <div key={event._id} className="rounded-2xl border border-white/10 bg-black/25 p-4 flex flex-col gap-2">
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">Going</span>
-                              <span className="text-[10px] text-white/40 uppercase">{event.type}</span>
+                              <span className="text-[10px] text-white/50 uppercase">{event.type}</span>
                             </div>
                             <h5 className="text-sm font-bold text-white line-clamp-1">{event.title}</h5>
                             <p className="text-xs text-white/50">{new Date(event.date).toLocaleDateString()} at {event.venue || "Online"}</p>
@@ -608,13 +608,13 @@ const ProfileView = () => {
                   <div>
                     <h4 className="text-sm font-semibold text-white mb-3">Attended ({attendedEvents.length})</h4>
                     {attendedEvents.length === 0 ? (
-                      <p className="text-xs text-white/40 bg-white/5 rounded-2xl p-4">No completed events attended yet.</p>
+                      <p className="text-xs text-white/50 bg-white/5 rounded-2xl p-4">No completed events attended yet.</p>
                     ) : (
                       <div className="space-y-3">
                         {attendedEvents.map((event) => (
                           <div key={event._id} className="rounded-2xl border border-white/10 bg-black/10 p-4 flex flex-col gap-1 opacity-70">
                             <h5 className="text-sm font-bold text-white line-clamp-1">{event.title}</h5>
-                            <p className="text-xs text-white/45">{new Date(event.date).toLocaleDateString()}</p>
+                            <p className="text-xs text-white/50">{new Date(event.date).toLocaleDateString()}</p>
                           </div>
                         ))}
                       </div>
@@ -627,7 +627,7 @@ const ProfileView = () => {
 
           <aside className="space-y-6">
             <div className={`${shellCard} p-6 md:p-7`}>
-              <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Quick facts</p>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Quick facts</p>
               <div className="mt-4 space-y-3 text-sm text-white/70">
                 <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
                   <span>Role</span>
@@ -646,7 +646,7 @@ const ProfileView = () => {
 
             {!isOwnProfile && profile.isMentor && currentUser && (
               <div className={`${shellCard} p-6 md:p-7`}>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Request mentorship</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Request mentorship</p>
                 {sent ? (
                   <p className="mt-4 text-sm leading-6 text-white/70">
                     Request sent. {profile.name.split(" ")[0]} will respond soon.
@@ -655,7 +655,7 @@ const ProfileView = () => {
                   <>
                     <div className="mt-4 space-y-4">
                       <div className="rounded-2xl bg-white/5 p-4 border border-white/5">
-                        <p className="text-[10px] uppercase tracking-[0.25em] text-white/45 mb-1.5">Availability Settings</p>
+                        <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 mb-1.5">Availability Settings</p>
                         <p className="text-xs text-white/80">Response time: {profile.typicalResponseTime || "1-3 days"}</p>
                         <p className="text-xs text-white/80 mt-1">Accepting students limit: {profile.maxActiveStudents ?? 3}</p>
                         <p className="text-xs text-cyan-300 mt-1 capitalize">Preferred contact: {profile.preferredContactMethod || "LinkedIn"}</p>
@@ -663,7 +663,7 @@ const ProfileView = () => {
 
                       {profile.canHelpWith?.length > 0 && (
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] uppercase tracking-[0.25em] text-white/45">Select Guidance Topic</label>
+                          <label className="text-[10px] uppercase tracking-[0.25em] text-white/50">Select Guidance Topic</label>
                           <select
                             value={selectedTopic}
                             onChange={(e) => setSelectedTopic(e.target.value)}
@@ -683,7 +683,7 @@ const ProfileView = () => {
                       onChange={(e) => setMessage(e.target.value)}
                       rows={4}
                       placeholder="Introduce yourself and what you'd like guidance on..."
-                      className="mt-4 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                      className="mt-4 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/50 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
                     />
                     {reqError && <p className="mt-2 text-sm text-rose-200">{reqError}</p>}
                     <button

@@ -97,7 +97,7 @@ const Collaborations = () => {
                 {/* Signatories / Representatives */}
                 {partner.representatives && partner.representatives.length > 0 && (
                   <div className="border-t border-white/10 pt-4">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-3 font-semibold">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/50 mb-3 font-semibold">
                       Student Representatives
                     </p>
                     <div className="flex flex-col gap-3">

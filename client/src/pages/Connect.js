@@ -46,7 +46,7 @@ const UserCard = ({ user }) => {
               </span>
             )}
           </div>
-          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-white/45">
+          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-white/50">
             {user.role}
             {user.batch ? ` · Batch ${user.batch}` : ""}
           </p>
@@ -130,15 +130,15 @@ const Connect = () => {
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Users</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Users</p>
                 <p className="mt-2 text-2xl font-semibold text-white">{users.length}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Role</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Role</p>
                 <p className="mt-2 text-2xl font-semibold text-white capitalize">{roleFilter}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Domain</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Domain</p>
                 <p className="mt-2 truncate text-2xl font-semibold text-white">{domain}</p>
               </div>
             </div>

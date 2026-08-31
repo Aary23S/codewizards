@@ -14,6 +14,7 @@ const projectSchema = new mongoose.Schema(
     },
     techStack: [String],          // ["React", "Node", "MongoDB"]
     contributors: [String],       // Names for now; ObjectId refs in Phase 2
+    postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // student credited for project_posted points
     githubUrl: String,
     demoUrl: String,
     imageUrl: String,             // Cloudinary URL

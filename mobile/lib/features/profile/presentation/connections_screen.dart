@@ -25,9 +25,11 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
   final Set<String> _expandedIds = {};
   final Map<String, Map<String, dynamic>> _contacts = {};
   final Set<String> _loadingContacts = {};
+  final Set<String> _contactErrors = {};
 
   final Map<String, List<Map<String, dynamic>>> _goals = {};
   final Set<String> _loadingGoals = {};
+  final Set<String> _goalErrors = {};
 
   @override
   void initState() {
@@ -93,51 +95,36 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
       _expandedIds.add(connId);
     });
 
-    final repo = context.read<ProfileRepository>();
+    if (!_contacts.containsKey(connId)) _loadContactFor(connId);
+    if (!_goals.containsKey(connId)) _loadGoalsFor(connId);
+  }
 
-    // Fetch contact details if not loaded
-    if (!_contacts.containsKey(connId)) {
-      setState(() {
-        _loadingContacts.add(connId);
-      });
-      try {
-        final contactData = await repo.fetchMentorshipContact(connId);
-        if (mounted) {
-          setState(() {
-            _contacts[connId] = contactData;
-          });
-        }
-      } catch (e) {
-        debugPrint('Failed to load contact: $e');
-      } finally {
-        if (mounted) {
-          setState(() {
-            _loadingContacts.remove(connId);
-          });
-        }
+  Future<void> _loadContactFor(String connId) async {
+    setState(() {
+      _loadingContacts.add(connId);
+      _contactErrors.remove(connId);
+    });
+    try {
+      final contactData = await context
+          .read<ProfileRepository>()
+          .fetchMentorshipContact(connId);
+      if (mounted) {
+        setState(() {
+          _contacts[connId] = contactData;
+        });
       }
-    }
-
-    // Fetch goals if not loaded
-    if (!_goals.containsKey(connId)) {
-      setState(() {
-        _loadingGoals.add(connId);
-      });
-      try {
-        final goalsData = await repo.fetchGoals(connId);
-        if (mounted) {
-          setState(() {
-            _goals[connId] = goalsData;
-          });
-        }
-      } catch (e) {
-        debugPrint('Failed to load goals: $e');
-      } finally {
-        if (mounted) {
-          setState(() {
-            _loadingGoals.remove(connId);
-          });
-        }
+    } catch (e) {
+      debugPrint('Failed to load contact: $e');
+      if (mounted) {
+        setState(() {
+          _contactErrors.add(connId);
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingContacts.remove(connId);
+        });
       }
     }
   }
@@ -196,9 +183,11 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
 
     final isExpanded = _expandedIds.contains(connId);
     final loadingContact = _loadingContacts.contains(connId);
+    final contactError = _contactErrors.contains(connId);
     final contactDetails = _contacts[connId] ?? const {};
 
     final loadingGoal = _loadingGoals.contains(connId);
+    final goalError = _goalErrors.contains(connId);
     final connGoals = _goals[connId] ?? [];
 
     return Container(
@@ -340,6 +329,30 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     )
+                  else if (contactError)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Failed to load contact channels.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.redAccent.withAlpha(220),
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _loadContactFor(connId),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF5CC8FF),
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text('Retry', style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                    )
                   else if (contactDetails.isEmpty)
                     Text(
                       'No contact channels are currently shared by this user.',
@@ -435,6 +448,30 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                         width: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
+                    )
+                  else if (goalError)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Failed to load mentorship goals.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.redAccent.withAlpha(220),
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _loadGoalsFor(connId),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF5CC8FF),
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text('Retry', style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
                     )
                   else if (connGoals.isEmpty)
                     Text(
@@ -799,6 +836,10 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
   }
 
   Future<void> _loadGoalsFor(String connId) async {
+    setState(() {
+      _loadingGoals.add(connId);
+      _goalErrors.remove(connId);
+    });
     try {
       final goalsData = await context.read<ProfileRepository>().fetchGoals(
         connId,
@@ -808,7 +849,20 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
           _goals[connId] = goalsData;
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to load goals: $e');
+      if (mounted) {
+        setState(() {
+          _goalErrors.add(connId);
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingGoals.remove(connId);
+        });
+      }
+    }
   }
 
   Widget _buildContactChip({

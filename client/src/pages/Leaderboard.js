@@ -10,7 +10,7 @@ const RankBadge = ({ rank }) => {
     3: "bg-amber-600 text-white",
   };
   return (
-    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${styles[rank] || "bg-white/10 text-white/45"}`}>
+    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${styles[rank] || "bg-white/10 text-white/50"}`}>
       {rank}
     </div>
   );
@@ -45,7 +45,7 @@ const Leaderboard = () => {
       <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
 
       <div className="relative mb-10 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">Top Contributors</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Top Contributors</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Leaderboard, presented as a ranked feed.
         </h1>
@@ -68,7 +68,7 @@ const Leaderboard = () => {
       </div>
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : students.length > 0 ? (
         <div className="flex flex-col gap-3">
           {students.map((student, index) => (
@@ -79,14 +79,14 @@ const Leaderboard = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-white">{student.name}</p>
-                <p className="text-xs text-white/40">Batch {student.batch}</p>
+                <p className="text-xs text-white/50">Batch {student.batch}</p>
               </div>
               <p className="text-lg font-semibold text-white">{student.points}</p>
             </Link>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-white/45">No data yet.</p>
+        <p className="text-sm text-white/50">No data yet.</p>
       )}
     </div>
   );

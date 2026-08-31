@@ -29,6 +29,26 @@ class ApiClient {
           }
           handler.next(options);
         },
+        onError: (error, handler) {
+          // These DioExceptionTypes mean the device never reached the server at
+          // all (no network route, DNS failure, or the request timed out) — give
+          // a clear, actionable message instead of a raw connection error.
+          const connectivityIssueTypes = {
+            DioExceptionType.connectionError,
+            DioExceptionType.connectionTimeout,
+            DioExceptionType.sendTimeout,
+            DioExceptionType.receiveTimeout,
+          };
+          if (connectivityIssueTypes.contains(error.type)) {
+            handler.next(
+              error.copyWith(
+                message: 'No internet connection. Please check your network and try again.',
+              ),
+            );
+            return;
+          }
+          handler.next(error);
+        },
       ),
     );
   }

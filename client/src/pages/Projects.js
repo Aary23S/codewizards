@@ -24,7 +24,7 @@ const ProjectCard = ({ project, index }) => (
         ))}
       </div>
       {project.contributors?.length > 0 && (
-        <p className="text-xs text-white/40">By {project.contributors.join(", ")}</p>
+        <p className="text-xs text-white/50">By {project.contributors.join(", ")}</p>
       )}
       <div className="flex gap-3 pt-1">
         {project.githubUrl && (
@@ -69,7 +69,7 @@ const Projects = () => {
       <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
 
       <div className="relative mb-14 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">What We Built</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">What We Built</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Projects with a sharper presentation layer.
         </h1>
@@ -79,7 +79,7 @@ const Projects = () => {
       </div>
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : projects.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {projects.map((project, index) => (

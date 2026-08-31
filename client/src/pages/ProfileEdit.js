@@ -384,7 +384,7 @@ const ProfileEdit = () => {
                   )}
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Profile image</p>
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Profile image</p>
                   <p className="mt-2 text-sm text-white/60">
                     Upload an image from your device. The backend will store it and reuse the same avatar across web and mobile.
                   </p>
@@ -433,7 +433,7 @@ const ProfileEdit = () => {
                   onChange={handleChange}
                   rows={4}
                   placeholder="Tell others about yourself..."
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/50 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
                 />
               </div>
             </div>
@@ -441,7 +441,7 @@ const ProfileEdit = () => {
 
           <section className={`${shellCard} p-6 md:p-7`}>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Professional Career</p>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Professional Career</p>
               <p className="mt-2 text-sm text-white/60">
                 Share your current company, designation, and professional background so juniors can seek guidance.
               </p>
@@ -534,7 +534,7 @@ const ProfileEdit = () => {
                   onChange={handleChange}
                   rows={4}
                   placeholder="Share a brief overview of your internships, work history, tech stacks, or guidance topics..."
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/50 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
                 />
               </div>
             </div>
@@ -543,7 +543,7 @@ const ProfileEdit = () => {
           <section className={`${shellCard} p-6 md:p-7`}>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Domains</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Domains</p>
                 <p className="mt-2 text-sm text-white/60">Choose the areas that best represent your work.</p>
               </div>
             </div>
@@ -663,7 +663,7 @@ const ProfileEdit = () => {
           <section className={`${shellCard} p-6 md:p-7`}>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Platform links</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Platform links</p>
                 <p className="mt-2 text-sm text-white/60">Add public links for discovery and profile visibility.</p>
               </div>
             </div>
@@ -679,7 +679,7 @@ const ProfileEdit = () => {
 
           <section className={`${shellCard} p-6 md:p-7`}>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Sync competitive stats</p>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Sync competitive stats</p>
               <p className="mt-2 text-sm text-white/60">
                 Connect your profiles to count toward the leaderboard. Re-sync anytime to update your stats.
               </p>
@@ -710,14 +710,14 @@ const ProfileEdit = () => {
                 },
               ].map((item) => (
                 <div key={item.name} className="space-y-2">
-                  <label className="text-xs uppercase tracking-[0.3em] text-white/45">{item.label}</label>
+                  <label className="text-xs uppercase tracking-[0.3em] text-white/50">{item.label}</label>
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <input
                       name={item.name}
                       value={form[item.name] || ""}
                       onChange={handleChange}
                       placeholder={item.placeholder}
-                      className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                      className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/50 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
                     />
                     <button
                       type="button"
@@ -746,7 +746,7 @@ const ProfileEdit = () => {
           <section className={`${shellCard} p-6 md:p-7`}>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Work Experience</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Work Experience</p>
                 <p className="mt-2 text-sm text-white/60">Add internships, part-time, or full-time roles.</p>
               </div>
               <button
@@ -762,7 +762,7 @@ const ProfileEdit = () => {
               {form.experiences.map((exp, idx) => (
                 <div key={idx} className="relative rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-white/45 font-bold">Role #{idx + 1}</span>
+                    <span className="text-xs text-white/50 font-bold">Role #{idx + 1}</span>
                     <button
                       type="button"
                       onClick={() => removeExperience(idx)}
@@ -817,13 +817,13 @@ const ProfileEdit = () => {
                       onChange={(e) => updateExperience(idx, "description", e.target.value)}
                       rows={3}
                       placeholder="List key achievements, tech stack, or guidance points..."
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/50 outline-none transition focus:border-cyan-300/60 focus:bg-white/8"
                     />
                   </div>
                 </div>
               ))}
               {form.experiences.length === 0 && (
-                <p className="text-center text-xs text-white/30 py-4">No experience items added yet.</p>
+                <p className="text-center text-xs text-white/50 py-4">No experience items added yet.</p>
               )}
             </div>
           </section>
@@ -832,7 +832,7 @@ const ProfileEdit = () => {
           <section className={`${shellCard} p-6 md:p-7`}>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Education</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Education</p>
                 <p className="mt-2 text-sm text-white/60">Share your university, degree, and study background.</p>
               </div>
               <button
@@ -848,7 +848,7 @@ const ProfileEdit = () => {
               {form.education.map((edu, idx) => (
                 <div key={idx} className="relative rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-white/45 font-bold">School #{idx + 1}</span>
+                    <span className="text-xs text-white/50 font-bold">School #{idx + 1}</span>
                     <button
                       type="button"
                       onClick={() => removeEducation(idx)}
@@ -905,7 +905,7 @@ const ProfileEdit = () => {
                 </div>
               ))}
               {form.education.length === 0 && (
-                <p className="text-center text-xs text-white/30 py-4">No education items added yet.</p>
+                <p className="text-center text-xs text-white/50 py-4">No education items added yet.</p>
               )}
             </div>
           </section>
@@ -914,7 +914,7 @@ const ProfileEdit = () => {
           <section className={`${shellCard} p-6 md:p-7`}>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Licenses & Certifications</p>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Licenses & Certifications</p>
                 <p className="mt-2 text-sm text-white/60">List courses, test scores, or vendor credentials.</p>
               </div>
               <button
@@ -930,7 +930,7 @@ const ProfileEdit = () => {
               {form.certifications.map((cert, idx) => (
                 <div key={idx} className="relative rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-white/45 font-bold">Credential #{idx + 1}</span>
+                    <span className="text-xs text-white/50 font-bold">Credential #{idx + 1}</span>
                     <button
                       type="button"
                       onClick={() => removeCertification(idx)}
@@ -976,14 +976,14 @@ const ProfileEdit = () => {
                 </div>
               ))}
               {form.certifications.length === 0 && (
-                <p className="text-center text-xs text-white/30 py-4">No certifications added yet.</p>
+                <p className="text-center text-xs text-white/50 py-4">No certifications added yet.</p>
               )}
             </div>
           </section>
 
           <section className={`${shellCard} p-6 md:p-7`}>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.35em] text-white/45">Contact & Privacy Details</p>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Contact & Privacy Details</p>
               <p className="mt-2 text-sm text-white/60">
                 These contact details are kept fully private. They will only be visible to mentors or mentees with whom you have an <strong>active accepted mentorship connection</strong>.
               </p>
@@ -996,7 +996,7 @@ const ProfileEdit = () => {
             </div>
 
             <div className="mt-6 border-t border-white/10 pt-5">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45 mb-4">Choose which contacts are visible to active connections:</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50 mb-4">Choose which contacts are visible to active connections:</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
                   { key: "email", label: "Share Email Address" },

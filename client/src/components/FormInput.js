@@ -36,7 +36,7 @@ const FormInput = ({ label, error, className = "", type = "text", ...props }) =>
         <input
           {...props}
           type={inputType}
-          className={`w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition duration-200 ease-out focus:border-cyan-300/60 focus:bg-white/8 focus:shadow-[0_0_0_4px_rgba(34,211,238,0.08)] ${
+          className={`w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/50 outline-none transition duration-200 ease-out focus:border-cyan-300/60 focus:bg-white/8 focus:shadow-[0_0_0_4px_rgba(34,211,238,0.08)] ${
             isPassword ? "pr-12" : ""
           } ${className}`}
         />

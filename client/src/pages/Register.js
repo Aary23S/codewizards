@@ -89,7 +89,7 @@ const Register = () => {
               { title: "Role preview", value: deriveRolePreview(form.batch, form.programDurationYears) },
             ].map((item) => (
               <div key={item.title} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
-                <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">{item.title}</div>
+                <div className="text-[10px] uppercase tracking-[0.28em] text-white/50">{item.title}</div>
                 <div className="mt-2 text-sm font-semibold text-white/80">{item.value}</div>
               </div>
             ))}
@@ -127,7 +127,7 @@ const Register = () => {
               required
             />
             <div>
-              <label className="mb-2 block text-[11px] uppercase tracking-[0.3em] text-white/45">
+              <label className="mb-2 block text-[11px] uppercase tracking-[0.3em] text-white/50">
                 Program duration
               </label>
               <select

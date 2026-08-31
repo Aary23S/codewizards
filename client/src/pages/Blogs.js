@@ -40,7 +40,7 @@ const BlogCard = ({ blog, user, onDelete, index }) => (
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">
             {blog.author?.name?.charAt(0)}
           </div>
-          <span className="text-xs text-white/40">
+          <span className="text-xs text-white/50">
             {blog.author?.name} · {timeAgo(blog.createdAt)}
           </span>
         </div>
@@ -121,7 +121,7 @@ const Blogs = () => {
   };
 
   const allTags = [...new Set(blogs.flatMap((blog) => blog.tags || []))];
-  const inputClass = "rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none w-full";
+  const inputClass = "rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none w-full";
 
   return (
     <div className="relative mx-auto max-w-6xl px-4 py-20">
@@ -130,7 +130,7 @@ const Blogs = () => {
 
       <div className="relative mb-10 flex items-start justify-between gap-4 flex-wrap">
         <div className="max-w-3xl">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/45">Ideas & Learnings</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Ideas & Learnings</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
             Blog feed, upgraded visually.
           </h1>
@@ -144,7 +144,7 @@ const Blogs = () => {
 
       {showForm && (
         <div className="mb-10 rounded-3xl border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-white/45">New Post</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-white/50">New Post</p>
           <div className="mt-5 flex flex-col gap-4">
             <input className={inputClass} placeholder="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             <textarea className={inputClass} placeholder="Write your article here... *" rows={8} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} style={{ resize: "vertical" }} />
@@ -172,7 +172,7 @@ const Blogs = () => {
       )}
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : blogs.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {blogs.map((blog, index) => (

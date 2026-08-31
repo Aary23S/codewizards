@@ -8,6 +8,7 @@ const roleLabel = {
   student: "Student",
   senior: "Senior",
   alumni: "Alumni",
+  admin: "Admin",
 };
 
 const shellCard =
@@ -20,7 +21,7 @@ const QuickAction = ({ to, title, description }) => (
   >
     <p className="text-sm font-semibold text-white">{title}</p>
     <p className="mt-2 text-sm leading-6 text-white/60">{description}</p>
-    <p className="mt-4 text-xs uppercase tracking-[0.3em] text-white/45">Open</p>
+    <p className="mt-4 text-xs uppercase tracking-[0.3em] text-white/50">Open</p>
   </Link>
 );
 
@@ -28,10 +29,10 @@ const RequestList = ({ title, emptyText, requests, onAction, showActions }) => (
   <section className={`${shellCard} p-6 md:p-7`}>
     <div className="mb-6 flex items-end justify-between gap-4">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">{title}</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">{title}</p>
         <h2 className="mt-2 text-2xl font-semibold text-white">Mentorship requests</h2>
       </div>
-      <p className="text-xs uppercase tracking-[0.22em] text-white/35">{requests.length} items</p>
+      <p className="text-xs uppercase tracking-[0.22em] text-white/50">{requests.length} items</p>
     </div>
 
     {requests.length === 0 ? (
@@ -116,8 +117,8 @@ const Dashboard = () => {
 
       <div className="relative mx-auto max-w-6xl px-4 py-20">
         <div className="relative mb-14 max-w-3xl">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/45">
-            {roleLabel[user.role]} Dashboard
+          <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+            {(roleLabel[user.role] || user.role)} Dashboard
           </p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
             Welcome back, {firstName}
@@ -129,15 +130,15 @@ const Dashboard = () => {
 
         <section className="mb-14 grid gap-5 md:grid-cols-3">
           <div className={shellCard + " p-6"}>
-            <p className="text-xs uppercase tracking-[0.28em] text-white/45">Role</p>
-            <p className="mt-3 text-2xl font-semibold text-white">{roleLabel[user.role]}</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-white/50">Role</p>
+            <p className="mt-3 text-2xl font-semibold text-white">{(roleLabel[user.role] || user.role)}</p>
           </div>
           <div className={shellCard + " p-6"}>
-            <p className="text-xs uppercase tracking-[0.28em] text-white/45">Email</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-white/50">Email</p>
             <p className="mt-3 break-all text-sm text-white/70">{user.email}</p>
           </div>
           <div className={shellCard + " p-6"}>
-            <p className="text-xs uppercase tracking-[0.28em] text-white/45">Batch</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-white/50">Batch</p>
             <p className="mt-3 text-2xl font-semibold text-white">{user.batch || "N/A"}</p>
           </div>
         </section>
@@ -150,10 +151,10 @@ const Dashboard = () => {
                   {user.name?.charAt(0) || "?"}
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.28em] text-white/45">Profile snapshot</p>
+                  <p className="text-xs uppercase tracking-[0.28em] text-white/50">Profile snapshot</p>
                   <p className="mt-2 text-lg font-semibold text-white">{user.name}</p>
                   <p className="text-sm text-white/55">
-                    {roleLabel[user.role]} {user.batch ? `· Batch ${user.batch}` : ""}
+                    {(roleLabel[user.role] || user.role)} {user.batch ? `· Batch ${user.batch}` : ""}
                   </p>
                 </div>
               </div>
@@ -182,7 +183,7 @@ const Dashboard = () => {
           </div>
 
           <div className={shellCard + " p-6 md:p-7"}>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/45">Quick Links</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/50">Quick Links</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.25em] text-white/70" to="/connect">
                 Connect
@@ -241,7 +242,7 @@ const Dashboard = () => {
         {user.role === "alumni" && (
           <section className="mb-14 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
             <div className={shellCard + " p-6 md:p-7"}>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Alumni Space</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Alumni Space</p>
               <h2 className="mt-3 text-2xl font-semibold text-white">Support the next cohort</h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-white/60">
                 Keep your profile current, stay visible in the mentor directory, and share guidance with students and seniors who need it.
@@ -263,7 +264,7 @@ const Dashboard = () => {
             </div>
 
             <div className={shellCard + " p-6 md:p-7"}>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Mentorship Info</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Mentorship Info</p>
               <p className="mt-3 text-sm leading-7 text-white/60">
                 You can review, accept, or reject incoming student requests in the mentorship requests section.
               </p>

@@ -97,7 +97,7 @@ const Resources = () => {
 
       <div className="relative mx-auto max-w-6xl">
         <section className={`${shellCard} overflow-hidden p-7 md:p-8`}>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Learn</p>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Learn</p>
           <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <h1 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">Resources</h1>
@@ -107,15 +107,15 @@ const Resources = () => {
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Items</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Items</p>
                 <p className="mt-2 text-2xl font-semibold text-white">{resources.length}</p>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Types</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Types</p>
                 <p className="mt-2 text-2xl font-semibold text-white">{Math.max(categories.length - 1, 0)}</p>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Domains</p>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Domains</p>
                 <p className="mt-2 text-2xl font-semibold text-white">{Math.max(domains.length - 1, 0)}</p>
               </div>
             </div>
@@ -125,7 +125,7 @@ const Resources = () => {
         <section className={`${shellCard} mt-6 p-6 md:p-7`}>
           <div className="space-y-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Type</p>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Type</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {categories.map((item) => (
                   <button
@@ -144,7 +144,7 @@ const Resources = () => {
             </div>
 
             <div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Domain</p>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Domain</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {domains.map((item) => (
                   <button
@@ -176,8 +176,8 @@ const Resources = () => {
               {orderedGroups.map(([groupName, groupItems]) => (
                 <section key={groupName}>
                   <div className="mb-3 flex items-center justify-between">
-                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">{groupName}</p>
-                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/35">{groupItems.length} items</p>
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">{groupName}</p>
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">{groupItems.length} items</p>
                   </div>
                   <div className="grid gap-5 md:grid-cols-2">
                     {groupItems.map((resource) => {
@@ -200,7 +200,7 @@ const Resources = () => {
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">
+                              <p className="text-[11px] uppercase tracking-[0.28em] text-white/50">
                                 {resource.category || "Resource"}
                               </p>
                               <p className="mt-3 text-xl font-semibold text-white">{resource.title}</p>
@@ -211,7 +211,7 @@ const Resources = () => {
                           </div>
 
                           {host && (
-                            <p className="mt-3 text-[11px] uppercase tracking-[0.28em] text-white/45">{host}</p>
+                            <p className="mt-3 text-[11px] uppercase tracking-[0.28em] text-white/50">{host}</p>
                           )}
 
                           <p className="mt-4 text-sm leading-6 text-white/60">

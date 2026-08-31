@@ -24,12 +24,12 @@ const OpportunityCard = ({ opp, user, onDelete }) => (
             {typeLabel[opp.type] || opp.type}
           </span>
           {opp.domain && <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/60">{opp.domain}</span>}
-          {opp.deadline && <span className="text-xs text-white/40">Deadline: {new Date(opp.deadline).toDateString()}</span>}
+          {opp.deadline && <span className="text-xs text-white/50">Deadline: {new Date(opp.deadline).toDateString()}</span>}
         </div>
         <h3 className="text-xl font-semibold text-white">{opp.title}</h3>
         <p className="mt-1 text-sm text-white/55">{opp.company}</p>
         {opp.description && <p className="mt-4 text-sm leading-7 text-white/60">{opp.description}</p>}
-        <p className="mt-4 text-xs text-white/40">Posted by {opp.postedBy?.name} · {opp.postedBy?.role}</p>
+        <p className="mt-4 text-xs text-white/50">Posted by {opp.postedBy?.name} · {opp.postedBy?.role}</p>
       </div>
 
       <div className="flex shrink-0 flex-col gap-2">
@@ -109,7 +109,7 @@ const Opportunities = () => {
     setItems((prev) => prev.filter((item) => item._id !== id));
   };
 
-  const inputClass = "rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none w-full";
+  const inputClass = "rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none w-full";
 
   return (
     <div className="relative mx-auto max-w-6xl px-4 py-20">
@@ -117,7 +117,7 @@ const Opportunities = () => {
       <div className="pointer-events-none absolute right-0 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
 
       <div className="relative mb-10 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">Grow Your Career</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Grow Your Career</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Opportunities in a cleaner, premium feed.
         </h1>
@@ -170,7 +170,7 @@ const Opportunities = () => {
 
       {showForm && (
         <div className="mb-10 rounded-3xl border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-white/45">New Opportunity</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-white/50">New Opportunity</p>
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
             <input className={inputClass} name="title" placeholder="Role / Title *" value={form.title} onChange={handleChange} />
             <input className={inputClass} name="company" placeholder="Company *" value={form.company} onChange={handleChange} />
@@ -192,7 +192,7 @@ const Opportunities = () => {
       )}
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : items.length > 0 ? (
         <div className="flex flex-col gap-5">
           {items.map((opp) => (
@@ -200,7 +200,7 @@ const Opportunities = () => {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-white/45">No opportunities found. Check back soon.</p>
+        <p className="text-sm text-white/50">No opportunities found. Check back soon.</p>
       )}
     </div>
   );

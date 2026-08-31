@@ -1,6 +1,7 @@
 //project.controller.js
 const { safeErrorMessage } = require("../utils/safeErrorMessage");
 const Project = require("../models/Project");
+const PointLedger = require("../models/PointLedger");
 const { parsePagination } = require("../utils/paginate");
 
 // GET /api/v1/projects
@@ -38,6 +39,21 @@ const getProject = async (req, res) => {
 const createProject = async (req, res) => {
   try {
     const project = await Project.create(req.body);
+
+    if (project.postedBy) {
+      try {
+        await PointLedger.create({
+          student: project.postedBy,
+          ruleKey: "project_posted",
+          sourceType: "in_house",
+          sourceId: project._id,
+          month: new Date().toISOString().slice(0, 7),
+        });
+      } catch (ledgerErr) {
+        console.warn("project_posted ledger entry failed:", ledgerErr.message);
+      }
+    }
+
     res.status(201).json({ success: true, data: project });
   } catch (error) {
     res.status(400).json({ success: false, message: safeErrorMessage(error) });

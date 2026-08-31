@@ -17,11 +17,11 @@ const Footer = () => {
           <p className="max-w-sm text-sm leading-7 text-white/55">
             Official coding club of D.Y. Patil Agriculture & Technical University, Talsande.
           </p>
-          <p className="mt-3 text-xs uppercase tracking-[0.24em] text-white/35">Founded: 9 June 2023</p>
+          <p className="mt-3 text-xs uppercase tracking-[0.24em] text-white/50">Founded: 9 June 2023</p>
         </div>
 
         <div>
-          <h4 className="text-xs uppercase tracking-[0.28em] text-white/45">
+          <h4 className="text-xs uppercase tracking-[0.28em] text-white/50">
             {user ? "Quick Links" : "Locked Access"}
           </h4>
           {user ? (
@@ -49,7 +49,7 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="text-xs uppercase tracking-[0.28em] text-white/45">Connect</h4>
+          <h4 className="text-xs uppercase tracking-[0.28em] text-white/50">Connect</h4>
           <ul className="mt-4 space-y-3 text-sm text-white/60">
             <li>
               <a href="mailto:codewizards@dypatil.edu" className="transition-colors hover:text-white">
@@ -70,7 +70,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="border-t border-white/10 py-4 text-center text-xs tracking-[0.2em] text-white/35">
+      <div className="border-t border-white/10 py-4 text-center text-xs tracking-[0.2em] text-white/50">
         © {new Date().getFullYear()} CodeWizards — D.Y. Patil Agriculture & Technical University
       </div>
     </footer>

@@ -34,7 +34,7 @@ const Contact = () => {
       <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
 
       <div className="relative mb-12 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">Get In Touch</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Get In Touch</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Contact, with the same visual system.
         </h1>
@@ -45,7 +45,7 @@ const Contact = () => {
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="group rounded-3xl border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
-          <p className="text-xs uppercase tracking-[0.28em] text-white/45">Reach Us</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-white/50">Reach Us</p>
           <ul className="mt-5 space-y-4 text-sm text-white/65">
             {info?.email && (
               <li>
@@ -60,7 +60,7 @@ const Contact = () => {
         </div>
 
         <div className="group rounded-3xl border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
-          <p className="text-xs uppercase tracking-[0.28em] text-white/45">Follow Us</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-white/50">Follow Us</p>
           <ul className="mt-5 space-y-4 text-sm">
             {info?.github && (
               <li>
@@ -95,7 +95,7 @@ const Contact = () => {
       </div>
 
       <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
-        <p className="text-xs uppercase tracking-[0.28em] text-white/45">Send a Message</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-white/50">Send a Message</p>
         <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
           <input
             type="text"
@@ -104,7 +104,7 @@ const Contact = () => {
             value={form.name}
             onChange={handleChange}
             required
-            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none"
           />
           <input
             type="email"
@@ -113,7 +113,7 @@ const Contact = () => {
             value={form.email}
             onChange={handleChange}
             required
-            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none"
           />
           <textarea
             rows={5}
@@ -122,7 +122,7 @@ const Contact = () => {
             value={form.message}
             onChange={handleChange}
             required
-            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none resize-none"
+            className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none resize-none"
           />
 
           {status === "sent" && (

@@ -1,6 +1,7 @@
 // codewizards/client/src/pages/Gallery.js
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getGallery } from "../services/api";
+import { useModalA11y } from "../hooks/useModalA11y";
 
 const categories = ["all", "event", "poster", "team", "other"];
 
@@ -33,6 +34,8 @@ const GalleryCard = ({ item, index, onClick }) => {
 const LightboxModal = ({ item, onClose }) => {
   const images = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls : [item.imageUrl];
   const [activeIdx, setActiveIdx] = useState(0);
+  const containerRef = useRef(null);
+  useModalA11y(containerRef, true, onClose);
 
   const handlePrev = (e) => {
     e.stopPropagation();
@@ -46,12 +49,18 @@ const LightboxModal = ({ item, onClose }) => {
 
   return (
     <div
+      ref={containerRef}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 px-4 backdrop-blur-md transition-all duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${item.title} — image viewer`}
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 px-4 backdrop-blur-md transition-all duration-300 outline-none"
     >
       {/* Close button */}
       <button
         onClick={onClose}
+        aria-label="Close image viewer"
         className="absolute right-6 top-6 text-white/70 hover:text-white text-3xl font-light transition-colors"
       >
         &times;
@@ -64,12 +73,14 @@ const LightboxModal = ({ item, onClose }) => {
           <>
             <button
               onClick={handlePrev}
+              aria-label="Previous image"
               className="absolute left-[-60px] top-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-white/5 p-4 text-white transition hover:bg-white/15 focus:outline-none hidden md:block"
             >
               &#10094;
             </button>
             <button
               onClick={handleNext}
+              aria-label="Next image"
               className="absolute right-[-60px] top-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-white/5 p-4 text-white transition hover:bg-white/15 focus:outline-none hidden md:block"
             >
               &#10095;
@@ -100,6 +111,8 @@ const LightboxModal = ({ item, onClose }) => {
               <button
                 key={idx}
                 onClick={() => setActiveIdx(idx)}
+                aria-label={`Go to image ${idx + 1}`}
+                aria-current={activeIdx === idx}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   activeIdx === idx ? "w-6 bg-white" : "w-2 bg-white/35 hover:bg-white/50"
                 }`}
@@ -155,7 +168,7 @@ const Gallery = () => {
       <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-amber-500/10 blur-3xl" />
 
       <div className="relative mb-10 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">Moments</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Moments</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Gallery, presented as a visual grid.
         </h1>
@@ -181,7 +194,7 @@ const Gallery = () => {
       </div>
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((item, index) => (

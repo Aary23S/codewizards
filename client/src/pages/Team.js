@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getTeam } from "../services/api";
+import { useTeamMembers } from "../hooks/useTeamMembers";
 
 const roleTone = {
   core: "bg-emerald-500/15 text-emerald-200 border-emerald-500/25",
@@ -84,10 +84,10 @@ const YearSection = ({ year, members, expanded, onToggle }) => (
       >
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Team Year</p>
+            <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Team Year</p>
             <h2 className="mt-2 text-3xl font-semibold text-white">{year}</h2>
           </div>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-white/40">{members.length} members</p>
+          <p className="text-[11px] uppercase tracking-[0.25em] text-white/50">{members.length} members</p>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -127,27 +127,9 @@ const YearSection = ({ year, members, expanded, onToggle }) => (
 );
 
 const Team = () => {
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { members, loading } = useTeamMembers();
   const [expandedYear, setExpandedYear] = useState(null);
   const hasInitializedExpandedYear = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    getTeam()
-      .then((res) => {
-        if (cancelled) return;
-        setMembers(res.data.data || []);
-      })
-      .catch(console.error)
-      .finally(() => {
-        if (cancelled) return;
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const yearlyGroups = useMemo(() => {
     const nonStaticMembers = members.filter((member) => !["founder", "faculty"].includes(member.category));
@@ -185,7 +167,7 @@ const Team = () => {
       <div className="absolute right-8 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
 
       <div className="relative mb-12 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">The People</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">The People</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Our team, organized by year.
         </h1>
@@ -195,24 +177,24 @@ const Team = () => {
       </div>
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : yearlyGroups.length > 0 ? (
         <>
           <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.2)]">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Team members</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Team members</p>
               <p className="mt-3 text-3xl font-semibold text-white">{totalMembers}+</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.2)]">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Year groups</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Year groups</p>
               <p className="mt-3 text-3xl font-semibold text-white">{yearlyGroups.length}</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.2)]">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Founders</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Founders</p>
               <p className="mt-3 text-3xl font-semibold text-white">{founders}</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.2)]">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Faculty</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Faculty</p>
               <p className="mt-3 text-3xl font-semibold text-white">{faculty}</p>
             </div>
           </div>

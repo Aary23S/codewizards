@@ -1,6 +1,6 @@
 // codewizards/client/src/pages/About.js
-import { useEffect, useMemo, useState } from "react";
-import { getTeam } from "../services/api";
+import { useMemo } from "react";
+import { useTeamMembers } from "../hooks/useTeamMembers";
 
 const fallbackFounders = [
   {
@@ -76,8 +76,8 @@ const MemberCard = ({ member }) => (
 const Section = ({ title, members, compact = false }) => (
   <section className="mb-10">
     <div className="mb-5 flex items-end justify-between gap-4">
-      <h2 className="text-xs uppercase tracking-[0.28em] text-white/45">{title}</h2>
-      <p className="text-xs uppercase tracking-[0.2em] text-white/30">{members.length} members</p>
+      <h2 className="text-xs uppercase tracking-[0.28em] text-white/50">{title}</h2>
+      <p className="text-xs uppercase tracking-[0.2em] text-white/50">{members.length} members</p>
     </div>
     <div className={compact ? "grid grid-cols-1 gap-4 md:grid-cols-2" : "grid grid-cols-1 gap-5 md:grid-cols-2"}>
       {members.map((member) => <MemberCard key={`${member.category}-${member.name}`} member={member} />)}
@@ -86,25 +86,7 @@ const Section = ({ title, members, compact = false }) => (
 );
 
 const About = () => {
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    getTeam()
-      .then((res) => {
-        if (cancelled) return;
-        setMembers(res.data.data || []);
-      })
-      .catch(console.error)
-      .finally(() => {
-        if (cancelled) return;
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { members, loading } = useTeamMembers();
 
   const founders = useMemo(() => {
     const apiFounders = members.filter((member) => member.category === "founder");
@@ -122,7 +104,7 @@ const About = () => {
       <div className="absolute right-0 top-20 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
 
       <div className="relative mb-16 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">Who We Are</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Who We Are</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">About CodeWizards</h1>
         <p className="mt-5 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
           We are building a student-led technical community with shared visibility, clear ownership, and admin-managed team profiles that can evolve with the club.
@@ -131,13 +113,13 @@ const About = () => {
 
       <div className="mb-14 grid gap-5 md:grid-cols-2">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-7">
-          <p className="text-xs uppercase tracking-[0.28em] text-white/45">Mission</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-white/50">Mission</p>
           <p className="mt-4 text-sm leading-7 text-white/65">
             To build a strong technical community where every student, regardless of background, gets access to guidance, projects, and opportunities through peer mentorship and collaboration.
           </p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-white/5 p-7">
-          <p className="text-xs uppercase tracking-[0.28em] text-white/45">Vision</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-white/50">Vision</p>
           <p className="mt-4 text-sm leading-7 text-white/65">
             To make CodeWizards the most impactful student-led technical club in Maharashtra, producing developers, researchers, and innovators who give back to the community.
           </p>
@@ -145,7 +127,7 @@ const About = () => {
       </div>
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : (
         <>
           <Section title="Founders" members={founders} />

@@ -31,6 +31,7 @@ import Blogs from "./pages/Blogs";
 import BlogPost from "./pages/BlogPost";
 import Collaborations from "./pages/Collaborations";
 import EventRegistrations from "./pages/EventRegistrations";
+import NotFound from "./pages/NotFound";
 
 const DashboardRedirect = () => {
   const { user, loading } = useAuth();
@@ -313,6 +314,7 @@ function App() {
             }
           />
 
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

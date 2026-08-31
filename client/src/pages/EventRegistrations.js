@@ -9,6 +9,7 @@ const EventRegistrations = () => {
   const [event, setEvent] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -24,7 +25,7 @@ const EventRegistrations = () => {
         setRegistrations(regRes.data.data || []);
       } catch (err) {
         console.error(err);
-        if (!cancelled) alert("Failed to load registrations or event info.");
+        if (!cancelled) setLoadError("Failed to load registrations or event info.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -72,7 +73,7 @@ const EventRegistrations = () => {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black text-white">
-        <p className="text-sm text-white/45">Loading registration details...</p>
+        <p className="text-sm text-white/50">Loading registration details...</p>
       </div>
     );
   }
@@ -83,12 +84,18 @@ const EventRegistrations = () => {
       <div className="absolute left-0 top-16 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
       <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
 
+      {loadError && (
+        <div role="alert" className="relative mb-8 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">
+          {loadError}
+        </div>
+      )}
+
       {/* Header section */}
       <div className="relative mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-white/10 pb-8">
         <div>
           <button
             onClick={() => navigate("/events")}
-            className="mb-4 inline-flex items-center gap-2 text-xs uppercase tracking-wider text-white/45 hover:text-white transition"
+            className="mb-4 inline-flex items-center gap-2 text-xs uppercase tracking-wider text-white/50 hover:text-white transition"
           >
             ← Back to Events
           </button>
@@ -109,7 +116,7 @@ const EventRegistrations = () => {
             placeholder="Search by name, email, batch..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="rounded-full border border-white/10 bg-black/40 px-5 py-2.5 text-xs text-white placeholder:text-white/30 outline-none focus:border-cyan-500/50 w-full sm:w-64"
+            className="rounded-full border border-white/10 bg-black/40 px-5 py-2.5 text-xs text-white placeholder:text-white/50 outline-none focus:border-cyan-500/50 w-full sm:w-64"
           />
           <button
             onClick={handleExportCSV}
@@ -124,24 +131,24 @@ const EventRegistrations = () => {
       {/* Statistics Cards */}
       <div className="mb-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <p className="text-[10px] uppercase tracking-widest text-white/45 font-semibold">Total Registered</p>
+          <p className="text-[10px] uppercase tracking-widest text-white/50 font-semibold">Total Registered</p>
           <p className="text-2xl font-bold mt-1">{registrations.length}</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <p className="text-[10px] uppercase tracking-widest text-white/45 font-semibold">Checked-In</p>
+          <p className="text-[10px] uppercase tracking-widest text-white/50 font-semibold">Checked-In</p>
           <p className="text-2xl font-bold mt-1 text-emerald-400">
             {registrations.filter((r) => r.status === "attended").length}
           </p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <p className="text-[10px] uppercase tracking-widest text-white/45 font-semibold">Pending</p>
+          <p className="text-[10px] uppercase tracking-widest text-white/50 font-semibold">Pending</p>
           <p className="text-2xl font-bold mt-1 text-sky-400">
             {registrations.filter((r) => r.status === "registered").length}
           </p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-          <p className="text-[10px] uppercase tracking-widest text-white/45 font-semibold">Cancelled</p>
-          <p className="text-2xl font-bold mt-1 text-white/30">
+          <p className="text-[10px] uppercase tracking-widest text-white/50 font-semibold">Cancelled</p>
+          <p className="text-2xl font-bold mt-1 text-white/50">
             {registrations.filter((r) => r.status === "cancelled").length}
           </p>
         </div>
@@ -172,7 +179,7 @@ const EventRegistrations = () => {
                           ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                           : reg.status === "registered"
                           ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
-                          : "bg-white/5 text-white/45 border border-white/10"
+                          : "bg-white/5 text-white/50 border border-white/10"
                       }`}>
                         {reg.status}
                       </span>
@@ -184,7 +191,7 @@ const EventRegistrations = () => {
           </div>
         ) : (
           <div className="py-20 text-center">
-            <p className="text-sm text-white/45">No student registrations match your filter.</p>
+            <p className="text-sm text-white/50">No student registrations match your filter.</p>
           </div>
         )}
       </div>

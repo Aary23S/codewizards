@@ -9,7 +9,7 @@ const MilestoneCard = ({ milestone, index }) => (
   >
     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
     <div className="relative">
-      <div className="mb-4 text-[11px] uppercase tracking-[0.28em] text-white/40">
+      <div className="mb-4 text-[11px] uppercase tracking-[0.28em] text-white/50">
         {milestone.month ? `${milestone.month} ${milestone.year}` : milestone.year}
       </div>
       <h3 className="text-xl font-semibold text-white">{milestone.title}</h3>
@@ -45,7 +45,7 @@ const Legacy = () => {
       <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
 
       <div className="relative mb-14 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">Our Journey</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Our Journey</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Club legacy, presented like a living timeline.
         </h1>
@@ -55,7 +55,7 @@ const Legacy = () => {
       </div>
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : milestones.length > 0 ? (
         <div className="relative border-l border-white/10 pl-8">
           <div className="absolute left-[-7px] top-0 h-full w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />

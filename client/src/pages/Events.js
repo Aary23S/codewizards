@@ -1,5 +1,5 @@
 // codewizards/client/src/pages/Events.js
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   getEvents,
@@ -9,9 +9,13 @@ import {
   verifyEventOTP,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useModalA11y } from "../hooks/useModalA11y";
 import logo from "../assets/logo.jpeg";
 
 const CertificateModal = ({ event, user, onClose }) => {
+  const containerRef = useRef(null);
+  useModalA11y(containerRef, true, onClose);
+
   const handlePrint = () => {
     window.print();
   };
@@ -21,7 +25,14 @@ const CertificateModal = ({ event, user, onClose }) => {
     : new Date().toLocaleDateString();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
+    <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Certificate of attendance for ${event.title}`}
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md outline-none"
+    >
       <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-[#181206] to-[#0a0804] p-8 shadow-[0_0_80px_rgba(245,158,11,0.15)] text-center md:p-12 print:border-none print:bg-white print:text-black">
         {/* Certificate Frame */}
         <div className="absolute inset-4 rounded-2xl border border-amber-500/10 pointer-events-none print:hidden" />
@@ -57,16 +68,16 @@ const CertificateModal = ({ event, user, onClose }) => {
           <div className="mt-10 grid grid-cols-2 gap-8 border-t border-white/10 pt-8 print:border-black/10">
             <div>
               <p className="font-serif text-sm font-semibold text-white/80 print:text-black/85">Mr. Somanath Salunkhe</p>
-              <p className="text-[10px] uppercase tracking-widest text-white/40 print:text-black/40">Faculty Co-ordinator</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/50 print:text-black/55">Faculty Co-ordinator</p>
             </div>
             <div>
               <p className="font-serif text-sm font-semibold text-white/80 print:text-black/85">Dr. Sangram Patil</p>
-              <p className="text-[10px] uppercase tracking-widest text-white/40 print:text-black/40">Director of Academics</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/50 print:text-black/55">Director of Academics</p>
             </div>
           </div>
 
           <div className="mt-8 border-t border-amber-500/20 pt-6">
-            <p className="text-[9px] text-white/35 print:text-black/35">
+            <p className="text-[9px] text-white/50 print:text-black/55">
               Verified on {attendedDateStr}
             </p>
           </div>
@@ -144,7 +155,7 @@ const EventCard = ({
         )}
         <div className="min-w-0 flex-1">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className="text-[11px] uppercase tracking-[0.28em] text-white/40">{event.type}</span>
+            <span className="text-[11px] uppercase tracking-[0.28em] text-white/50">{event.type}</span>
             <span
               className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${isUpcoming ? "bg-white text-black" : "bg-white/8 text-white/55"
                 }`}
@@ -162,7 +173,7 @@ const EventCard = ({
           </div>
           <h3 className="text-xl font-semibold text-white line-clamp-2">{event.title}</h3>
           <p className="mt-3 text-sm leading-6 text-white/60 line-clamp-4">{event.description}</p>
-          <p className="mt-4 text-xs text-white/40">
+          <p className="mt-4 text-xs text-white/50">
             {new Date(event.date).toDateString()} {event.venue && `· ${event.venue}`}
           </p>
 
@@ -219,7 +230,7 @@ const EventCard = ({
                             placeholder="Enter Event OTP"
                             value={otpVal}
                             onChange={(e) => setOtpVal(e.target.value)}
-                            className="w-32 rounded-full border border-white/10 bg-black/40 px-3.5 py-1.5 text-center text-xs text-white placeholder:text-white/30 outline-none focus:border-amber-500/50"
+                            className="w-32 rounded-full border border-white/10 bg-black/40 px-3.5 py-1.5 text-center text-xs text-white placeholder:text-white/50 outline-none focus:border-amber-500/50"
                           />
                           <button
                             type="submit"
@@ -263,7 +274,7 @@ const EventCard = ({
                         🎓 View Certificate
                       </button>
                     ) : (
-                      <p className="text-xs text-white/35">Event has ended</p>
+                      <p className="text-xs text-white/50">Event has ended</p>
                     )}
                   </>
                 )}
@@ -271,7 +282,7 @@ const EventCard = ({
             )}
 
             {!user && isUpcoming && (
-              <p className="text-xs text-white/40">
+              <p className="text-xs text-white/50">
                 <a href="/login" className="text-white underline underline-offset-4">Login</a> to register & verify attendance.
               </p>
             )}
@@ -288,6 +299,13 @@ const Events = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const [activeCertEvent, setActiveCertEvent] = useState(null);
+  const [banner, setBanner] = useState(null); // { type: "error" | "success", message }
+
+  useEffect(() => {
+    if (!banner) return;
+    const timer = setTimeout(() => setBanner(null), 5000);
+    return () => clearTimeout(timer);
+  }, [banner]);
 
   const fetchAllEvents = async (isCancelled = () => false) => {
     try {
@@ -328,7 +346,7 @@ const Events = () => {
         )
       );
     } catch (err) {
-      alert(err.response?.data?.message || "Registration failed");
+      setBanner({ type: "error", message: err.response?.data?.message || "Registration failed" });
     }
   };
 
@@ -351,13 +369,13 @@ const Events = () => {
         )
       );
     } catch (err) {
-      alert(err.response?.data?.message || "Cancellation failed");
+      setBanner({ type: "error", message: err.response?.data?.message || "Cancellation failed" });
     }
   };
 
   const handleVerifyOtp = async (eventId, code) => {
     const res = await verifyEventOTP(eventId, code);
-    alert("✓ Attendance Verified! Your certificate is now available and points have been awarded.");
+    setBanner({ type: "success", message: "✓ Attendance verified! Your certificate is now available and points have been awarded." });
     setEvents((prev) =>
       prev.map((e) =>
         e._id === eventId
@@ -390,7 +408,7 @@ const Events = () => {
         )
       );
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to generate OTP");
+      setBanner({ type: "error", message: err.response?.data?.message || "Failed to generate OTP" });
     }
   };
 
@@ -401,8 +419,20 @@ const Events = () => {
       <div className="absolute left-0 top-16 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
       <div className="absolute right-0 top-28 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
 
+      {banner && (
+        <div
+          role="alert"
+          className={`relative mb-6 rounded-2xl border px-5 py-4 text-sm ${banner.type === "success"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+              : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+            }`}
+        >
+          {banner.message}
+        </div>
+      )}
+
       <div className="relative mb-10 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">What's Happening</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">What's Happening</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Events with verified certification.
         </h1>
@@ -427,7 +457,7 @@ const Events = () => {
       </div>
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : filtered.length > 0 ? (
         <div className="flex flex-col gap-5">
           {filtered.map((event, index) => {
@@ -451,7 +481,7 @@ const Events = () => {
           })}
         </div>
       ) : (
-        <p className="text-sm text-white/45">No events found.</p>
+        <p className="text-sm text-white/50">No events found.</p>
       )}
 
       {/* Certificate Modal Overlay */}

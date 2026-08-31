@@ -206,7 +206,7 @@ const Navbar = () => {
       >
         <div className="mx-auto max-h-[calc(100dvh-73px)] max-w-7xl overflow-y-auto overscroll-contain px-4 py-4">
           {activeLink && (
-            <p className="mb-4 text-[11px] uppercase tracking-[0.3em] text-white/35">
+            <p className="mb-4 text-[11px] uppercase tracking-[0.3em] text-white/50">
               {activeLink.name}
             </p>
           )}
@@ -229,7 +229,7 @@ const Navbar = () => {
             </div>
 
             <div>
-              <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-white/35">Explore</p>
+              <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-white/50">Explore</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {exploreLinks.map((link) => (
                   <Link
@@ -249,7 +249,7 @@ const Navbar = () => {
             </div>
 
             <div>
-              <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-white/35">Quick Access</p>
+              <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-white/50">Quick Access</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {utilityLinks.map((link) => (
                   <Link
@@ -270,7 +270,7 @@ const Navbar = () => {
 
             {user && (
               <div>
-                <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-white/35">Workspace</p>
+                <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-white/50">Workspace</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Link
                     to={`/profile/${user._id}`}

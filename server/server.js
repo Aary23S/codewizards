@@ -2,6 +2,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const cron = require("node-cron");
 const axios = require("axios");
@@ -51,9 +52,15 @@ cron.schedule("*/14 * * * *", async () => {
 });
 app.use(express.json());
 
-// Health check — confirms server is alive
+// Health check — reports DB connectivity too, since a live process with a dead
+// DB connection is not actually "healthy" for anything the API does.
 app.get("/", (req, res) => {
-  res.json({ success: true, message: "CodeWizards API running" });
+  const dbConnected = mongoose.connection.readyState === 1;
+  res.status(dbConnected ? 200 : 503).json({
+    success: dbConnected,
+    message: dbConnected ? "CodeWizards API running" : "API running, database unavailable",
+    db: dbConnected ? "connected" : "disconnected",
+  });
 });
 
 // Routes (we'll plug these in as we build each module)
@@ -98,4 +105,28 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}  🎉`));
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}  🎉`));
+
+// Graceful shutdown — let in-flight requests finish and close the DB connection
+// cleanly instead of the process (and any open Mongo sockets) being killed mid-write.
+const shutdown = (signal) => {
+  console.log(`${signal} received, shutting down gracefully...`);
+  server.close(async () => {
+    try {
+      await mongoose.connection.close();
+    } catch (err) {
+      console.error("Error closing DB connection:", err.message);
+    }
+    console.log("Shutdown complete.");
+    process.exit(0);
+  });
+
+  // Safety net: force-exit if close() hangs (e.g. a stuck keep-alive connection)
+  setTimeout(() => {
+    console.error("Forced shutdown after timeout.");
+    process.exit(1);
+  }, 10000).unref();
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

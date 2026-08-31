@@ -1957,6 +1957,11 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
   }
 
   Future<void> _editRule(Map<String, dynamic> rule) async {
+    if (rule['type'] == 'tiered') {
+      await _editTieredRule(rule);
+      return;
+    }
+
     final flatPointsController = TextEditingController(
       text: _string(rule['flatPoints']),
     );
@@ -1995,6 +2000,99 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
       await _refresh();
     } finally {
       flatPointsController.dispose();
+    }
+  }
+
+  Future<void> _editTieredRule(Map<String, dynamic> rule) async {
+    final tiers = List<Map<String, dynamic>>.from(
+      (rule['tiers'] as List? ?? const []).map(
+        (t) => Map<String, dynamic>.from(t as Map),
+      ),
+    );
+    final pointsControllers = [
+      for (final tier in tiers) TextEditingController(text: _string(tier['points'], fallback: '0')),
+    ];
+    final repo = context.read<AdminRepository>();
+    try {
+      final saved = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Edit tiered point rule'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < tiers.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _string(tiers[i]['label'], fallback: 'Tier'),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '${_string(tiers[i]['min'], fallback: '0')}–${tiers[i]['max'] ?? '∞'}',
+                                    style: const TextStyle(fontSize: 12, color: Colors.white54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: TextField(
+                                controller: pointsControllers[i],
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(labelText: 'Points'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (saved != true || !mounted) return;
+      final id = _id(rule);
+      if (id == null) return;
+
+      for (var i = 0; i < tiers.length; i++) {
+        tiers[i] = {
+          ...tiers[i],
+          'points': int.tryParse(pointsControllers[i].text.trim()) ?? tiers[i]['points'],
+        };
+      }
+
+      await repo.updatePointRule(id, {'tiers': tiers});
+      await _refresh();
+    } finally {
+      for (final controller in pointsControllers) {
+        controller.dispose();
+      }
     }
   }
 
@@ -2048,8 +2146,9 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
                         child: _ListTileCard(
                           item: item,
                           title: _string(item['key'], fallback: 'Rule'),
-                          subtitle:
-                              'Flat points: ${_string(item['flatPoints'], fallback: '0')}',
+                          subtitle: item['type'] == 'tiered'
+                              ? '${(item['tiers'] as List? ?? const []).length} tiers'
+                              : 'Flat points: ${_string(item['flatPoints'], fallback: '0')}',
                           trailingLabel: 'Edit',
                           onTap: () => _editRule(item),
                         ),

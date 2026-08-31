@@ -32,9 +32,11 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
   Future<List<Map<String, dynamic>>> _loadRegistrations() async {
     final repo = context.read<EventRepository>();
     final data = await repo.fetchEventRegistrations(widget.eventId);
-    setState(() {
-      _allRegs = data;
-    });
+    if (mounted) {
+      setState(() {
+        _allRegs = data;
+      });
+    }
     return data;
   }
 

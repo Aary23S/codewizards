@@ -164,7 +164,7 @@ const MentorshipGoalsWidget = ({ connId, isMentor, goalsList, onUpdateGoals }) =
       )}
 
       {goalsList.length === 0 ? (
-        <p className="text-sm text-white/40">No goals or milestones set for this connection yet.</p>
+        <p className="text-sm text-white/50">No goals or milestones set for this connection yet.</p>
       ) : (
         <div className="space-y-4">
           {goalsList.map((goal) => {
@@ -208,7 +208,7 @@ const MentorshipGoalsWidget = ({ connId, isMentor, goalsList, onUpdateGoals }) =
                           onChange={() => handleToggleTask(goal._id, task._id)}
                           className="rounded border-white/20 bg-white/5 text-cyan-400 focus:ring-0 focus:ring-offset-0 h-4 w-4"
                         />
-                        <span className={task.isCompleted ? "line-through text-white/40" : ""}>
+                        <span className={task.isCompleted ? "line-through text-white/50" : ""}>
                           {task.title}
                         </span>
                       </label>
@@ -390,7 +390,7 @@ const MyConnections = () => {
             <div className="mt-6 border-t border-white/10 pt-6">
               {hasBio && (
                 <div className="mb-5">
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-white/45">Biography</p>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-white/50">Biography</p>
                   <p className="mt-2 text-sm leading-6 text-white/70">{targetUser.bio}</p>
                 </div>
               )}
@@ -420,18 +420,18 @@ const MyConnections = () => {
               )}
 
               <div>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-white/45 mb-3">Shared Contact Information</p>
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 mb-3">Shared Contact Information</p>
                 {isLoadingC ? (
-                  <p className="text-sm text-white/40">Loading contact information...</p>
+                  <p className="text-sm text-white/50">Loading contact information...</p>
                 ) : Object.keys(connContacts).length === 0 ? (
-                  <p className="text-sm text-white/40">
+                  <p className="text-sm text-white/50">
                     No private contact details are currently shared by this user.
                   </p>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
                     {connContacts.email && (
                       <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                        <p className="text-[10px] text-white/40 uppercase">Email Address</p>
+                        <p className="text-[10px] text-white/50 uppercase">Email Address</p>
                         <a href={`mailto:${connContacts.email}`} className="text-sm text-cyan-200 font-semibold block mt-1 hover:underline">
                           {connContacts.email}
                         </a>
@@ -439,19 +439,19 @@ const MyConnections = () => {
                     )}
                     {connContacts.phone && (
                       <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                        <p className="text-[10px] text-white/40 uppercase">Phone Number</p>
+                        <p className="text-[10px] text-white/50 uppercase">Phone Number</p>
                         <p className="text-sm text-white font-semibold mt-1">{connContacts.phone}</p>
                       </div>
                     )}
                     {connContacts.whatsapp && (
                       <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                        <p className="text-[10px] text-white/40 uppercase">WhatsApp</p>
+                        <p className="text-[10px] text-white/50 uppercase">WhatsApp</p>
                         <p className="text-sm text-white font-semibold mt-1">{connContacts.whatsapp}</p>
                       </div>
                     )}
                     {connContacts.discord && (
                       <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                        <p className="text-[10px] text-white/40 uppercase">Discord</p>
+                        <p className="text-[10px] text-white/50 uppercase">Discord</p>
                         <p className="text-sm text-white font-semibold mt-1">{connContacts.discord}</p>
                       </div>
                     )}
@@ -462,7 +462,7 @@ const MyConnections = () => {
               {/* Goals widget section */}
               {isLoadingG ? (
                 <div className="mt-6 border-t border-white/10 pt-6">
-                  <p className="text-sm text-white/40">Loading mentorship goals...</p>
+                  <p className="text-sm text-white/50">Loading mentorship goals...</p>
                 </div>
               ) : (
                 <MentorshipGoalsWidget
@@ -516,7 +516,7 @@ const MyConnections = () => {
         {!hasConnections ? (
           <div className={`${shellCard} p-8 text-center text-white/55`}>
             <p className="text-base">No active connections found.</p>
-            <p className="mt-2 text-sm text-white/40">
+            <p className="mt-2 text-sm text-white/50">
               Active connections will appear here once incoming requests are approved or when your sent requests are accepted.
             </p>
             <Link

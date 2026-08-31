@@ -54,7 +54,7 @@ const ReplyThread = ({ doubt, user, onReply, onResolve, onDeleteReply }) => {
                 }`}>
                   {reply.author?.role}
                 </span>
-                <span className="text-xs text-white/35">{timeAgo(reply.createdAt)}</span>
+                <span className="text-xs text-white/50">{timeAgo(reply.createdAt)}</span>
               </div>
               <p className="mt-2 text-sm leading-7 text-white/70">{reply.body}</p>
               {user && (user.role === "admin" || reply.author?._id === user._id) && (
@@ -77,7 +77,7 @@ const ReplyThread = ({ doubt, user, onReply, onResolve, onDeleteReply }) => {
             onChange={(e) => setReplyText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleReply()}
             placeholder="Write a reply..."
-            className="flex-1 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+            className="flex-1 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none"
           />
           <button onClick={handleReply} disabled={sending || !replyText.trim()} className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-black disabled:opacity-40">
             {sending ? "..." : "Reply"}
@@ -90,7 +90,7 @@ const ReplyThread = ({ doubt, user, onReply, onResolve, onDeleteReply }) => {
           onClick={() => onResolve(doubt._id)}
           className={`mt-4 rounded-full border px-3 py-1.5 text-xs transition-colors ${
             doubt.resolved
-              ? "border-white/10 text-white/45 hover:border-red-500/30 hover:text-red-300"
+              ? "border-white/10 text-white/50 hover:border-red-500/30 hover:text-red-300"
               : "border-green-500/20 text-green-200 hover:border-green-400/40"
           }`}
         >
@@ -110,17 +110,17 @@ const DoubtCard = ({ doubt, user, onReply, onResolve, onUpvote, onDeleteDoubt, o
       <div className="p-6">
         <div className="flex items-start gap-4">
           <div className="flex flex-col items-center gap-1 shrink-0">
-            <button onClick={() => onUpvote(doubt._id)} className={`text-sm font-bold transition-colors ${hasUpvoted ? "text-white" : "text-white/35 hover:text-white/70"}`}>
+            <button onClick={() => onUpvote(doubt._id)} className={`text-sm font-bold transition-colors ${hasUpvoted ? "text-white" : "text-white/50 hover:text-white/70"}`}>
               ▲
             </button>
-            <span className="text-xs text-white/35">{doubt.upvotes?.length || 0}</span>
+            <span className="text-xs text-white/50">{doubt.upvotes?.length || 0}</span>
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               {doubt.resolved && <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-200">Resolved</span>}
               {doubt.domain && <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/60">{doubt.domain}</span>}
-              <span className="text-xs text-white/35">{timeAgo(doubt.createdAt)}</span>
+              <span className="text-xs text-white/50">{timeAgo(doubt.createdAt)}</span>
             </div>
 
             <h3 onClick={() => setExpanded(!expanded)} className="cursor-pointer text-lg font-semibold text-white hover:text-white/75">
@@ -136,9 +136,9 @@ const DoubtCard = ({ doubt, user, onReply, onResolve, onUpvote, onDeleteDoubt, o
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">
                   {doubt.author?.name?.charAt(0)}
                 </div>
-                <span className="text-xs text-white/40">{doubt.author?.name} · {doubt.author?.role}</span>
+                <span className="text-xs text-white/50">{doubt.author?.name} · {doubt.author?.role}</span>
               </div>
-              <button onClick={() => setExpanded(!expanded)} className="ml-auto text-xs text-white/40 transition-colors hover:text-white">
+              <button onClick={() => setExpanded(!expanded)} className="ml-auto text-xs text-white/50 transition-colors hover:text-white">
                 {expanded ? "Collapse" : `${doubt.replies?.length || 0} ${doubt.replies?.length === 1 ? "reply" : "replies"} ↓`}
               </button>
             </div>
@@ -266,7 +266,7 @@ const Doubts = () => {
       <div className="pointer-events-none absolute right-0 top-28 h-72 w-72 rounded-full bg-rose-500/10 blur-3xl" />
 
       <div className="relative mb-10 max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/45">Ask Anything</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Ask Anything</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-6xl">
           Doubt forum, restyled without changing the flow.
         </h1>
@@ -313,20 +313,20 @@ const Doubts = () => {
 
       {showForm && (
         <div className="mb-8 rounded-3xl border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-white/45">New Question</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-white/50">New Question</p>
           <div className="mt-5 flex flex-col gap-4">
             <input
               placeholder="Title — be specific (e.g. 'How do I fix CORS in Express?') *"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none"
             />
             <textarea
               placeholder="Describe your problem in detail. Include what you tried... *"
               rows={5}
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
-              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none resize-none"
+              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none resize-none"
             />
             <select
               value={form.domain}
@@ -346,7 +346,7 @@ const Doubts = () => {
       )}
 
       {loading ? (
-        <p className="text-sm text-white/45">Loading...</p>
+        <p className="text-sm text-white/50">Loading...</p>
       ) : doubts.length > 0 ? (
         <div className="flex flex-col gap-4">
           {doubts.map((doubt) => (

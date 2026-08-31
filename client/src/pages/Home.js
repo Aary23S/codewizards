@@ -8,7 +8,7 @@ const StatCard = ({ value, label }) => (
     <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
     <div className="relative">
       <div className="text-3xl font-semibold tracking-tight text-white md:text-4xl">{value}</div>
-      <div className="mt-2 text-xs uppercase tracking-[0.28em] text-white/45">{label}</div>
+      <div className="mt-2 text-xs uppercase tracking-[0.28em] text-white/50">{label}</div>
     </div>
   </div>
 );
@@ -16,7 +16,7 @@ const StatCard = ({ value, label }) => (
 const SectionHeader = ({ eyebrow, title, description, action }) => (
   <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
     <div className="max-w-2xl">
-      <p className="text-xs uppercase tracking-[0.3em] text-white/45">{eyebrow}</p>
+      <p className="text-xs uppercase tracking-[0.3em] text-white/50">{eyebrow}</p>
       <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white md:text-4xl">{title}</h2>
       {description && <p className="mt-3 text-sm leading-7 text-white/55 md:text-base">{description}</p>}
     </div>
@@ -85,10 +85,10 @@ const EventCard = ({ event, index }) => (
       )}
       <div className="relative flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <span className="mb-2 block text-[11px] uppercase tracking-[0.28em] text-white/40">{event.type}</span>
+          <span className="mb-2 block text-[11px] uppercase tracking-[0.28em] text-white/50">{event.type}</span>
           <h3 className="text-lg font-semibold text-white line-clamp-2">{event.title}</h3>
           <p className="mt-2 text-sm leading-6 text-white/60 line-clamp-3">{event.description}</p>
-          <div className="mt-4 text-xs text-white/40">
+          <div className="mt-4 text-xs text-white/50">
             {new Date(event.date).toDateString()} {event.venue && `· ${event.venue}`}
           </div>
         </div>
@@ -127,7 +127,7 @@ const AnnouncementCard = ({ announcement, index }) => (
             </span>
           )}
           {!announcement.important && (
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-white/45">
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-white/50">
               Update
             </span>
           )}
@@ -198,7 +198,7 @@ const CarouselShell = ({ title, eyebrow, description, action, items, renderItem,
     <section className="mx-auto max-w-7xl px-4 pb-24">
       <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
         <div className="max-w-2xl">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/45">{eyebrow}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/50">{eyebrow}</p>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white md:text-4xl">{title}</h2>
           {description && <p className="mt-3 text-sm leading-7 text-white/55 md:text-base">{description}</p>}
         </div>
@@ -312,7 +312,7 @@ const Home = () => {
       <section className="mx-auto max-w-7xl px-4 pb-20 pt-20 md:pb-24 md:pt-28">
         <div className="grid gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
           <div className="max-w-4xl">
-            <p className="text-xs uppercase tracking-[0.35em] text-white/45">
+            <p className="text-xs uppercase tracking-[0.35em] text-white/50">
               D.Y. Patil Agriculture & Technical University, Talsande
             </p>
             <h1 className="mt-5 text-5xl font-semibold tracking-tight text-white md:text-7xl lg:text-8xl">
@@ -363,7 +363,7 @@ const Home = () => {
             <div className="announcement-panel group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-7 shadow-[0_20px_80px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.12),_transparent_30%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="relative">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/45">Club Feed</p>
+                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Club Feed</p>
                 <h3 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl">
                   Updates that stay readable and feel alive.
                 </h3>
@@ -372,11 +372,11 @@ const Home = () => {
                 </p>
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Live status</p>
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Live status</p>
                     <p className="mt-2 text-lg font-semibold text-white">{announcements.length} posts</p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Priority</p>
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Priority</p>
                     <p className="mt-2 text-lg font-semibold text-white">
                       {announcements.some((item) => item.important) ? "Pinned items" : "General updates"}
                     </p>
@@ -406,7 +406,7 @@ const Home = () => {
           }
         />
         {loading ? (
-          <p className="text-sm text-white/45">Loading...</p>
+          <p className="text-sm text-white/50">Loading...</p>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {projects.map((project, index) => (
@@ -433,7 +433,7 @@ const Home = () => {
 
       <section className="mx-auto max-w-7xl px-4 pb-24">
         <div className="rounded-[2rem] border border-white/10 bg-white/5 px-8 py-12 text-center shadow-[0_20px_80px_rgba(0,0,0,0.22)]">
-          <p className="text-xs uppercase tracking-[0.35em] text-white/45">Connect</p>
+          <p className="text-xs uppercase tracking-[0.35em] text-white/50">Connect</p>
           <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-5xl">
             Ready to connect?
           </h2>
